@@ -17,7 +17,7 @@
   "itens": {
     "painel": "Panel",
     "explorar": "Trazabilidad pública",
-    "lotes": "Mis lotes",
+    "lotes": "Lotes de venta",
     "anuncios": "Anuncios",
     "retiradas": "Retiros",
     "entregas": "Entregas en curso",
@@ -39,12 +39,12 @@
     "resgates": "Canjes de cupones",
     "arbitragem": "Arbitraje",
     "materiais": "Materiales",
-    "coletas": "Entregas de recolectores"
+    "coletas": "Lotes de origen"
   },
   "descricoes": {
     "painel": "Resumen de tu operación.",
     "explorar": "Consulta la trazabilidad de cualquier lote, crédito o distribución.",
-    "lotes": "Arma lotes con las entregas, anúncialos en la subasta y sigue cada etapa.",
+    "lotes": "Junte lotes de origen del mismo material, pese el lote consolidado y publíquelo en la subasta.",
     "anuncios": "Anuncia lotes en el marketplace, cambia el precio o retira anuncios.",
     "retiradas": "Confirma el traspaso de custodia entre cooperativa y transportista.",
     "entregas": "Lotes en transporte y plazos de entrega.",
@@ -66,7 +66,7 @@
     "resgates": "Registra los canjes de derechos en cupones.",
     "arbitragem": "Resuelve disputas de lotes.",
     "materiais": "Registra los tipos de material aceptados en los lotes.",
-    "coletas": "Pesa y registra cada entrega de material de los recolectores."
+    "coletas": "Pese y registre el material que llega: de recolectores, clasificación propia, donaciones, compras o recicladores sin registro."
   },
   "papel": {
     "coletor": "Recolector",
@@ -213,7 +213,15 @@
     "PapelIncorreto": "El participante no tiene el rol necesario.",
     "ParametroInvalido": "Algún valor es inválido.",
     "BalancaDeOutroDono": "La báscula pertenece a otro participante.",
-    "BalancaInativa": "La báscula está inactiva."
+    "BalancaInativa": "La báscula está inactiva.",
+    "PesoConsolidadoForaDaFaixa": "El peso del lote consolidado está fuera del rango aceptado sobre la suma de los lotes de origen.",
+    "EntregaDeOutroLote": "Uno de los lotes de origen pertenece a otro lote de venta.",
+    "LoteSemEntregas": "El lote aún no tiene lotes de origen.",
+    "EntregaJaVinculada": "Uno de los lotes de origen ya está en otro lote de venta. Actualice y vuelva a intentar.",
+    "MaterialDiferente": "Todos los lotes de origen deben ser del mismo material que el lote de venta.",
+    "TransicaoInvalida": "Esta acción no vale para la situación actual del lote. Actualice la página.",
+    "PesagemExpirada": "La pesada expiró. Pese de nuevo.",
+    "PesagemDivergente": "La pesada firmada por la báscula no coincide con los datos enviados."
   },
   "cooperativa": {
     "soCooperativa": "Esta pantalla es solo para billeteras de cooperativa.",
@@ -234,31 +242,38 @@
       "aviso": "Báscula de prueba: la clave se guarda en este navegador. En la operación real, el propio equipo firma cada pesaje."
     },
     "coletas": {
-      "nova": "Nueva entrega",
+      "nova": "Nuevo lote de origen",
       "escolherColetor": "Elige el recolector",
       "semColetores": "No hay recolectores registrados. Pide a la administración que registre sus billeteras en Participantes.",
       "pesar": "Pesar y registrar",
-      "balancaNaoPronta": "La báscula debe estar registrada y activa para registrar entregas.",
-      "registrada": "Entrega registrada.",
-      "vazio": "Aún no hay entregas registradas.",
+      "balancaNaoPronta": "La báscula debe estar registrada y activa para registrar lotes de origen.",
+      "registrada": "Lote de origen registrado.",
+      "vazio": "Aún no hay lotes de origen registrados.",
       "disponivel": "Disponible",
-      "noLote": "En lote"
+      "noLote": "En lote de venta",
+      "origem": "Origen",
+      "todasOrigens": "Todos los orígenes",
+      "quem": "Recolector o referencia",
+      "refRegistrada": "Referencia registrada",
+      "referencia": "Referencia",
+      "referenciaObrigatoria": "Factura, recibo o CUIT/NIF. En la blockchain solo queda un código derivado. Guarde el texto: con él el donante encuentra el lote en la trazabilidad pública.",
+      "referenciaOpcional": "Opcional: ticket o nota interna. En la blockchain solo queda un código derivado."
     },
     "lotes": {
       "montar": "Armar lote",
-      "semBalanca": "Genera la báscula de prueba en Entregas de recolectores antes de armar lotes.",
+      "semBalanca": "Genere la báscula de prueba en Lotes de origen antes de armar lotes.",
       "evidencias": "Referencia de las evidencias (opcional)",
       "evidenciasAjuda": "Ej.: número del ticket o carpeta de fotos. En la blockchain solo queda un código derivado.",
-      "escolherEntregas": "Entregas disponibles de este material",
-      "semEntregas": "No hay entregas disponibles de este material.",
-      "resumo": "{{n}} entrega(s), que suman {{kg}} kg",
-      "pesoFardo": "Peso del lote en la báscula (kg)",
-      "pesoFardoAjuda": "Déjalo vacío para usar la suma de las entregas.",
-      "criar": "Pesar y armar lote",
+      "escolherEntregas": "Lotes de origen disponibles de este material",
+      "semEntregas": "No hay lotes de origen disponibles de este material.",
+      "resumo": "{{n}} lote(s) de origen, sumando {{kg}} kg",
+      "pesoFardo": "Peso del lote consolidado en la báscula (kg)",
+      "pesoFardoAjuda": "Aceptado de {{min}} a {{max}} kg. Vacío usa la suma.",
+      "criar": "Armar, pesar y cerrar",
       "passo": "Enviando {{n}} de {{total}}… confirma en la billetera.",
-      "entregas": "Entregas",
+      "entregas": "Orígenes",
       "estado": "Estado",
-      "vazio": "Aún no hay lotes armados.",
+      "vazio": "Aún no hay lotes de venta.",
       "precoMinimo": "Precio mínimo (R$)",
       "dias": "Días",
       "anunciar": "Anunciar",
@@ -266,11 +281,19 @@
       "ate": "Hasta {{data}}, mínimo {{preco}}",
       "marcarTodas": "Marcar todas",
       "desmarcarTodas": "Desmarcar todas",
-      "anunciarTitulo": "Anunciar el lote {{id}}"
+      "anunciarTitulo": "Anunciar el lote {{id}}",
+      "foraDaFaixa": "Fuera del rango aceptado: de {{min}} a {{max}} kg.",
+      "fechar": "Pesar y cerrar",
+      "fecharTitulo": "Pesar y cerrar el lote {{id}}",
+      "desfazer": "Deshacer",
+      "desfazerTitulo": "Deshacer el lote {{id}}",
+      "desfazerTexto": "Los {{n}} lote(s) de origen vuelven a estar disponibles para otro lote de venta y el recibo digital del lote se quema. Después de la venta ya no se puede deshacer.",
+      "desfazerConfirmar": "Deshacer lote",
+      "semColetor": "{{pct}}% sin recolector"
     }
   },
   "estadoLote": {
-    "Criado": "Armado",
+    "Criado": "Cerrado",
     "Anunciado": "En subasta",
     "SemLance": "Sin pujas",
     "Vendido": "Vendido",
@@ -279,7 +302,10 @@
     "Reciclado": "Reciclado",
     "Agregado": "En un crédito",
     "EmDisputa": "En disputa",
-    "Reembolsado": "Reembolsado"
+    "Reembolsado": "Reembolsado",
+    "EmMontagem": "En armado",
+    "EmDesmontagem": "Deshaciendo",
+    "Desfeito": "Deshecho"
   },
   "grade": {
     "buscar": "Buscar",
@@ -298,5 +324,45 @@
     "soInativos": "Solo inactivos",
     "todosMateriais": "Todos los materiales",
     "todosEstados": "Todos los estados"
+  },
+  "origem": {
+    "Coletor": "Recolector",
+    "TriagemPropria": "Clasificación propia",
+    "Doacao": "Donación",
+    "Compra": "Compra",
+    "Avulso": "Reciclador sin registro"
+  },
+  "trilha": {
+    "busca": "Referencia o dirección",
+    "buscaExemplo": "Ej.: FAC 1234, recibo 88 o la dirección de un lote",
+    "buscar": "Buscar",
+    "ajuda": "¿Tiene un comprobante de donación o de venta? Escriba la referencia como figura en el documento (factura, recibo o CUIT/NIF); mayúsculas y espacios extra no importan. También acepta la dirección de un lote de origen o de venta.",
+    "nada": "No se encontró nada con esa referencia.",
+    "buscando": "Buscando en la blockchain…",
+    "loteOrigem": "Lote de origen",
+    "loteVenda": "Lote de venta",
+    "naoVinculado": "Aún no forma parte de un lote de venta.",
+    "cooperativa": "Cooperativa",
+    "industria": "Industria",
+    "transportador": "Transportista",
+    "credito": "Crédito de carbono",
+    "registrado": "Pesado el {{data}}",
+    "desde": "En esta situación desde el {{data}}",
+    "origens": "Lotes de origen que forman este lote",
+    "consumido": "Consumido por la industria",
+    "naoConsumido": "Aún no consumido por la industria.",
+    "verExplorer": "Ver en la blockchain",
+    "peso": "{{kg}} kg",
+    "erro": "No fue posible consultar la blockchain ahora. Intente de nuevo en unos instantes.",
+    "pesoRotulo": "Peso"
+  },
+  "estadoCredito": {
+    "EmFormacao": "En formación",
+    "EmValidacao": "En validación",
+    "Emitido": "Emitido",
+    "Vendido": "Vendido",
+    "Aposentado": "Retirado",
+    "Rejeitado": "Rechazado",
+    "Abandonado": "Abandonado"
   }
 }

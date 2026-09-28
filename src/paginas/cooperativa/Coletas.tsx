@@ -3,7 +3,7 @@ import { useClient, useRequest } from '@solana/react';
 import { Copy, Plus, Scale } from 'lucide-react';
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { coletorRef } from '@clientes/coletor';
+import { coletorRef, origemRef } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { instrucaoPesagem, TipoPesagem } from '@clientes/pesagem';
@@ -19,6 +19,21 @@ import { useCadastro } from '../../solana/useCadastro';
 import { gramasParaKg, kgParaGramas, useEntregas, useMateriais, useParticipantes } from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
 import { rotuloParticipante, SoPapel } from '../admin/comum';
+
+/** Origens na ordem do formulário (coletor primeiro, o caso mais comum). */
+const ORIGENS = [
+    lote.OrigemEntrega.Coletor,
+    lote.OrigemEntrega.TriagemPropria,
+    lote.OrigemEntrega.Doacao,
+    lote.OrigemEntrega.Compra,
+    lote.OrigemEntrega.Avulso,
+] as const;
+export const nomeOrigem = (o: lote.OrigemEntrega) => `origem.${lote.OrigemEntrega[o]}`;
+/** Doação e compra precisam de documento (nota, recibo, CNPJ); triagem e avulso, não. */
+const referenciaObrigatoria = (o: lote.OrigemEntrega) => o === lote.OrigemEntrega.Doacao || o === lote.OrigemEntrega.Compra;
+
+/** O que o formulário envia: a origem e, conforme ela, o coletor ou o texto da referência. */
+export type NovaOrigem = { origem: lote.OrigemEntrega; coletor: string; referencia: string; material: number; pesoG: bigint };
 
 /** Endereço "vazio" (Pubkey::default): entrega ainda sem lote. */
 const SEM_LOTE = '11111111111111111111111111111111';
@@ -65,6 +80,7 @@ function ConteudoColetas() {
     const [popup, setPopup] = useState<'entrega' | 'balanca' | null>(null);
     const [filtroLote, setFiltroLote] = useState<'todas' | 'disponiveis' | 'noLote'>('todas');
     const [filtroMaterial, setFiltroMaterial] = useState('');
+    const [filtroOrigem, setFiltroOrigem] = useState('');
 
     const coletores = useMemo(
         () => (participantes.data ?? []).filter((p) => p.dados.papel === lote.Papel.Coletor),
@@ -88,7 +104,13 @@ function ConteudoColetas() {
     const pronta = situacaoBalanca.data === 'pronta' && !!balanca;
 
     const colunas = useMemo<Coluna<Linha>[]>(() => {
-        const quem = (l: Linha) => refs.get(hex(l.dados.coletorRef));
+        const quem = (l: Linha) => refs.get(hex(l.dados.origemRef));
+        const comColetor = (l: Linha) => l.dados.origem === lote.OrigemEntrega.Coletor;
+        const rotuloQuem = (l: Linha) => {
+            if (!comColetor(l)) return t('cooperativa.coletas.refRegistrada');
+            const q = quem(l);
+            return q ? rotuloParticipante(q) : '—';
+        };
         return [
             { id: 'id', titulo: '#', valor: (l) => l.dados.entregaId, numerica: true, largura: 'w-20' },
             {
@@ -103,12 +125,23 @@ function ConteudoColetas() {
                 ),
             },
             {
+                id: 'origem',
+                titulo: t('cooperativa.coletas.origem'),
+                valor: (l) => t(nomeOrigem(l.dados.origem)),
+                largura: 'w-40',
+            },
+            {
                 id: 'coletor',
-                titulo: t('papel.coletor'),
-                valor: (l) => {
-                    const q = quem(l);
-                    return q ? rotuloParticipante(q) : '—';
-                },
+                titulo: t('cooperativa.coletas.quem'),
+                valor: rotuloQuem,
+                celula: (l) =>
+                    comColetor(l) ? (
+                        rotuloQuem(l)
+                    ) : (
+                        <span className="text-texto-suave" title={hex(l.dados.origemRef)}>
+                            {rotuloQuem(l)}
+                        </span>
+                    ),
                 busca: (l) => quem(l)?.carteira ?? '',
             },
             { id: 'material', titulo: t('cooperativa.material'), valor: (l) => nomeMaterial.get(l.dados.material) ?? String(l.dados.material) },
@@ -143,15 +176,21 @@ function ConteudoColetas() {
     const filtro = useMemo(
         () => (l: Linha) =>
             (filtroLote === 'todas' || (filtroLote === 'noLote') === (l.dados.lote !== SEM_LOTE)) &&
-            (filtroMaterial === '' || String(l.dados.material) === filtroMaterial),
-        [filtroLote, filtroMaterial],
+            (filtroMaterial === '' || String(l.dados.material) === filtroMaterial) &&
+            (filtroOrigem === '' || String(l.dados.origem) === filtroOrigem),
+        [filtroLote, filtroMaterial, filtroOrigem],
     );
     const grade = useGrade(entregas.data, colunas, { chave: (l) => l.endereco, ordem: { id: 'id', desc: true }, filtro });
 
-    const registrar = async (coletor: string, material: number, pesoG: bigint) => {
+    const registrar = async ({ origem, coletor, referencia, material, pesoG }: NovaOrigem) => {
         if (!balanca || !cooperativa) return;
         const proximo = (entregas.data ?? []).reduce((m, x) => (x.dados.entregaId > m ? x.dados.entregaId : m), 0n) + 1n;
         const entrega = await pLote.entrega(cooperativa, proximo);
+        // Sem texto (triagem, avulso), a referência é o próprio lote de origem: única e não vazia.
+        const ref =
+            origem === lote.OrigemEntrega.Coletor
+                ? await coletorRef(address(coletor))
+                : await origemRef(referencia.trim() || `${lote.OrigemEntrega[origem]}:${cooperativa}:${proximo}`);
         const ts = BigInt(Math.floor(Date.now() / 1000));
         try {
             await envio.dispatchAsync([
@@ -166,7 +205,8 @@ function ConteudoColetas() {
                     eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
                     program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
                     entregaId: proximo,
-                    coletorRef: await coletorRef(address(coletor)),
+                    origem,
+                    origemRef: ref,
                     material,
                     pesoG,
                     tsPesagem: ts,
@@ -202,6 +242,18 @@ function ConteudoColetas() {
                             opcoes={[
                                 { valor: '', texto: t('grade.todosMateriais') },
                                 ...(materiais.data ?? []).map((m) => ({ valor: String(m.dados.codigo), texto: m.dados.nome })),
+                            ]}
+                        />
+                        <FiltroGrade
+                            rotulo={t('cooperativa.coletas.origem')}
+                            valor={filtroOrigem}
+                            onChange={(v) => {
+                                setFiltroOrigem(v);
+                                grade.reiniciar();
+                            }}
+                            opcoes={[
+                                { valor: '', texto: t('cooperativa.coletas.todasOrigens') },
+                                ...ORIGENS.map((o) => ({ valor: String(o), texto: t(nomeOrigem(o)) })),
                             ]}
                         />
                         <FiltroGrade
@@ -302,14 +354,18 @@ function DialogoEntrega({
     salvando: boolean;
     erro: unknown;
     aoFechar: () => void;
-    aoSalvar: (coletor: string, material: number, pesoG: bigint) => void;
+    aoSalvar: (nova: NovaOrigem) => void;
 }) {
     const { t } = useTranslation();
+    const [origem, setOrigem] = useState<lote.OrigemEntrega>(lote.OrigemEntrega.Coletor);
     const [coletor, setColetor] = useState('');
+    const [referencia, setReferencia] = useState('');
     const [material, setMaterial] = useState('');
     const [peso, setPeso] = useState('');
     const pesoG = kgParaGramas(peso);
-    const pronto = !!coletor && !!material && !!pesoG;
+    const comColetor = origem === lote.OrigemEntrega.Coletor;
+    const quemOk = comColetor ? !!coletor : !referenciaObrigatoria(origem) || referencia.trim() !== '';
+    const pronto = quemOk && !!material && !!pesoG;
     const ordenados = useMemo(
         () => [...coletores].sort((a, b) => rotuloParticipante(a.dados).localeCompare(rotuloParticipante(b.dados))),
         [coletores],
@@ -317,7 +373,7 @@ function DialogoEntrega({
 
     const enviar = (e: FormEvent) => {
         e.preventDefault();
-        if (pronto) aoSalvar(coletor, Number(material), pesoG);
+        if (pronto && pesoG) aoSalvar({ origem, coletor, referencia, material: Number(material), pesoG });
     };
 
     return (
@@ -329,43 +385,70 @@ function DialogoEntrega({
             rotuloSalvar={t('cooperativa.coletas.pesar')}
             aoFechar={aoFechar}
         >
-            {!carregando && coletores.length === 0 ? (
-                <p className="text-sm text-texto-suave">{t('cooperativa.coletas.semColetores')}</p>
-            ) : (
-                <form id="form-entrega" onSubmit={enviar} className="flex flex-col gap-4">
-                    <Resultado erro={erro} sucesso="" />
-                    <Selecao rotulo={t('papel.coletor')} required autoFocus value={coletor} onChange={(e) => setColetor(e.target.value)}>
-                        <option value="" disabled>
-                            {t('cooperativa.coletas.escolherColetor')}
+            <form id="form-entrega" onSubmit={enviar} className="flex flex-col gap-4">
+                <Resultado erro={erro} sucesso="" />
+                <Selecao
+                    rotulo={t('cooperativa.coletas.origem')}
+                    autoFocus
+                    value={origem}
+                    onChange={(e) => setOrigem(Number(e.target.value) as lote.OrigemEntrega)}
+                >
+                    {ORIGENS.map((o) => (
+                        <option key={o} value={o}>
+                            {t(nomeOrigem(o))}
                         </option>
-                        {ordenados.map((c) => (
-                            <option key={c.endereco} value={c.dados.carteira}>
-                                {rotuloParticipante(c.dados)}
-                            </option>
-                        ))}
-                    </Selecao>
-                    <div className="grid gap-4 sm:grid-cols-[1fr_10rem]">
-                        <Selecao rotulo={t('cooperativa.material')} required value={material} onChange={(e) => setMaterial(e.target.value)}>
+                    ))}
+                </Selecao>
+                {comColetor ? (
+                    !carregando && coletores.length === 0 ? (
+                        <p className="text-sm text-kraft">{t('cooperativa.coletas.semColetores')}</p>
+                    ) : (
+                        <Selecao rotulo={t('papel.coletor')} required value={coletor} onChange={(e) => setColetor(e.target.value)}>
                             <option value="" disabled>
-                                {t('cooperativa.escolherMaterial')}
+                                {t('cooperativa.coletas.escolherColetor')}
                             </option>
-                            {materiais.map((m) => (
-                                <option key={m.endereco} value={m.dados.codigo}>
-                                    {m.dados.nome}
+                            {ordenados.map((c) => (
+                                <option key={c.endereco} value={c.dados.carteira}>
+                                    {rotuloParticipante(c.dados)}
                                 </option>
                             ))}
                         </Selecao>
-                        <Campo
-                            rotulo={t('cooperativa.pesoKg')}
-                            inputMode="decimal"
-                            required
-                            value={peso}
-                            placeholder="0,000"
-                            onChange={(e) => setPeso(e.target.value)}
-                        />
-                    </div>
-                </form>
-            )}
+                    )
+                ) : (
+                    <Campo
+                        rotulo={t('cooperativa.coletas.referencia')}
+                        required={referenciaObrigatoria(origem)}
+                        value={referencia}
+                        autoComplete="off"
+                        onChange={(e) => setReferencia(e.target.value)}
+                        ajuda={t(
+                            referenciaObrigatoria(origem)
+                                ? 'cooperativa.coletas.referenciaObrigatoria'
+                                : 'cooperativa.coletas.referenciaOpcional',
+                        )}
+                    />
+                )}
+                <div className="grid gap-4 sm:grid-cols-[1fr_10rem]">
+                    <Selecao rotulo={t('cooperativa.material')} required value={material} onChange={(e) => setMaterial(e.target.value)}>
+                        <option value="" disabled>
+                            {t('cooperativa.escolherMaterial')}
+                        </option>
+                        {materiais.map((m) => (
+                            <option key={m.endereco} value={m.dados.codigo}>
+                                {m.dados.nome}
+                            </option>
+                        ))}
+                    </Selecao>
+                    <Campo
+                        rotulo={t('cooperativa.pesoKg')}
+                        inputMode="decimal"
+                        required
+                        value={peso}
+                        placeholder="0,000"
+                        onChange={(e) => setPeso(e.target.value)}
+                    />
+                </div>
+            </form>
         </Dialogo>
     );
 }

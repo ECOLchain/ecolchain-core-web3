@@ -60,7 +60,14 @@ export function MenuLateral({ expandido, gavetaAberta, fecharGaveta }: Props) {
 
                     <Grupo titulo={t('menu.geral')} mostrarTexto={mostrarTexto}>
                         {ITENS_GERAIS.map((i) => (
-                            <Item key={i.id} item={i} habilitado={conectada} mostrarTexto={mostrarTexto} aoNavegar={fecharGaveta} />
+                            // A trilha pública é aberta a qualquer pessoa, com ou sem carteira.
+                            <Item
+                                key={i.id}
+                                item={i}
+                                habilitado={conectada || i.id === 'explorar'}
+                                mostrarTexto={mostrarTexto}
+                                aoNavegar={fecharGaveta}
+                            />
                         ))}
                     </Grupo>
 

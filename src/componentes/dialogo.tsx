@@ -1,5 +1,5 @@
 import { LoaderCircle, Save, X } from 'lucide-react';
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ComponentType, type ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -18,6 +18,7 @@ export function Dialogo({
     rotuloSalvar,
     aoFechar,
     largura = 'md',
+    iconeSalvar: IconeSalvar = Save,
     children,
 }: {
     titulo: string;
@@ -29,6 +30,8 @@ export function Dialogo({
     rotuloSalvar?: string;
     aoFechar: () => void;
     largura?: 'md' | 'lg';
+    /** Ícone da ação principal (ex.: desfazer usa o seu próprio, não o de salvar). */
+    iconeSalvar?: ComponentType<{ className?: string }>;
     children: ReactNode;
 }) {
     const { t } = useTranslation();
@@ -72,7 +75,7 @@ export function Dialogo({
                                 aria-label={salvar}
                                 className="flex size-9 items-center justify-center rounded-lg bg-barra-texto text-[#1a5a4d] shadow-sm transition hover:opacity-90 focus-visible:outline-barra-texto disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {salvando ? <LoaderCircle className="size-5 animate-spin" /> : <Save className="size-5" />}
+                                {salvando ? <LoaderCircle className="size-5 animate-spin" /> : <IconeSalvar className="size-5" />}
                             </button>
                         )}
                         <button

@@ -17,7 +17,7 @@
   "itens": {
     "painel": "Dashboard",
     "explorar": "Public trail",
-    "lotes": "My batches",
+    "lotes": "Sale lots",
     "anuncios": "Listings",
     "retiradas": "Pickups",
     "entregas": "Deliveries in progress",
@@ -39,12 +39,12 @@
     "resgates": "Coupon redemptions",
     "arbitragem": "Arbitration",
     "materiais": "Materials",
-    "coletas": "Collector deliveries"
+    "coletas": "Source lots"
   },
   "descricoes": {
     "painel": "Summary of your operation.",
     "explorar": "Look up the trail of any batch, credit or distribution.",
-    "lotes": "Assemble batches from deliveries, list them at auction and follow each step.",
+    "lotes": "Combine source lots of the same material, weigh the consolidated lot and list it in the auction.",
     "anuncios": "List batches on the marketplace, reprice or withdraw listings.",
     "retiradas": "Confirm the custody handover between cooperative and carrier.",
     "entregas": "Batches in transit and delivery deadlines.",
@@ -66,7 +66,7 @@
     "resgates": "Record entitlement redemptions in coupons.",
     "arbitragem": "Rule on batch disputes.",
     "materiais": "Register the material types accepted in batches.",
-    "coletas": "Weigh and record each material delivery from collectors."
+    "coletas": "Weigh and record incoming material: from collectors, in-house sorting, donations, purchases or unregistered pickers."
   },
   "papel": {
     "coletor": "Collector",
@@ -213,7 +213,15 @@
     "PapelIncorreto": "The participant does not have the required role.",
     "ParametroInvalido": "One of the values is invalid.",
     "BalancaDeOutroDono": "The scale belongs to another participant.",
-    "BalancaInativa": "The scale is inactive."
+    "BalancaInativa": "The scale is inactive.",
+    "PesoConsolidadoForaDaFaixa": "The consolidated lot weight is outside the accepted range over the total of the source lots.",
+    "EntregaDeOutroLote": "One of the source lots belongs to another sale lot.",
+    "LoteSemEntregas": "The lot has no source lots yet.",
+    "EntregaJaVinculada": "One of the source lots is already in another sale lot. Refresh and try again.",
+    "MaterialDiferente": "All source lots must be of the same material as the sale lot.",
+    "TransicaoInvalida": "This action does not apply to the lot’s current status. Refresh the page.",
+    "PesagemExpirada": "The weighing expired. Weigh again.",
+    "PesagemDivergente": "The weighing signed by the scale does not match the data sent."
   },
   "cooperativa": {
     "soCooperativa": "This screen is only for cooperative wallets.",
@@ -234,31 +242,38 @@
       "aviso": "Test scale: the key is stored in this browser. In real operation, the device itself signs each weighing."
     },
     "coletas": {
-      "nova": "New delivery",
+      "nova": "New source lot",
       "escolherColetor": "Choose the collector",
       "semColetores": "No collectors registered. Ask the administration to register collector wallets under Participants.",
       "pesar": "Weigh and record",
-      "balancaNaoPronta": "The scale must be registered and active to record deliveries.",
-      "registrada": "Delivery recorded.",
-      "vazio": "No deliveries recorded yet.",
+      "balancaNaoPronta": "The scale must be registered and active to record source lots.",
+      "registrada": "Source lot recorded.",
+      "vazio": "No source lots recorded yet.",
       "disponivel": "Available",
-      "noLote": "In a batch"
+      "noLote": "In a sale lot",
+      "origem": "Source",
+      "todasOrigens": "All sources",
+      "quem": "Collector or reference",
+      "refRegistrada": "Reference recorded",
+      "referencia": "Reference",
+      "referenciaObrigatoria": "Invoice, receipt or tax ID. Only a derived code goes on the blockchain. Keep the text: the donor uses it to find the lot in the public trail.",
+      "referenciaOpcional": "Optional: ticket or internal note. Only a derived code goes on the blockchain."
     },
     "lotes": {
       "montar": "Assemble batch",
-      "semBalanca": "Generate the test scale under Collector deliveries before assembling batches.",
+      "semBalanca": "Generate the test scale in Source lots before assembling lots.",
       "evidencias": "Evidence reference (optional)",
       "evidenciasAjuda": "E.g.: ticket number or photo folder. Only a code derived from it goes on the blockchain.",
-      "escolherEntregas": "Available deliveries of this material",
-      "semEntregas": "No available deliveries of this material.",
-      "resumo": "{{n}} delivery(ies), totaling {{kg}} kg",
-      "pesoFardo": "Batch weight on the scale (kg)",
-      "pesoFardoAjuda": "Leave empty to use the sum of deliveries.",
-      "criar": "Weigh and assemble batch",
+      "escolherEntregas": "Available source lots of this material",
+      "semEntregas": "No source lots of this material available.",
+      "resumo": "{{n}} source lot(s), totaling {{kg}} kg",
+      "pesoFardo": "Consolidated lot weight on the scale (kg)",
+      "pesoFardoAjuda": "Accepted from {{min}} to {{max}} kg. Empty uses the total.",
+      "criar": "Assemble, weigh and close",
       "passo": "Sending {{n}} of {{total}}… confirm in your wallet.",
-      "entregas": "Deliveries",
+      "entregas": "Sources",
       "estado": "Status",
-      "vazio": "No batches assembled yet.",
+      "vazio": "No sale lots yet.",
       "precoMinimo": "Minimum price (R$)",
       "dias": "Days",
       "anunciar": "List",
@@ -266,11 +281,19 @@
       "ate": "Until {{data}}, minimum {{preco}}",
       "marcarTodas": "Select all",
       "desmarcarTodas": "Clear selection",
-      "anunciarTitulo": "List lot {{id}}"
+      "anunciarTitulo": "List lot {{id}}",
+      "foraDaFaixa": "Outside the accepted range: {{min}} to {{max}} kg.",
+      "fechar": "Weigh and close",
+      "fecharTitulo": "Weigh and close lot {{id}}",
+      "desfazer": "Undo",
+      "desfazerTitulo": "Undo lot {{id}}",
+      "desfazerTexto": "The {{n}} source lot(s) become available for another sale lot and the lot’s digital receipt is burned. After the sale, it can no longer be undone.",
+      "desfazerConfirmar": "Undo lot",
+      "semColetor": "{{pct}}% without collector"
     }
   },
   "estadoLote": {
-    "Criado": "Assembled",
+    "Criado": "Closed",
     "Anunciado": "At auction",
     "SemLance": "No bids",
     "Vendido": "Sold",
@@ -279,7 +302,10 @@
     "Reciclado": "Recycled",
     "Agregado": "In a credit",
     "EmDisputa": "In dispute",
-    "Reembolsado": "Refunded"
+    "Reembolsado": "Refunded",
+    "EmMontagem": "Being assembled",
+    "EmDesmontagem": "Undoing",
+    "Desfeito": "Undone"
   },
   "grade": {
     "buscar": "Search",
@@ -298,5 +324,45 @@
     "soInativos": "Inactive only",
     "todosMateriais": "All materials",
     "todosEstados": "All states"
+  },
+  "origem": {
+    "Coletor": "Collector",
+    "TriagemPropria": "In-house sorting",
+    "Doacao": "Donation",
+    "Compra": "Purchase",
+    "Avulso": "Unregistered picker"
+  },
+  "trilha": {
+    "busca": "Reference or address",
+    "buscaExemplo": "E.g.: INV 1234, receipt 88 or a lot address",
+    "buscar": "Search",
+    "ajuda": "Have a donation or sale receipt? Type the reference as it appears on the document (invoice, receipt or tax ID); case and extra spaces do not matter. A source or sale lot address also works.",
+    "nada": "Nothing found for this reference.",
+    "buscando": "Searching the blockchain…",
+    "loteOrigem": "Source lot",
+    "loteVenda": "Sale lot",
+    "naoVinculado": "Not in a sale lot yet.",
+    "cooperativa": "Cooperative",
+    "industria": "Industry",
+    "transportador": "Carrier",
+    "credito": "Carbon credit",
+    "registrado": "Weighed on {{data}}",
+    "desde": "In this status since {{data}}",
+    "origens": "Source lots that make up this lot",
+    "consumido": "Consumed by the industry",
+    "naoConsumido": "Not consumed by the industry yet.",
+    "verExplorer": "View on the blockchain",
+    "peso": "{{kg}} kg",
+    "erro": "Could not reach the blockchain right now. Try again in a moment.",
+    "pesoRotulo": "Weight"
+  },
+  "estadoCredito": {
+    "EmFormacao": "Being formed",
+    "EmValidacao": "Under validation",
+    "Emitido": "Issued",
+    "Vendido": "Sold",
+    "Aposentado": "Retired",
+    "Rejeitado": "Rejected",
+    "Abandonado": "Abandoned"
   }
 }

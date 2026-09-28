@@ -1,7 +1,7 @@
 import { type Address, address, type Instruction } from '@solana/kit';
-import { useClient } from '@solana/react';
-import { Ban, Megaphone, Package } from 'lucide-react';
-import { type FormEvent, useMemo, useState } from 'react';
+import { useClient, useRequest } from '@solana/react';
+import { Ban, Megaphone, Package, Scale, Undo2 } from 'lucide-react';
+import { type FormEvent, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
@@ -20,11 +20,21 @@ import { useEnviar } from '../../solana/useEnviar';
 import { SoPapel } from '../admin/comum';
 
 const SEM_LOTE = '11111111111111111111111111111111';
-/** Limite do programa por transação ao vincular entregas. */
+/** Limite do programa por transação ao vincular ou devolver lotes de origem. */
 const ENTREGAS_POR_TX = 10;
+/** Faixa padrão da pesagem do consolidado (ADR 0010), usada enquanto o config estiver zerado. */
+const PERDA_PADRAO_BPS = 1_000;
+const EXCESSO_PADRAO_BPS = 200;
 
 type Linha = ContaDecodificada<lote.Lote>;
-type Popup = { tipo: 'montar' } | { tipo: 'anunciar'; linha: Linha };
+type Entrega = ContaDecodificada<lote.Entrega>;
+type Popup =
+    | { tipo: 'montar' }
+    | { tipo: 'fechar'; linha: Linha }
+    | { tipo: 'anunciar'; linha: Linha }
+    | { tipo: 'desfazer'; linha: Linha };
+/** Faixa aceita do consolidado sobre a soma das origens, em bps. */
+type Faixa = { perdaBps: number; excessoBps: number };
 
 export function Lotes() {
     const { t } = useTranslation();
@@ -41,6 +51,23 @@ export function Lotes() {
 const brl = (centavos: bigint, idioma: string) =>
     (Number(centavos) / 100).toLocaleString(idioma, { style: 'currency', currency: 'BRL' });
 
+/** Mesma conta do programa: soma × (1 − perda) ≤ peso ≤ soma × (1 + excesso). */
+const limites = (somaG: bigint, f: Faixa) => ({
+    min: (somaG * BigInt(10_000 - f.perdaBps) + 9_999n) / 10_000n,
+    max: (somaG * BigInt(10_000 + f.excessoBps)) / 10_000n,
+});
+
+/** Faixa vigente no config do `ecol_lote` (zerada = padrão). */
+function useFaixa(): Faixa {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(async () => lote.fetchGlobalConfig(client.rpc, await pLote.config()), [client]);
+    const cfg = useRequest(fonte).data?.data;
+    return {
+        perdaBps: cfg?.perdaMontagemBps || PERDA_PADRAO_BPS,
+        excessoBps: cfg?.excessoMontagemBps || EXCESSO_PADRAO_BPS,
+    };
+}
+
 function ConteudoLotes() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
@@ -51,6 +78,7 @@ function ConteudoLotes() {
     const materiais = useMateriais();
     const entregas = useEntregas(cooperativa);
     const lotes = useLotes(cooperativa);
+    const faixa = useFaixa();
     const envio = useEnviar();
     const [popup, setPopup] = useState<Popup | null>(null);
     const [progresso, setProgresso] = useState<string | null>(null);
@@ -72,19 +100,25 @@ function ConteudoLotes() {
                 titulo: t('cooperativa.pesoKg'),
                 largura: 'w-32',
                 valor: (l) => l.dados.pesoG,
-                celula: (l) => gramasParaKg(l.dados.pesoG, idioma),
+                // Em montagem ainda não há pesagem do consolidado.
+                celula: (l) => (l.dados.pesoG > 0n ? gramasParaKg(l.dados.pesoG, idioma) : '—'),
                 numerica: true,
             },
             {
                 id: 'entregas',
                 titulo: t('cooperativa.lotes.entregas'),
-                largura: 'w-40',
+                largura: 'w-60',
                 valor: (l) => l.dados.qtdEntregas,
-                celula: (l) => (
-                    <span className="text-texto-suave">
-                        {l.dados.qtdEntregas} ({gramasParaKg(l.dados.pesoEntregasG, idioma)} kg)
-                    </span>
-                ),
+                celula: (l) => {
+                    const { qtdEntregas, pesoEntregasG, pesoSemColetorG } = l.dados;
+                    const pct = pesoEntregasG > 0n ? Number((pesoSemColetorG * 100n) / pesoEntregasG) : 0;
+                    return (
+                        <span className="text-texto-suave">
+                            {qtdEntregas} ({gramasParaKg(pesoEntregasG, idioma)} kg)
+                            {pct > 0 && <span className="ml-1.5 text-kraft">{t('cooperativa.lotes.semColetor', { pct })}</span>}
+                        </span>
+                    );
+                },
                 numerica: true,
             },
             {
@@ -119,19 +153,45 @@ function ConteudoLotes() {
     const grade = useGrade(lotes.data, colunas, { chave: (l) => l.endereco, ordem: { id: 'id', desc: true }, filtro });
     const sel = grade.selecionada;
     const estadoSel = sel?.dados.estado.__kind;
-    const podeAnunciar = !!sel && (estadoSel === 'Criado' || estadoSel === 'SemLance') && sel.dados.qtdEntregas > 0;
+    const podeAnunciar = (estadoSel === 'Criado' || estadoSel === 'SemLance') && !!sel && sel.dados.qtdEntregas > 0;
+    const podeDesfazer = ['EmMontagem', 'Criado', 'SemLance', 'EmDesmontagem'].includes(estadoSel ?? '');
 
     const abrir = (p: Popup) => {
         envio.reset();
         setPopup(p);
     };
+    const recarregar = () => {
+        entregas.refresh();
+        lotes.refresh();
+    };
 
-    const montar = async (material: number, escolhidas: ContaDecodificada<lote.Entrega>[], pesoG: bigint, evidencias: string) => {
+    /** Pesagem do consolidado, assinada pela balança, + fechamento. */
+    const ixsFechar = async (lotePda: Address, pesoG: bigint, loteId: bigint) => {
+        if (!balanca || !cooperativa) throw new Error('sem balança');
+        const ts = BigInt(Math.floor(Date.now() / 1000));
+        return [
+            await instrucaoPesagem(balanca, TipoPesagem.Origem, lotePda, pesoG, ts),
+            await lote.getCooperativaFecharLoteInstructionAsync({
+                payer: client.payer,
+                cooperativa: client.payer,
+                balanca: await pLote.balanca(balanca.address),
+                lote: lotePda,
+                eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
+                program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
+                pesoG,
+                tsPesagem: ts,
+                // Metadados do recibo (Core asset); na devnet, um endereço de referência.
+                uri: `https://ecolchain.dev/lotes/${cooperativa}/${loteId}.json`,
+            }),
+        ];
+    };
+
+    /** Abre o lote de venda, vincula as origens (até 10 por transação) e fecha com a pesagem. */
+    const montar = async (material: number, escolhidas: Entrega[], pesoG: bigint, evidencias: string) => {
         if (!balanca || !cooperativa) return;
         const loteId = (lotes.data ?? []).reduce((m, x) => (x.dados.loteId > m ? x.dados.loteId : m), 0n) + 1n;
         const lotePda = await pLote.lote(cooperativa, loteId);
-        const ev0 = await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS);
-        const ts = BigInt(Math.floor(Date.now() / 1000));
+        const ev = await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS);
         const hash = new Uint8Array(
             await crypto.subtle.digest('SHA-256', new TextEncoder().encode(evidencias || `lote:${cooperativa}:${loteId}`)),
         );
@@ -139,37 +199,71 @@ function ConteudoLotes() {
         for (let i = 0; i < escolhidas.length; i += ENTREGAS_POR_TX) {
             grupos.push(escolhidas.slice(i, i + ENTREGAS_POR_TX).map((e) => e.endereco));
         }
-        const total = 1 + grupos.length;
+        const total = grupos.length + 2;
         try {
-            // 1) Pesagem do lote montado (fardo), assinada pela balança, e criação do lote.
             setProgresso(t('cooperativa.lotes.passo', { n: 1, total }));
             await envio.dispatchAsync([
-                await instrucaoPesagem(balanca, TipoPesagem.Origem, lotePda, pesoG, ts),
                 await lote.getCooperativaCreateLoteInstructionAsync({
                     payer: client.payer,
                     cooperativa: client.payer,
-                    balanca: await pLote.balanca(balanca.address),
                     materialCadastro: await pLote.material(material),
                     lote: lotePda,
-                    eventAuthority: ev0,
+                    eventAuthority: ev,
                     program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
                     loteId,
                     material,
-                    pesoG,
-                    tsPesagem: ts,
                     evidenciasHash: hash,
-                    // Metadados do recibo (Core asset); na devnet, um endereço de referência.
-                    uri: `https://ecolchain.dev/lotes/${cooperativa}/${loteId}.json`,
                 }),
             ]);
-            // 2) Vinculação das entregas, até 10 por transação.
             for (const [i, grupo] of grupos.entries()) {
                 setProgresso(t('cooperativa.lotes.passo', { n: i + 2, total }));
                 const ix: Instruction = comContasGravaveis(
                     await lote.getCooperativaAddEntregasInstructionAsync({
                         cooperativa: client.payer,
                         lote: lotePda,
-                        eventAuthority: ev0,
+                        eventAuthority: ev,
+                        program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
+                    }),
+                    grupo,
+                );
+                await envio.dispatchAsync([ix]);
+            }
+            setProgresso(t('cooperativa.lotes.passo', { n: total, total }));
+            await envio.dispatchAsync(await ixsFechar(lotePda, pesoG, loteId));
+            setPopup(null);
+        } catch {
+            // o erro fica em envio.error; um lote que parou em montagem pode ser fechado ou desfeito depois
+        } finally {
+            setProgresso(null);
+            recarregar();
+        }
+    };
+
+    const fechar = async (l: Linha, pesoG: bigint) => {
+        try {
+            await envio.dispatchAsync(await ixsFechar(l.endereco, pesoG, l.dados.loteId));
+            setPopup(null);
+            lotes.refresh();
+        } catch {
+            // o erro fica em envio.error
+        }
+    };
+
+    /** Devolve as origens do lote em grupos de 10; a última transação conclui (Desfeito). */
+    const desfazer = async (l: Linha) => {
+        const minhas = (entregas.data ?? []).filter((e) => e.dados.lote === l.endereco).map((e) => e.endereco);
+        const grupos: Address[][] = [];
+        for (let i = 0; i < minhas.length; i += ENTREGAS_POR_TX) grupos.push(minhas.slice(i, i + ENTREGAS_POR_TX));
+        if (grupos.length === 0) grupos.push([]);
+        try {
+            for (const [i, grupo] of grupos.entries()) {
+                setProgresso(t('cooperativa.lotes.passo', { n: i + 1, total: grupos.length }));
+                const ix: Instruction = comContasGravaveis(
+                    await lote.getCooperativaDesmontarLoteInstructionAsync({
+                        payer: client.payer,
+                        cooperativa: client.payer,
+                        lote: l.endereco,
+                        eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
                         program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
                     }),
                     grupo,
@@ -178,11 +272,10 @@ function ConteudoLotes() {
             }
             setPopup(null);
         } catch {
-            // o erro fica em envio.error
+            // o erro fica em envio.error; desfazer de novo continua de onde parou
         } finally {
             setProgresso(null);
-            entregas.refresh();
-            lotes.refresh();
+            recarregar();
         }
     };
 
@@ -229,6 +322,11 @@ function ConteudoLotes() {
                             ]}
                         />
                         <AcoesGrade>
+                            {estadoSel === 'EmMontagem' && (
+                                <Botao compacto variante="secundario" disabled={!balanca} onClick={() => sel && abrir({ tipo: 'fechar', linha: sel })}>
+                                    <Scale className="size-4" /> {t('cooperativa.lotes.fechar')}
+                                </Botao>
+                            )}
                             {estadoSel === 'Anunciado' ? (
                                 <Botao
                                     compacto
@@ -258,6 +356,14 @@ function ConteudoLotes() {
                                     <Megaphone className="size-4" /> {t('cooperativa.lotes.anunciar')}
                                 </Botao>
                             )}
+                            <Botao
+                                compacto
+                                variante="secundario"
+                                disabled={!podeDesfazer}
+                                onClick={() => sel && abrir({ tipo: 'desfazer', linha: sel })}
+                            >
+                                <Undo2 className="size-4" /> {t('cooperativa.lotes.desfazer')}
+                            </Botao>
                             <Botao compacto onClick={() => abrir({ tipo: 'montar' })}>
                                 <Package className="size-4" /> {t('cooperativa.lotes.montar')}
                             </Botao>
@@ -271,7 +377,8 @@ function ConteudoLotes() {
                     carregando={lotes.status === 'fetching' && !lotes.data}
                     onAbrir={(l) => {
                         const e = l.dados.estado.__kind;
-                        if ((e === 'Criado' || e === 'SemLance') && l.dados.qtdEntregas > 0) abrir({ tipo: 'anunciar', linha: l });
+                        if (e === 'EmMontagem') abrir({ tipo: 'fechar', linha: l });
+                        else if ((e === 'Criado' || e === 'SemLance') && l.dados.qtdEntregas > 0) abrir({ tipo: 'anunciar', linha: l });
                     }}
                 />
             </CartaoGrade>
@@ -279,6 +386,7 @@ function ConteudoLotes() {
             {popup?.tipo === 'montar' && (
                 <DialogoMontar
                     semBalanca={!balanca}
+                    faixa={faixa}
                     materiais={(materiais.data ?? []).filter((m) => m.dados.ativo)}
                     entregas={(entregas.data ?? []).filter((e) => e.dados.lote === SEM_LOTE)}
                     salvando={envio.isRunning}
@@ -287,6 +395,42 @@ function ConteudoLotes() {
                     aoFechar={() => setPopup(null)}
                     aoSalvar={montar}
                 />
+            )}
+            {popup?.tipo === 'fechar' && (
+                <DialogoFechar
+                    linha={popup.linha}
+                    nomeMaterial={nomeMaterial.get(popup.linha.dados.material) ?? ''}
+                    faixa={faixa}
+                    salvando={envio.isRunning}
+                    erro={envio.error}
+                    aoFechar={() => setPopup(null)}
+                    aoSalvar={(pesoG) => fechar(popup.linha, pesoG)}
+                />
+            )}
+            {popup?.tipo === 'desfazer' && (
+                <Dialogo
+                    titulo={t('cooperativa.lotes.desfazerTitulo', { id: popup.linha.dados.loteId.toString() })}
+                    subtitulo={progresso ?? undefined}
+                    formId="form-desfazer"
+                    salvando={envio.isRunning}
+                    rotuloSalvar={t('cooperativa.lotes.desfazerConfirmar')}
+                    iconeSalvar={Undo2}
+                    aoFechar={() => setPopup(null)}
+                >
+                    <form
+                        id="form-desfazer"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            void desfazer(popup.linha);
+                        }}
+                        className="flex flex-col gap-4"
+                    >
+                        <Resultado erro={envio.error} sucesso="" />
+                        <p className="text-sm text-texto">
+                            {t('cooperativa.lotes.desfazerTexto', { n: popup.linha.dados.qtdEntregas })}
+                        </p>
+                    </form>
+                </Dialogo>
             )}
             {popup?.tipo === 'anunciar' && (
                 <DialogoAnunciar
@@ -313,8 +457,32 @@ function ConteudoLotes() {
     );
 }
 
+/** Campo do peso do consolidado: vazio = soma das origens; fora da faixa, avisa e bloqueia. */
+function usePesoConsolidado(somaG: bigint, faixa: Faixa) {
+    const { t } = useTranslation();
+    const { idioma } = usePreferencias();
+    const [texto, setTexto] = useState('');
+    const { min, max } = limites(somaG, faixa);
+    const pesoG = texto ? kgParaGramas(texto) : somaG > 0n ? somaG : null;
+    const naFaixa = pesoG !== null && pesoG >= min && pesoG <= max;
+    const kg = { min: gramasParaKg(min, idioma), max: gramasParaKg(max, idioma) };
+    const campo = (
+        <Campo
+            rotulo={t('cooperativa.lotes.pesoFardo')}
+            inputMode="decimal"
+            value={texto}
+            placeholder={gramasParaKg(somaG, idioma)}
+            aria-invalid={!!texto && !naFaixa}
+            ajuda={t(texto && !naFaixa ? 'cooperativa.lotes.foraDaFaixa' : 'cooperativa.lotes.pesoFardoAjuda', kg)}
+            onChange={(e) => setTexto(e.target.value)}
+        />
+    );
+    return { pesoG: naFaixa ? pesoG : null, campo };
+}
+
 function DialogoMontar({
     semBalanca,
+    faixa,
     materiais,
     entregas,
     salvando,
@@ -324,19 +492,19 @@ function DialogoMontar({
     aoSalvar,
 }: {
     semBalanca: boolean;
+    faixa: Faixa;
     materiais: ContaDecodificada<lote.Material>[];
-    entregas: ContaDecodificada<lote.Entrega>[];
+    entregas: Entrega[];
     salvando: boolean;
     progresso: string | null;
     erro: unknown;
     aoFechar: () => void;
-    aoSalvar: (material: number, escolhidas: ContaDecodificada<lote.Entrega>[], pesoG: bigint, evidencias: string) => void;
+    aoSalvar: (material: number, escolhidas: Entrega[], pesoG: bigint, evidencias: string) => void;
 }) {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
     const [material, setMaterial] = useState('');
     const [marcadas, setMarcadas] = useState<Set<Address>>(new Set());
-    const [pesoFardo, setPesoFardo] = useState('');
     const [evidencias, setEvidencias] = useState('');
     const disponiveis = useMemo(
         () =>
@@ -347,7 +515,7 @@ function DialogoMontar({
     );
     const escolhidas = disponiveis.filter((e) => marcadas.has(e.endereco));
     const soma = escolhidas.reduce((a, e) => a + e.dados.pesoG, 0n);
-    const pesoG = pesoFardo ? kgParaGramas(pesoFardo) : soma > 0n ? soma : null;
+    const { pesoG, campo } = usePesoConsolidado(soma, faixa);
     const todas = disponiveis.length > 0 && escolhidas.length === disponiveis.length;
 
     const alternar = (e: Address) =>
@@ -442,6 +610,9 @@ function DialogoMontar({
                                                 />
                                                 <span className="font-semibold tabular-nums">#{e.dados.entregaId.toString()}</span>
                                                 <span className="tabular-nums">{gramasParaKg(e.dados.pesoG, idioma)} kg</span>
+                                                <span className="ml-auto truncate text-xs text-texto-suave">
+                                                    {t(`origem.${lote.OrigemEntrega[e.dados.origem]}`)}
+                                                </span>
                                             </label>
                                         </li>
                                     ))}
@@ -451,22 +622,63 @@ function DialogoMontar({
                     )}
 
                     {escolhidas.length > 0 && (
-                        <div className="grid gap-4 sm:grid-cols-[1fr_14rem] sm:items-end">
+                        <div className="grid gap-4 sm:grid-cols-[1fr_16rem] sm:items-end">
                             <p className="text-sm text-texto">
                                 {t('cooperativa.lotes.resumo', { n: escolhidas.length, kg: gramasParaKg(soma, idioma) })}
                             </p>
-                            <Campo
-                                rotulo={t('cooperativa.lotes.pesoFardo')}
-                                inputMode="decimal"
-                                value={pesoFardo}
-                                placeholder={gramasParaKg(soma, idioma)}
-                                ajuda={t('cooperativa.lotes.pesoFardoAjuda')}
-                                onChange={(e) => setPesoFardo(e.target.value)}
-                            />
+                            {campo}
                         </div>
                     )}
                 </form>
             )}
+        </Dialogo>
+    );
+}
+
+function DialogoFechar({
+    linha,
+    nomeMaterial,
+    faixa,
+    salvando,
+    erro,
+    aoFechar,
+    aoSalvar,
+}: {
+    linha: Linha;
+    nomeMaterial: string;
+    faixa: Faixa;
+    salvando: boolean;
+    erro: unknown;
+    aoFechar: () => void;
+    aoSalvar: (pesoG: bigint) => void;
+}) {
+    const { t } = useTranslation();
+    const { idioma } = usePreferencias();
+    const { pesoG, campo } = usePesoConsolidado(linha.dados.pesoEntregasG, faixa);
+    return (
+        <Dialogo
+            titulo={t('cooperativa.lotes.fecharTitulo', { id: linha.dados.loteId.toString() })}
+            subtitulo={`${nomeMaterial} | ${t('cooperativa.lotes.resumo', {
+                n: linha.dados.qtdEntregas,
+                kg: gramasParaKg(linha.dados.pesoEntregasG, idioma),
+            })}`}
+            formId="form-fechar"
+            salvando={salvando}
+            podeSalvar={!!pesoG}
+            rotuloSalvar={t('cooperativa.lotes.fechar')}
+            aoFechar={aoFechar}
+        >
+            <form
+                id="form-fechar"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    if (pesoG) aoSalvar(pesoG);
+                }}
+                className="flex flex-col gap-4"
+            >
+                <Resultado erro={erro} sucesso="" />
+                {campo}
+            </form>
         </Dialogo>
     );
 }

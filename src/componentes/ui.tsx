@@ -80,7 +80,8 @@ export function Resultado({ assinatura, erro, sucesso }: { assinatura?: string; 
         return (
             <p role="alert" className="flex items-start gap-2 rounded-lg bg-perigo/10 p-3 text-sm text-perigo">
                 <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                {t(chaveDoErro(erro))}
+                {/* Erro do programa ainda sem tradução: mensagem genérica em vez da chave crua. */}
+                {t(chaveDoErro(erro), { defaultValue: t('erros.generico') })}
             </p>
         );
     }

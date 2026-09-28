@@ -14,6 +14,8 @@ export async function listarContas<T>(
     decoder: Decoder<T>,
     /** Filtra pelo primeiro campo da conta (logo após o discriminador), ex.: a cooperativa dona. */
     primeiroCampo?: Address,
+    /** Outros campos exigidos: bytes exatos na posição `offset` da conta (com o discriminador). */
+    filtros: { offset: number; bytes: Uint8Array }[] = [],
 ): Promise<ContaDecodificada<T>[]> {
     const contas = await client.rpc
         .getProgramAccounts(programa, {
@@ -29,6 +31,9 @@ export async function listarContas<T>(
                 ...(primeiroCampo
                     ? [{ memcmp: { offset: 8n, bytes: primeiroCampo as never, encoding: 'base58' as const } }]
                     : []),
+                ...filtros.map((f) => ({
+                    memcmp: { offset: BigInt(f.offset), bytes: getBase58Decoder().decode(f.bytes) as never, encoding: 'base58' as const },
+                })),
             ],
         })
         .send();
