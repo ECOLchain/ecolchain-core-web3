@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { lerNomeParticipante } from '@clientes/participante';
 import { Carregando } from '../../componentes/ui';
 import { type PapelUsuario, useCadastro } from '../../solana/useCadastro';
 
@@ -27,6 +28,12 @@ function Aviso({ texto }: { texto: string }) {
 }
 
 export const abreviar = (endereco: string) => `${endereco.slice(0, 4)}…${endereco.slice(-4)}`;
+
+/** "Nome — carteira abreviada"; cadastro antigo, sem nome, mostra só a carteira. */
+export function rotuloParticipante(dados: { carteira: string; nome: ArrayLike<number> }) {
+    const nome = lerNomeParticipante(dados.nome);
+    return nome ? `${nome} — ${abreviar(dados.carteira)}` : abreviar(dados.carteira);
+}
 
 /** sha256 de um texto, em bytes (referência do cadastro off-chain; on-chain vai só o hash). */
 export async function sha256(texto: string): Promise<Uint8Array> {

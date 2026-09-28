@@ -8,7 +8,7 @@ import { Botao, Campo, Carregando, Resultado, Secao, Selecao, Situacao, Tabela, 
 import type { AppClient } from '../../solana/cliente';
 import { listarContas } from '../../solana/contas';
 import { useEnviar } from '../../solana/useEnviar';
-import { abreviar, SoAdministracao } from './comum';
+import { abreviar, rotuloParticipante, SoAdministracao } from './comum';
 import { useParticipantes } from '../../solana/useDados';
 import { chavePapel } from './Participantes';
 
@@ -45,8 +45,8 @@ function ConteudoBalancas() {
             ),
         [participantes.data],
     );
-    const papelDe = useMemo(
-        () => new Map((participantes.data ?? []).map((p) => [p.dados.carteira as string, p.dados.papel])),
+    const participanteDe = useMemo(
+        () => new Map((participantes.data ?? []).map((p) => [p.dados.carteira as string, p.dados])),
         [participantes.data],
     );
     const dispositivoValido = isAddress(dispositivo.trim());
@@ -92,7 +92,7 @@ function ConteudoBalancas() {
                             </option>
                             {donos.map((p) => (
                                 <option key={p.endereco} value={p.dados.carteira}>
-                                    {abreviar(p.dados.carteira)} ({t(chavePapel(p.dados.papel))})
+                                    {rotuloParticipante(p.dados)} ({t(chavePapel(p.dados.papel))})
                                 </option>
                             ))}
                         </Selecao>
@@ -126,15 +126,15 @@ function ConteudoBalancas() {
                     vazio={(lista.data ?? []).length === 0 ? t('admin.balancas.vazio') : undefined}
                 >
                     {(lista.data ?? []).map(({ endereco, dados }) => {
-                        const papel = papelDe.get(dados.dono);
+                        const dono = participanteDe.get(dados.dono);
                         return (
                             <tr key={endereco}>
                                 <td className="px-4 py-3 font-medium tabular-nums text-texto" title={dados.dispositivo}>
                                     {abreviar(dados.dispositivo)}
                                 </td>
                                 <td className="px-4 py-3 text-texto" title={dados.dono}>
-                                    {abreviar(dados.dono)}
-                                    {papel !== undefined && <span className="text-texto-suave"> ({t(chavePapel(papel))})</span>}
+                                    {dono ? rotuloParticipante(dono) : abreviar(dados.dono)}
+                                    {dono && <span className="text-texto-suave"> ({t(chavePapel(dono.papel))})</span>}
                                 </td>
                                 <td className="px-4 py-3">
                                     <Situacao ativo={dados.ativa} />

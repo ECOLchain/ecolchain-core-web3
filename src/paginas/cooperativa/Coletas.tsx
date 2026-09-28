@@ -14,7 +14,7 @@ import type { AppClient } from '../../solana/cliente';
 import { useCadastro } from '../../solana/useCadastro';
 import { gramasParaKg, kgParaGramas, useEntregas, useMateriais, useParticipantes } from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
-import { abreviar, SoPapel } from '../admin/comum';
+import { rotuloParticipante, SoPapel } from '../admin/comum';
 
 /** Endereço "vazio" (Pubkey::default): entrega ainda sem lote. */
 const SEM_LOTE = '11111111111111111111111111111111';
@@ -67,10 +67,10 @@ function ConteudoColetas() {
         [materiais.data],
     );
     // coletor_ref → carteira, para mostrar quem entregou.
-    const [refs, setRefs] = useState<Map<string, string>>(new Map());
+    const [refs, setRefs] = useState<Map<string, lote.Participante>>(new Map());
     useEffect(() => {
         let vivo = true;
-        void Promise.all(coletores.map(async (c) => [hex(await coletorRef(c.dados.carteira)), c.dados.carteira] as const)).then(
+        void Promise.all(coletores.map(async (c) => [hex(await coletorRef(c.dados.carteira)), c.dados] as const)).then(
             (pares) => vivo && setRefs(new Map(pares)),
         );
         return () => {
@@ -165,7 +165,7 @@ function ConteudoColetas() {
                             </option>
                             {coletores.map((c) => (
                                 <option key={c.endereco} value={c.dados.carteira}>
-                                    {abreviar(c.dados.carteira)}
+                                    {rotuloParticipante(c.dados)}
                                 </option>
                             ))}
                         </Selecao>
@@ -213,8 +213,8 @@ function ConteudoColetas() {
                                 <td className="px-4 py-3 text-texto-suave">
                                     {new Date(Number(dados.tsPesagem) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' })}
                                 </td>
-                                <td className="px-4 py-3 text-texto" title={quem}>
-                                    {quem ? abreviar(quem) : '—'}
+                                <td className="px-4 py-3 text-texto" title={quem?.carteira}>
+                                    {quem ? rotuloParticipante(quem) : '—'}
                                 </td>
                                 <td className="px-4 py-3 text-texto">{nomeMaterial.get(dados.material) ?? dados.material}</td>
                                 <td className="px-4 py-3 tabular-nums text-texto">{gramasParaKg(dados.pesoG, idioma)}</td>
