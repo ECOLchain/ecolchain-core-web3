@@ -38,12 +38,13 @@
     "aposentadorias": "Aposentadorias",
     "resgates": "Resgates de cupons",
     "arbitragem": "Arbitragem",
-    "materiais": "Materiais"
+    "materiais": "Materiais",
+    "coletas": "Entregas de coletores"
   },
   "descricoes": {
     "painel": "Resumo da sua operação.",
     "explorar": "Consulte a trilha de qualquer lote, crédito ou distribuição.",
-    "lotes": "Registre lotes a partir da pesagem da balança e acompanhe cada etapa.",
+    "lotes": "Monte lotes com as entregas, anuncie no leilão e acompanhe cada etapa.",
     "anuncios": "Anuncie lotes no marketplace, reprecifique ou retire anúncios.",
     "retiradas": "Confirme a passagem de custódia do lote entre cooperativa e transportador.",
     "entregas": "Lotes em transporte e prazos de entrega.",
@@ -64,7 +65,8 @@
     "aposentadorias": "Registre a aposentadoria dos créditos vendidos.",
     "resgates": "Registre os resgates de direitos em cupons.",
     "arbitragem": "Julgue disputas de lotes.",
-    "materiais": "Cadastre os tipos de material aceitos nos lotes."
+    "materiais": "Cadastre os tipos de material aceitos nos lotes.",
+    "coletas": "Pese e registre cada entrega de material dos coletores."
   },
   "papel": {
     "coletor": "Coletor",
@@ -197,5 +199,68 @@
     "ParametroInvalido": "Algum valor informado é inválido.",
     "BalancaDeOutroDono": "A balança pertence a outro participante.",
     "BalancaInativa": "A balança está inativa."
+  },
+  "cooperativa": {
+    "soCooperativa": "Esta tela é só para carteiras de cooperativa.",
+    "material": "Material",
+    "escolherMaterial": "Escolha o material",
+    "pesoKg": "Peso (kg)",
+    "data": "Data",
+    "balanca": {
+      "titulo": "Balança",
+      "semBalanca": "Para pesar, esta cooperativa precisa de uma balança. Na devnet, use uma balança de teste gerada neste navegador.",
+      "gerar": "Gerar balança de teste",
+      "chave": "Chave da balança:",
+      "naoCadastrada": "Balança ainda não cadastrada. Peça à administração para cadastrá-la em Balanças, com esta cooperativa como dona.",
+      "outroDono": "Esta balança está cadastrada para outra carteira.",
+      "inativa": "Balança cadastrada, mas desativada pela administração.",
+      "pronta": "Balança cadastrada e ativa. Pronta para pesar.",
+      "verificar": "Verificar de novo",
+      "aviso": "Balança de teste: a chave fica guardada neste navegador. Na operação real, o próprio equipamento assina cada pesagem."
+    },
+    "coletas": {
+      "nova": "Nova entrega",
+      "escolherColetor": "Escolha o coletor",
+      "semColetores": "Nenhum coletor cadastrado. Peça à administração para cadastrar as carteiras dos coletores em Participantes.",
+      "pesar": "Pesar e registrar",
+      "balancaNaoPronta": "A balança precisa estar cadastrada e ativa para registrar entregas.",
+      "registrada": "Entrega registrada.",
+      "vazio": "Nenhuma entrega registrada ainda.",
+      "disponivel": "Disponível",
+      "noLote": "Em lote"
+    },
+    "lotes": {
+      "montar": "Montar lote",
+      "semBalanca": "Gere a balança de teste em Entregas de coletores antes de montar lotes.",
+      "evidencias": "Referência das evidências (opcional)",
+      "evidenciasAjuda": "Ex.: número do ticket ou pasta das fotos. Na blockchain fica só um código derivado dela.",
+      "escolherEntregas": "Entregas disponíveis deste material",
+      "semEntregas": "Nenhuma entrega disponível deste material.",
+      "resumo": "{{n}} entrega(s), somando {{kg}} kg",
+      "pesoFardo": "Peso do lote na balança (kg)",
+      "pesoFardoAjuda": "Deixe vazio para usar a soma das entregas.",
+      "criar": "Pesar e montar lote",
+      "passo": "Enviando {{n}} de {{total}}… confirme na carteira.",
+      "entregas": "Entregas",
+      "estado": "Situação",
+      "vazio": "Nenhum lote montado ainda.",
+      "precoMinimo": "Preço mínimo (R$)",
+      "dias": "Dias",
+      "anunciar": "Anunciar",
+      "cancelarAnuncio": "Cancelar anúncio",
+      "ate": "Até {{data}}, mínimo {{preco}}"
+    }
+  },
+  "estadoLote": {
+    "Criado": "Montado",
+    "Anunciado": "No leilão",
+    "SemLance": "Sem lance",
+    "Vendido": "Vendido",
+    "EmTransporte": "Em transporte",
+    "Recebido": "Recebido",
+    "Reciclado": "Reciclado",
+    "Agregado": "Em crédito",
+    "EmDisputa": "Em disputa",
+    "Reembolsado": "Reembolsado"
   }
 }

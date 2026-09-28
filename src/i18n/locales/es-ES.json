@@ -38,12 +38,13 @@
     "aposentadorias": "Retiros de créditos",
     "resgates": "Canjes de cupones",
     "arbitragem": "Arbitraje",
-    "materiais": "Materiales"
+    "materiais": "Materiales",
+    "coletas": "Entregas de recolectores"
   },
   "descricoes": {
     "painel": "Resumen de tu operación.",
     "explorar": "Consulta la trazabilidad de cualquier lote, crédito o distribución.",
-    "lotes": "Registra lotes a partir del pesaje de la báscula y sigue cada etapa.",
+    "lotes": "Arma lotes con las entregas, anúncialos en la subasta y sigue cada etapa.",
     "anuncios": "Anuncia lotes en el marketplace, cambia el precio o retira anuncios.",
     "retiradas": "Confirma el traspaso de custodia entre cooperativa y transportista.",
     "entregas": "Lotes en transporte y plazos de entrega.",
@@ -64,7 +65,8 @@
     "aposentadorias": "Registra el retiro de los créditos vendidos.",
     "resgates": "Registra los canjes de derechos en cupones.",
     "arbitragem": "Resuelve disputas de lotes.",
-    "materiais": "Registra los tipos de material aceptados en los lotes."
+    "materiais": "Registra los tipos de material aceptados en los lotes.",
+    "coletas": "Pesa y registra cada entrega de material de los recolectores."
   },
   "papel": {
     "coletor": "Recolector",
@@ -197,5 +199,68 @@
     "ParametroInvalido": "Algún valor es inválido.",
     "BalancaDeOutroDono": "La báscula pertenece a otro participante.",
     "BalancaInativa": "La báscula está inactiva."
+  },
+  "cooperativa": {
+    "soCooperativa": "Esta pantalla es solo para billeteras de cooperativa.",
+    "material": "Material",
+    "escolherMaterial": "Elige el material",
+    "pesoKg": "Peso (kg)",
+    "data": "Fecha",
+    "balanca": {
+      "titulo": "Báscula",
+      "semBalanca": "Para pesar, esta cooperativa necesita una báscula. En devnet, usa una báscula de prueba generada en este navegador.",
+      "gerar": "Generar báscula de prueba",
+      "chave": "Clave de la báscula:",
+      "naoCadastrada": "Báscula aún no registrada. Pide a la administración que la registre en Básculas, con esta cooperativa como propietaria.",
+      "outroDono": "Esta báscula está registrada para otra billetera.",
+      "inativa": "Báscula registrada, pero desactivada por la administración.",
+      "pronta": "Báscula registrada y activa. Lista para pesar.",
+      "verificar": "Verificar de nuevo",
+      "aviso": "Báscula de prueba: la clave se guarda en este navegador. En la operación real, el propio equipo firma cada pesaje."
+    },
+    "coletas": {
+      "nova": "Nueva entrega",
+      "escolherColetor": "Elige el recolector",
+      "semColetores": "No hay recolectores registrados. Pide a la administración que registre sus billeteras en Participantes.",
+      "pesar": "Pesar y registrar",
+      "balancaNaoPronta": "La báscula debe estar registrada y activa para registrar entregas.",
+      "registrada": "Entrega registrada.",
+      "vazio": "Aún no hay entregas registradas.",
+      "disponivel": "Disponible",
+      "noLote": "En lote"
+    },
+    "lotes": {
+      "montar": "Armar lote",
+      "semBalanca": "Genera la báscula de prueba en Entregas de recolectores antes de armar lotes.",
+      "evidencias": "Referencia de las evidencias (opcional)",
+      "evidenciasAjuda": "Ej.: número del ticket o carpeta de fotos. En la blockchain solo queda un código derivado.",
+      "escolherEntregas": "Entregas disponibles de este material",
+      "semEntregas": "No hay entregas disponibles de este material.",
+      "resumo": "{{n}} entrega(s), que suman {{kg}} kg",
+      "pesoFardo": "Peso del lote en la báscula (kg)",
+      "pesoFardoAjuda": "Déjalo vacío para usar la suma de las entregas.",
+      "criar": "Pesar y armar lote",
+      "passo": "Enviando {{n}} de {{total}}… confirma en la billetera.",
+      "entregas": "Entregas",
+      "estado": "Estado",
+      "vazio": "Aún no hay lotes armados.",
+      "precoMinimo": "Precio mínimo (R$)",
+      "dias": "Días",
+      "anunciar": "Anunciar",
+      "cancelarAnuncio": "Cancelar anuncio",
+      "ate": "Hasta {{data}}, mínimo {{preco}}"
+    }
+  },
+  "estadoLote": {
+    "Criado": "Armado",
+    "Anunciado": "En subasta",
+    "SemLance": "Sin pujas",
+    "Vendido": "Vendido",
+    "EmTransporte": "En transporte",
+    "Recebido": "Recibido",
+    "Reciclado": "Reciclado",
+    "Agregado": "En un crédito",
+    "EmDisputa": "En disputa",
+    "Reembolsado": "Reembolsado"
   }
 }

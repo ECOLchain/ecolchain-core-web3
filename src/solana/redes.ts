@@ -1,4 +1,5 @@
 // Redes suportadas. Mainnet fica de fora até os programas serem publicados lá.
+const RPC_LOCALNET = import.meta.env.VITE_RPC_LOCALNET ?? 'http://127.0.0.1:8899';
 export const REDES = {
     devnet: {
         chain: 'solana:devnet',
@@ -8,10 +9,10 @@ export const REDES = {
     },
     localnet: {
         chain: 'solana:localnet',
-        rpcUrl: import.meta.env.VITE_RPC_LOCALNET ?? 'http://127.0.0.1:8899',
+        rpcUrl: RPC_LOCALNET,
         wsUrl: import.meta.env.VITE_WS_LOCALNET as string | undefined,
         explorer: (endereco: string) =>
-            `https://explorer.solana.com/address/${endereco}?cluster=custom&customUrl=${encodeURIComponent('http://127.0.0.1:8899')}`,
+            `https://explorer.solana.com/address/${endereco}?cluster=custom&customUrl=${encodeURIComponent(RPC_LOCALNET)}`,
     },
 } as const;
 

@@ -1,16 +1,25 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Carregando } from '../../componentes/ui';
-import { useCadastro } from '../../solana/useCadastro';
+import { type PapelUsuario, useCadastro } from '../../solana/useCadastro';
 
-/** Mostra o conteúdo só para a carteira de administração (operador); as demais veem o motivo. */
-export function SoAdministracao({ children }: { children: ReactNode }) {
+/** Mostra o conteúdo só para carteiras com o `papel`; as demais veem o motivo. */
+export function SoPapel({ papel, aviso, children }: { papel: PapelUsuario; aviso: string; children: ReactNode }) {
     const { t } = useTranslation();
     const { carteira, cadastro, status } = useCadastro();
     if (!carteira) return <Aviso texto={t('menu.conecteParaUsar')} />;
     if (!cadastro && status === 'fetching') return <Carregando />;
-    if (!cadastro?.papeis.includes('operador')) return <Aviso texto={t('admin.soAdministracao')} />;
+    if (!cadastro?.papeis.includes(papel)) return <Aviso texto={aviso} />;
     return <>{children}</>;
+}
+
+export function SoAdministracao({ children }: { children: ReactNode }) {
+    const { t } = useTranslation();
+    return (
+        <SoPapel papel="operador" aviso={t('admin.soAdministracao')}>
+            {children}
+        </SoPapel>
+    );
 }
 
 function Aviso({ texto }: { texto: string }) {

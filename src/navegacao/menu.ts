@@ -2,6 +2,7 @@ import {
     ArrowLeftRight,
     BadgeCheck,
     Boxes,
+    ClipboardList,
     Coins,
     Factory,
     FileCheck2,
@@ -11,7 +12,6 @@ import {
     LayoutDashboard,
     Leaf,
     type LucideIcon,
-    Megaphone,
     Recycle,
     PackageCheck,
     Scale,
@@ -40,7 +40,7 @@ const I = {
     painel: item('painel', '/', LayoutDashboard),
     explorar: item('explorar', '/explorar', Search),
     lotes: item('lotes', '/lotes', Boxes),
-    anuncios: item('anuncios', '/anuncios', Megaphone),
+    coletas: item('coletas', '/coletas', ClipboardList),
     retiradas: item('retiradas', '/retiradas', Handshake),
     entregas: item('entregas', '/entregas', Truck),
     marketplace: item('marketplace', '/marketplace', Store),
@@ -68,7 +68,7 @@ export const ITENS_GERAIS: readonly ItemMenu[] = [I.painel, I.explorar];
 
 /** O que cada papel opera, na ordem do fluxo. Espelha quem assina cada instrução nos programas. */
 export const ITENS_POR_PAPEL: Record<PapelUsuario, readonly ItemMenu[]> = {
-    cooperativa: [I.lotes, I.anuncios, I.retiradas, I.disputas, I.direitos],
+    cooperativa: [I.coletas, I.lotes, I.retiradas, I.disputas, I.direitos],
     industria: [I.marketplace, I.compras, I.recebimentos, I.disputas, I.direitos],
     transportador: [I.retiradas, I.entregas, I.disputas, I.direitos],
     coletor: [I.direitos],

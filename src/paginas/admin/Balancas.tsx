@@ -9,7 +9,8 @@ import type { AppClient } from '../../solana/cliente';
 import { listarContas } from '../../solana/contas';
 import { useEnviar } from '../../solana/useEnviar';
 import { abreviar, SoAdministracao } from './comum';
-import { chavePapel, useParticipantes } from './Participantes';
+import { useParticipantes } from '../../solana/useDados';
+import { chavePapel } from './Participantes';
 
 export function Balancas() {
     const { t } = useTranslation();

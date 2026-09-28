@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAt
 import { useTranslation } from 'react-i18next';
 import { usePreferencias } from '../preferencias/Preferencias';
 import { chaveDoErro } from '../solana/erros';
+import { REDES } from '../solana/redes';
 
 export function Titulo({ titulo, descricao, children }: { titulo: string; descricao?: string; children?: ReactNode }) {
     return (
@@ -103,7 +104,7 @@ export function Resultado({ assinatura, erro, sucesso }: { assinatura?: string; 
         );
     }
     if (!assinatura) return null;
-    const cluster = rede === 'devnet' ? 'devnet' : `custom&customUrl=${encodeURIComponent('http://127.0.0.1:8899')}`;
+    const cluster = rede === 'devnet' ? 'devnet' : `custom&customUrl=${encodeURIComponent(REDES.localnet.rpcUrl)}`;
     return (
         <p role="status" className="flex flex-wrap items-center gap-2 rounded-lg bg-acento-suave p-3 text-sm text-acento">
             <CircleCheck className="size-4 shrink-0" aria-hidden="true" />

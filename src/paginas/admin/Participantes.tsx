@@ -1,12 +1,12 @@
 import { address, type Instruction, isAddress } from '@solana/kit';
-import { useClient, useRequest } from '@solana/react';
-import { type FormEvent, useCallback, useMemo, useState } from 'react';
+import { useClient } from '@solana/react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { Botao, Campo, Carregando, Resultado, Secao, Selecao, Situacao, Tabela, Titulo } from '../../componentes/ui';
 import type { AppClient } from '../../solana/cliente';
-import { listarContas } from '../../solana/contas';
+import { useParticipantes } from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
 import { abreviar, sha256, SoAdministracao } from './comum';
 
@@ -18,15 +18,6 @@ export const PAPEIS = [
     { valor: lote.Papel.Industria, chave: 'papel.industria' },
 ] as const;
 export const chavePapel = (p: lote.Papel) => PAPEIS.find((x) => x.valor === p)?.chave ?? '';
-
-export function useParticipantes() {
-    const client = useClient<AppClient>();
-    const fonte = useCallback(
-        () => listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.PARTICIPANTE_DISCRIMINATOR, lote.getParticipanteDecoder()),
-        [client],
-    );
-    return useRequest(fonte);
-}
 
 export function Participantes() {
     const { t } = useTranslation();

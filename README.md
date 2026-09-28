@@ -16,7 +16,24 @@ npm run build      # typecheck + build de produção em dist/
 - **Idiomas:** pt-BR, en-US e es-ES (`src/i18n/locales`), escolhidos no rodapé do menu lateral, com bandeira. Com o menu recolhido, aparece só a bandeira e a lista abre ao lado.
 - **Redes:** devnet (padrão) e localnet. Mainnet fica bloqueada até os programas serem publicados lá.
 - **Administração** (carteira do operador): telas funcionais de **Participantes** (cadastrar, ativar/desativar), **Balanças** (cadastrar para uma cooperativa ou indústria, ativar/desativar) e **Materiais** (cadastrar, renomear, ativar/desativar). Cada ação é uma transação assinada na carteira; o resultado mostra o link da transação ou o erro em linguagem simples.
+- **Cooperativa** (carteira com papel Cooperativa):
+  - **Entregas de coletores:** escolhe o coletor cadastrado, o material e o peso; a balança assina a pesagem e a entrega vai para a blockchain. A tabela mostra quem entregou, quanto e se a entrega já está num lote.
+  - **Meus lotes:** escolhe o material, marca as entregas disponíveis, informa o peso do lote na balança (ou usa a soma) e monta o lote (uma transação para criar e uma a cada 10 entregas vinculadas). Depois, anuncia no leilão (preço mínimo e prazo) ou cancela o anúncio.
+  - **Balança de teste (só devnet/localnet):** na primeira vez, a tela gera uma chave de balança guardada no navegador; a administração a cadastra em Balanças com a cooperativa como dona. Na operação real, o equipamento assina cada pesagem.
 - **Páginas:** o painel ainda é um esqueleto, e as demais operações abrem uma página provisória.
+
+## Testar com uma rede local
+
+Sem depender da devnet (nem da carteira de administração):
+
+```bash
+cd ../onchain && NO_DNA=1 anchor build        # os .so em target/deploy
+cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, cooperativa, 2 coletores, materiais e balança
+# em outro terminal, com o rpcUrl/wsUrl que o script mostrar:
+cd web && VITE_RPC_LOCALNET=<rpcUrl> VITE_WS_LOCALNET=<wsUrl> npm run dev
+```
+
+Na interface, escolha a rede **Localnet**. As chaves de teste (cooperativa e balança) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
 
 As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegador.
 

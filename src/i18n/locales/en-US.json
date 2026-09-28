@@ -38,12 +38,13 @@
     "aposentadorias": "Retirements",
     "resgates": "Coupon redemptions",
     "arbitragem": "Arbitration",
-    "materiais": "Materials"
+    "materiais": "Materials",
+    "coletas": "Collector deliveries"
   },
   "descricoes": {
     "painel": "Summary of your operation.",
     "explorar": "Look up the trail of any batch, credit or distribution.",
-    "lotes": "Register batches from the scale reading and follow each step.",
+    "lotes": "Assemble batches from deliveries, list them at auction and follow each step.",
     "anuncios": "List batches on the marketplace, reprice or withdraw listings.",
     "retiradas": "Confirm the custody handover between cooperative and carrier.",
     "entregas": "Batches in transit and delivery deadlines.",
@@ -64,7 +65,8 @@
     "aposentadorias": "Record the retirement of sold credits.",
     "resgates": "Record entitlement redemptions in coupons.",
     "arbitragem": "Rule on batch disputes.",
-    "materiais": "Register the material types accepted in batches."
+    "materiais": "Register the material types accepted in batches.",
+    "coletas": "Weigh and record each material delivery from collectors."
   },
   "papel": {
     "coletor": "Collector",
@@ -197,5 +199,68 @@
     "ParametroInvalido": "One of the values is invalid.",
     "BalancaDeOutroDono": "The scale belongs to another participant.",
     "BalancaInativa": "The scale is inactive."
+  },
+  "cooperativa": {
+    "soCooperativa": "This screen is only for cooperative wallets.",
+    "material": "Material",
+    "escolherMaterial": "Choose the material",
+    "pesoKg": "Weight (kg)",
+    "data": "Date",
+    "balanca": {
+      "titulo": "Scale",
+      "semBalanca": "To weigh, this cooperative needs a scale. On devnet, use a test scale generated in this browser.",
+      "gerar": "Generate test scale",
+      "chave": "Scale key:",
+      "naoCadastrada": "Scale not registered yet. Ask the administration to register it under Scales, with this cooperative as owner.",
+      "outroDono": "This scale is registered to another wallet.",
+      "inativa": "Scale registered but deactivated by the administration.",
+      "pronta": "Scale registered and active. Ready to weigh.",
+      "verificar": "Check again",
+      "aviso": "Test scale: the key is stored in this browser. In real operation, the device itself signs each weighing."
+    },
+    "coletas": {
+      "nova": "New delivery",
+      "escolherColetor": "Choose the collector",
+      "semColetores": "No collectors registered. Ask the administration to register collector wallets under Participants.",
+      "pesar": "Weigh and record",
+      "balancaNaoPronta": "The scale must be registered and active to record deliveries.",
+      "registrada": "Delivery recorded.",
+      "vazio": "No deliveries recorded yet.",
+      "disponivel": "Available",
+      "noLote": "In a batch"
+    },
+    "lotes": {
+      "montar": "Assemble batch",
+      "semBalanca": "Generate the test scale under Collector deliveries before assembling batches.",
+      "evidencias": "Evidence reference (optional)",
+      "evidenciasAjuda": "E.g.: ticket number or photo folder. Only a code derived from it goes on the blockchain.",
+      "escolherEntregas": "Available deliveries of this material",
+      "semEntregas": "No available deliveries of this material.",
+      "resumo": "{{n}} delivery(ies), totaling {{kg}} kg",
+      "pesoFardo": "Batch weight on the scale (kg)",
+      "pesoFardoAjuda": "Leave empty to use the sum of deliveries.",
+      "criar": "Weigh and assemble batch",
+      "passo": "Sending {{n}} of {{total}}… confirm in your wallet.",
+      "entregas": "Deliveries",
+      "estado": "Status",
+      "vazio": "No batches assembled yet.",
+      "precoMinimo": "Minimum price (R$)",
+      "dias": "Days",
+      "anunciar": "List",
+      "cancelarAnuncio": "Cancel listing",
+      "ate": "Until {{data}}, minimum {{preco}}"
+    }
+  },
+  "estadoLote": {
+    "Criado": "Assembled",
+    "Anunciado": "At auction",
+    "SemLance": "No bids",
+    "Vendido": "Sold",
+    "EmTransporte": "In transit",
+    "Recebido": "Received",
+    "Reciclado": "Recycled",
+    "Agregado": "In a credit",
+    "EmDisputa": "In dispute",
+    "Reembolsado": "Refunded"
   }
 }
