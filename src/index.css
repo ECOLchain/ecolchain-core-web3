@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/instrument-sans';
+
+/* Tema escuro pela classe `.dark` no <html> (escolha do usuário), não só pela preferência do sistema. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Paleta tirada dos materiais da reciclagem: verde de garrafa PET (acento), papelão kraft
+ * (rede / avisos) e o cinza-esverdeado de papel reciclado nas superfícies.
+ */
+:root {
+    --cor-fundo: #eef1ec;
+    --cor-superficie: #fafbf8;
+    --cor-superficie-2: #e3e8e1;
+    --cor-texto: #1b2420;
+    --cor-texto-suave: #5f6b64;
+    --cor-linha: #d3dad2;
+    --cor-acento: #1f6b5c;
+    --cor-acento-texto: #f4faf7;
+    --cor-acento-suave: #d5e8e1;
+    --cor-kraft: #9a6a34;
+    --cor-kraft-suave: #f0e2cf;
+    --cor-perigo: #a8382b;
+}
+
+:root.dark {
+    --cor-fundo: #121816;
+    --cor-superficie: #19211e;
+    --cor-superficie-2: #222c28;
+    --cor-texto: #e4eae5;
+    --cor-texto-suave: #9aa7a0;
+    --cor-linha: #2e3a35;
+    --cor-acento: #5cc2a8;
+    --cor-acento-texto: #0d1a16;
+    --cor-acento-suave: #1d3a33;
+    --cor-kraft: #d9a262;
+    --cor-kraft-suave: #3a2c1c;
+    --cor-perigo: #ef8a7c;
+}
+
+@theme inline {
+    --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+
+    --color-fundo: var(--cor-fundo);
+    --color-superficie: var(--cor-superficie);
+    --color-superficie-2: var(--cor-superficie-2);
+    --color-texto: var(--cor-texto);
+    --color-texto-suave: var(--cor-texto-suave);
+    --color-linha: var(--cor-linha);
+    --color-acento: var(--cor-acento);
+    --color-acento-texto: var(--cor-acento-texto);
+    --color-acento-suave: var(--cor-acento-suave);
+    --color-kraft: var(--cor-kraft);
+    --color-kraft-suave: var(--cor-kraft-suave);
+    --color-perigo: var(--cor-perigo);
+}
+
+/*
+ * Tamanho da fonte: muda o tamanho-base do <html>. Como o Tailwind usa rem em textos,
+ * espaçamentos e alturas, a interface inteira acompanha.
+ */
+html {
+    font-size: 100%;
+    color-scheme: light;
+}
+html[data-fonte='pequena'] {
+    font-size: 87.5%;
+}
+html[data-fonte='grande'] {
+    font-size: 112.5%;
+}
+html.dark {
+    color-scheme: dark;
+}
+
+body {
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: var(--font-sans);
+    font-feature-settings: 'tnum' 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+    outline: 2px solid var(--cor-acento);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
