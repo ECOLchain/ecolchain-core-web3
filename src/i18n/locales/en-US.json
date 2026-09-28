@@ -262,8 +262,8 @@
     "lotes": {
       "montar": "Assemble batch",
       "semBalanca": "Generate the test scale in Source lots before assembling lots.",
-      "evidencias": "Evidence reference (optional)",
-      "evidenciasAjuda": "E.g.: ticket number or photo folder. Only a code derived from it goes on the blockchain.",
+      "evidencias": "Invoice or receipt (optional)",
+      "evidenciasAjuda": "Invoice, receipt or scale ticket number. Only a code derived from it goes on the blockchain; with the text, anyone can find the lot in the public trail.",
       "escolherEntregas": "Available source lots of this material",
       "semEntregas": "No source lots of this material available.",
       "resumo": "{{n}} source lot(s), totaling {{kg}} kg",
@@ -333,11 +333,11 @@
     "Avulso": "Unregistered picker"
   },
   "trilha": {
-    "busca": "Reference or address",
-    "buscaExemplo": "E.g.: INV 1234, receipt 88 or a lot address",
+    "busca": "Name, reference or address",
+    "buscaExemplo": "E.g.: Collector 1, invoice 1234, receipt 88 or a lot address",
     "buscar": "Search",
-    "ajuda": "Have a donation or sale receipt? Type the reference as it appears on the document (invoice, receipt or tax ID); case and extra spaces do not matter. A source or sale lot address also works.",
-    "nada": "Nothing found for this reference.",
+    "ajuda": "Type the name of a collector, cooperative or industry to see its lots. With a donation or sale receipt, type the reference as it appears on the document (invoice, receipt or tax ID); case and extra spaces do not matter. A lot or wallet address also works.",
+    "nada": "Nothing found with that name, reference or address.",
     "buscando": "Searching the blockchain…",
     "loteOrigem": "Source lot",
     "loteVenda": "Sale lot",
@@ -354,7 +354,10 @@
     "verExplorer": "View on the blockchain",
     "peso": "{{kg}} kg",
     "erro": "Could not reach the blockchain right now. Try again in a moment.",
-    "pesoRotulo": "Weight"
+    "pesoRotulo": "Weight",
+    "coletor": "Collector",
+    "limite": "Showing {{n}} of {{total}} results. Refine the search to see the rest.",
+    "participantes": "Participants found: {{nomes}}"
   },
   "estadoCredito": {
     "EmFormacao": "Being formed",

@@ -262,8 +262,8 @@
     "lotes": {
       "montar": "Montar lote",
       "semBalanca": "Gere a balança de teste em Lotes de origem antes de montar lotes.",
-      "evidencias": "Referência das evidências (opcional)",
-      "evidenciasAjuda": "Ex.: número do ticket ou pasta das fotos. Na blockchain fica só um código derivado dela.",
+      "evidencias": "Nota fiscal ou recibo (opcional)",
+      "evidenciasAjuda": "Número da nota, do recibo ou do ticket da balança. Na blockchain fica só um código derivado; com o texto, qualquer pessoa encontra o lote na trilha pública.",
       "escolherEntregas": "Lotes de origem disponíveis deste material",
       "semEntregas": "Nenhum lote de origem disponível deste material.",
       "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg",
@@ -333,11 +333,11 @@
     "Avulso": "Catador avulso"
   },
   "trilha": {
-    "busca": "Referência ou endereço",
-    "buscaExemplo": "Ex.: NF 1234, recibo 88 ou o endereço de um lote",
+    "busca": "Nome, referência ou endereço",
+    "buscaExemplo": "Ex.: Coletor 1, NF 1234, recibo 88 ou o endereço de um lote",
     "buscar": "Buscar",
-    "ajuda": "Tem um comprovante de doação ou de venda? Digite a referência como está no documento (nota, recibo ou CNPJ); maiúsculas e espaços extras não importam. Também aceita o endereço de um lote de origem ou de venda.",
-    "nada": "Nada encontrado com essa referência.",
+    "ajuda": "Digite o nome de um coletor, cooperativa ou indústria para ver os lotes dele. Com um comprovante de doação ou de venda, digite a referência como está no documento (nota, recibo ou CNPJ); maiúsculas e espaços extras não importam. Também aceita o endereço de um lote ou de uma carteira.",
+    "nada": "Nada encontrado com esse nome, referência ou endereço.",
     "buscando": "Buscando na blockchain…",
     "loteOrigem": "Lote de origem",
     "loteVenda": "Lote de venda",
@@ -354,7 +354,10 @@
     "verExplorer": "Ver na blockchain",
     "peso": "{{kg}} kg",
     "erro": "Não foi possível consultar a blockchain agora. Tente de novo em instantes.",
-    "pesoRotulo": "Peso"
+    "pesoRotulo": "Peso",
+    "coletor": "Coletor",
+    "limite": "Mostrando {{n}} de {{total}} resultados. Refine a busca para ver os demais.",
+    "participantes": "Participantes encontrados: {{nomes}}"
   },
   "estadoCredito": {
     "EmFormacao": "Em formação",

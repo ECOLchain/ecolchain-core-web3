@@ -3,6 +3,7 @@ import { useClient, useRequest } from '@solana/react';
 import { Ban, Megaphone, Package, Scale, Undo2 } from 'lucide-react';
 import { type FormEvent, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { origemRef } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { comContasGravaveis, instrucaoPesagem, TipoPesagem } from '@clientes/pesagem';
@@ -192,9 +193,10 @@ function ConteudoLotes() {
         const loteId = (lotes.data ?? []).reduce((m, x) => (x.dados.loteId > m ? x.dados.loteId : m), 0n) + 1n;
         const lotePda = await pLote.lote(cooperativa, loteId);
         const ev = await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS);
-        const hash = new Uint8Array(
-            await crypto.subtle.digest('SHA-256', new TextEncoder().encode(evidencias || `lote:${cooperativa}:${loteId}`)),
-        );
+        // Com a nota ou o recibo, o hash é o mesmo das origens: a trilha pública acha o lote pelo texto.
+        const hash = evidencias
+            ? await origemRef(evidencias)
+            : new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`lote:${cooperativa}:${loteId}`)));
         const grupos: Address[][] = [];
         for (let i = 0; i < escolhidas.length; i += ENTREGAS_POR_TX) {
             grupos.push(escolhidas.slice(i, i + ENTREGAS_POR_TX).map((e) => e.endereco));

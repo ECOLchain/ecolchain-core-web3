@@ -262,8 +262,8 @@
     "lotes": {
       "montar": "Armar lote",
       "semBalanca": "Genere la báscula de prueba en Lotes de origen antes de armar lotes.",
-      "evidencias": "Referencia de las evidencias (opcional)",
-      "evidenciasAjuda": "Ej.: número del ticket o carpeta de fotos. En la blockchain solo queda un código derivado.",
+      "evidencias": "Factura o recibo (opcional)",
+      "evidenciasAjuda": "Número de la factura, del recibo o del ticket de la balanza. En la blockchain solo queda un código derivado; con el texto, cualquiera encuentra el lote en la trazabilidad pública.",
       "escolherEntregas": "Lotes de origen disponibles de este material",
       "semEntregas": "No hay lotes de origen disponibles de este material.",
       "resumo": "{{n}} lote(s) de origen, sumando {{kg}} kg",
@@ -333,11 +333,11 @@
     "Avulso": "Reciclador sin registro"
   },
   "trilha": {
-    "busca": "Referencia o dirección",
-    "buscaExemplo": "Ej.: FAC 1234, recibo 88 o la dirección de un lote",
+    "busca": "Nombre, referencia o dirección",
+    "buscaExemplo": "Ej.: Recolector 1, factura 1234, recibo 88 o la dirección de un lote",
     "buscar": "Buscar",
-    "ajuda": "¿Tiene un comprobante de donación o de venta? Escriba la referencia como figura en el documento (factura, recibo o CUIT/NIF); mayúsculas y espacios extra no importan. También acepta la dirección de un lote de origen o de venta.",
-    "nada": "No se encontró nada con esa referencia.",
+    "ajuda": "Escriba el nombre de un recolector, cooperativa o industria para ver sus lotes. Con un comprobante de donación o de venta, escriba la referencia como aparece en el documento (factura, recibo o CNPJ); mayúsculas y espacios extra no importan. También acepta la dirección de un lote o de una billetera.",
+    "nada": "No se encontró nada con ese nombre, referencia o dirección.",
     "buscando": "Buscando en la blockchain…",
     "loteOrigem": "Lote de origen",
     "loteVenda": "Lote de venta",
@@ -354,7 +354,10 @@
     "verExplorer": "Ver en la blockchain",
     "peso": "{{kg}} kg",
     "erro": "No fue posible consultar la blockchain ahora. Intente de nuevo en unos instantes.",
-    "pesoRotulo": "Peso"
+    "pesoRotulo": "Peso",
+    "coletor": "Recolector",
+    "limite": "Mostrando {{n}} de {{total}} resultados. Refine la búsqueda para ver los demás.",
+    "participantes": "Participantes encontrados: {{nomes}}"
   },
   "estadoCredito": {
     "EmFormacao": "En formación",
