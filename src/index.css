@@ -21,6 +21,12 @@
     --cor-kraft: #9a6a34;
     --cor-kraft-suave: #f0e2cf;
     --cor-perigo: #a8382b;
+    /* Barra de título do painel e cabeçalho das grades: o verde PET em degradê, uma régua só. */
+    --cor-barra: linear-gradient(135deg, #24796a 0%, #1a5a4d 100%);
+    --cor-barra-texto: #f4faf7;
+    --cor-moldura: #dde3db;
+    --cor-linha-alt: #f2f5f0;
+    --cor-linha-sel: #dcebe5;
 }
 
 :root.dark {
@@ -36,6 +42,11 @@
     --cor-kraft: #d9a262;
     --cor-kraft-suave: #3a2c1c;
     --cor-perigo: #ef8a7c;
+    --cor-barra: linear-gradient(135deg, #226b5d 0%, #173f37 100%);
+    --cor-barra-texto: #e9f5f1;
+    --cor-moldura: #0c110f;
+    --cor-linha-alt: #1c2521;
+    --cor-linha-sel: #1f3b34;
 }
 
 @theme inline {
@@ -53,6 +64,14 @@
     --color-kraft: var(--cor-kraft);
     --color-kraft-suave: var(--cor-kraft-suave);
     --color-perigo: var(--cor-perigo);
+    --color-barra-texto: var(--cor-barra-texto);
+    --color-moldura: var(--cor-moldura);
+    --color-linha-alt: var(--cor-linha-alt);
+    --color-linha-sel: var(--cor-linha-sel);
+}
+
+@utility bg-barra {
+    background-image: var(--cor-barra);
 }
 
 /*

@@ -158,7 +158,8 @@
         "aluminio": "Alumínio",
         "metal": "Metal",
         "outros": "Outros"
-      }
+      },
+      "editar": "Editar material"
     },
     "participantes": {
       "novo": "Novo participante",
@@ -175,18 +176,27 @@
       "cadastrar": "Cadastrar participante",
       "umPapel": "Cada carteira tem um único papel, que não pode ser trocado depois.",
       "vazio": "Nenhum participante cadastrado ainda.",
-      "carteiraExemplo": "Endereço da carteira Solana do participante"
+      "carteiraExemplo": "Endereço da carteira Solana do participante",
+      "editar": "Editar participante"
     },
     "balancas": {
       "nova": "Nova balança",
-      "dono": "Dono",
+      "dono": "Proprietário",
       "escolherDono": "Escolha a cooperativa ou indústria",
       "dispositivo": "Chave da balança",
       "dispositivoAjuda": "Endereço público gerado pelo próprio equipamento.",
       "cadastrar": "Cadastrar balança",
       "vazio": "Nenhuma balança cadastrada ainda.",
-      "semDonos": "Cadastre antes uma cooperativa ou indústria em Participantes."
-    }
+      "semDonos": "Cadastre antes uma cooperativa ou indústria em Participantes.",
+      "nome": "Nome",
+      "nomeExemplo": "Ex.: Balança do galpão 2",
+      "nomeAjuda": "Para achar o equipamento nas listas. Fica público na blockchain.",
+      "editar": "Editar balança"
+    },
+    "novo": "Novo",
+    "nova": "Nova",
+    "editar": "Editar",
+    "fechar": "Fechar"
   },
   "erros": {
     "generico": "A transação falhou. Tente de novo em instantes.",
@@ -253,7 +263,10 @@
       "dias": "Dias",
       "anunciar": "Anunciar",
       "cancelarAnuncio": "Cancelar anúncio",
-      "ate": "Até {{data}}, mínimo {{preco}}"
+      "ate": "Até {{data}}, mínimo {{preco}}",
+      "marcarTodas": "Marcar todas",
+      "desmarcarTodas": "Desmarcar todas",
+      "anunciarTitulo": "Anunciar o lote {{id}}"
     }
   },
   "estadoLote": {
@@ -267,5 +280,23 @@
     "Agregado": "Em crédito",
     "EmDisputa": "Em disputa",
     "Reembolsado": "Reembolsado"
+  },
+  "grade": {
+    "buscar": "Buscar",
+    "semResultado": "Nada encontrado com esses filtros.",
+    "paginacao": "Paginação",
+    "pagina": "Página {{atual}} de {{total}}",
+    "registros_one": "{{count}} registro",
+    "registros_other": "{{count}} registros",
+    "primeira": "Primeira página",
+    "anterior": "Página anterior",
+    "proxima": "Próxima página",
+    "ultima": "Última página",
+    "todosPapeis": "Todos os papéis",
+    "todasSituacoes": "Todas as situações",
+    "soAtivos": "Só ativos",
+    "soInativos": "Só inativos",
+    "todosMateriais": "Todos os materiais",
+    "todosEstados": "Todos os estados"
   }
 }

@@ -1,6 +1,7 @@
 import { useConnectedWallet } from '@solana/kit-plugin-wallet/react';
 import { useClient } from '@solana/react';
 import { useTranslation } from 'react-i18next';
+import { TituloPagina } from '../componentes/pagina';
 import type { AppClient } from '../solana/cliente';
 
 const ETAPAS = ['pesagem', 'venda', 'transporte', 'recebimento', 'credito', 'reparticao'] as const;
@@ -13,8 +14,9 @@ export function Painel() {
 
     return (
         <div className="flex flex-col gap-10">
+            <TituloPagina titulo={t('itens.painel')} />
             <section className="max-w-2xl">
-                <h1 className="text-3xl font-semibold tracking-tight text-texto sm:text-4xl">{t('painel.titulo')}</h1>
+                <h2 className="text-3xl font-semibold tracking-tight text-texto sm:text-4xl">{t('painel.titulo')}</h2>
                 <p className="mt-3 text-lg leading-relaxed text-texto-suave">{t('painel.boasVindas')}</p>
                 {!conectada && <p className="mt-4 font-medium text-acento">{t('painel.conecte')}</p>}
             </section>

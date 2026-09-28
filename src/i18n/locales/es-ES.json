@@ -158,7 +158,8 @@
         "aluminio": "Aluminio",
         "metal": "Metal",
         "outros": "Otros"
-      }
+      },
+      "editar": "Editar material"
     },
     "participantes": {
       "novo": "Nuevo participante",
@@ -175,7 +176,8 @@
       "cadastrar": "Registrar participante",
       "umPapel": "Cada billetera tiene un único rol, que no se puede cambiar después.",
       "vazio": "Aún no hay participantes registrados.",
-      "carteiraExemplo": "Dirección de la billetera Solana del participante"
+      "carteiraExemplo": "Dirección de la billetera Solana del participante",
+      "editar": "Editar participante"
     },
     "balancas": {
       "nova": "Nueva báscula",
@@ -185,8 +187,16 @@
       "dispositivoAjuda": "Dirección pública generada por el propio equipo.",
       "cadastrar": "Registrar báscula",
       "vazio": "Aún no hay básculas registradas.",
-      "semDonos": "Registra antes una cooperativa o industria en Participantes."
-    }
+      "semDonos": "Registra antes una cooperativa o industria en Participantes.",
+      "nome": "Nombre",
+      "nomeExemplo": "Ej.: Báscula del galpón 2",
+      "nomeAjuda": "Para encontrar el equipo en las listas. Es público en la blockchain.",
+      "editar": "Editar báscula"
+    },
+    "novo": "Nuevo",
+    "nova": "Nueva",
+    "editar": "Editar",
+    "fechar": "Cerrar"
   },
   "erros": {
     "generico": "La transacción falló. Inténtalo de nuevo en unos instantes.",
@@ -253,7 +263,10 @@
       "dias": "Días",
       "anunciar": "Anunciar",
       "cancelarAnuncio": "Cancelar anuncio",
-      "ate": "Hasta {{data}}, mínimo {{preco}}"
+      "ate": "Hasta {{data}}, mínimo {{preco}}",
+      "marcarTodas": "Marcar todas",
+      "desmarcarTodas": "Desmarcar todas",
+      "anunciarTitulo": "Anunciar el lote {{id}}"
     }
   },
   "estadoLote": {
@@ -267,5 +280,23 @@
     "Agregado": "En un crédito",
     "EmDisputa": "En disputa",
     "Reembolsado": "Reembolsado"
+  },
+  "grade": {
+    "buscar": "Buscar",
+    "semResultado": "Nada coincide con estos filtros.",
+    "paginacao": "Paginación",
+    "pagina": "Página {{atual}} de {{total}}",
+    "registros_one": "{{count}} registro",
+    "registros_other": "{{count}} registros",
+    "primeira": "Primera página",
+    "anterior": "Página anterior",
+    "proxima": "Página siguiente",
+    "ultima": "Última página",
+    "todosPapeis": "Todos los roles",
+    "todasSituacoes": "Todas las situaciones",
+    "soAtivos": "Solo activos",
+    "soInativos": "Solo inactivos",
+    "todosMateriais": "Todos los materiales",
+    "todosEstados": "Todos los estados"
   }
 }

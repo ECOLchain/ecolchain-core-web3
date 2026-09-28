@@ -5,26 +5,6 @@ import { usePreferencias } from '../preferencias/Preferencias';
 import { chaveDoErro } from '../solana/erros';
 import { REDES } from '../solana/redes';
 
-export function Titulo({ titulo, descricao, children }: { titulo: string; descricao?: string; children?: ReactNode }) {
-    return (
-        <header className="flex flex-wrap items-end justify-between gap-4">
-            <div className="max-w-2xl">
-                <h1 className="text-2xl font-semibold tracking-tight text-texto sm:text-3xl">{titulo}</h1>
-                {descricao && <p className="mt-2 text-texto-suave">{descricao}</p>}
-            </div>
-            {children}
-        </header>
-    );
-}
-
-export function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
-    return (
-        <section className="rounded-xl border border-linha bg-superficie p-5 sm:p-6">
-            <h2 className="mb-4 text-base font-semibold text-texto">{titulo}</h2>
-            {children}
-        </section>
-    );
-}
 
 const campoBase =
     'h-10 w-full rounded-lg border border-linha bg-fundo px-3 text-sm text-texto placeholder:text-texto-suave/70 transition-colors focus:border-acento';
@@ -57,9 +37,10 @@ export function Selecao({
 export function Botao({
     carregando,
     variante = 'principal',
+    compacto,
     children,
     ...props
-}: { carregando?: boolean; variante?: 'principal' | 'secundario' } & ButtonHTMLAttributes<HTMLButtonElement>) {
+}: { carregando?: boolean; variante?: 'principal' | 'secundario'; compacto?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
     const estilo =
         variante === 'principal'
             ? 'bg-acento text-acento-texto hover:opacity-90'
@@ -68,7 +49,7 @@ export function Botao({
         <button
             {...props}
             disabled={props.disabled || carregando}
-            className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50 ${estilo} ${props.className ?? ''}`}
+            className={`inline-flex ${compacto ? 'h-9 px-3' : 'h-10 px-4'} items-center justify-center gap-2 rounded-lg text-sm font-semibold whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50 ${estilo} ${props.className ?? ''}`}
         >
             {carregando && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
             {children}
@@ -119,26 +100,6 @@ export function Resultado({ assinatura, erro, sucesso }: { assinatura?: string; 
                 <ExternalLink className="size-3.5" aria-hidden="true" />
             </a>
         </p>
-    );
-}
-
-export function Tabela({ colunas, children, vazio }: { colunas: string[]; children: ReactNode; vazio?: string }) {
-    return (
-        <div className="overflow-x-auto rounded-xl border border-linha">
-            <table className="w-full min-w-[36rem] text-left text-sm">
-                <thead className="bg-superficie-2 text-texto-suave">
-                    <tr>
-                        {colunas.map((c) => (
-                            <th key={c} scope="col" className="px-4 py-2.5 font-medium">
-                                {c}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-linha bg-superficie">{children}</tbody>
-            </table>
-            {vazio && <p className="bg-superficie p-6 text-center text-texto-suave">{vazio}</p>}
-        </div>
     );
 }
 
