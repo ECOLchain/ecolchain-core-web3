@@ -22,6 +22,16 @@ npm run build      # typecheck + build de produção em dist/
 
 Os clientes gerados (`onchain/clients/src/generated`) estão versionados no repositório da blockchain, então não é preciso compilar os programas para rodar a interface.
 
+## Carteira recomendada: Solflare
+
+Use a **[Solflare](https://solflare.com)** (extensão do navegador ou app do celular) para todos os papéis. É a carteira usada na operação da devnet (a administração assina com uma Solflare), e ela atende três pontos de que a EcolChain depende:
+
+- **Assina sem alterar a transação.** A retirada do lote é assinada por duas pessoas, cada uma no seu aparelho: a cooperativa assina primeiro e o transportador completa. Algumas carteiras acrescentam instruções ao assinar (proteções ou taxa de prioridade). Isso muda a transação e invalida a assinatura da outra parte. Nesse caso, a tela avisa: "A carteira alterou a transação ao assinar".
+- **Assina sem enviar.** A Solflare implementa a assinatura avulsa do Wallet Standard (`solana:signTransaction`), usada na retirada.
+- **Devnet.** A rede da carteira pode ser trocada para Devnet, a rede atual dos programas. A rede escolhida na carteira precisa ser a mesma do seletor de rede da interface.
+
+Outras carteiras compatíveis com o Wallet Standard aparecem no botão **Conectar** e servem para as telas de uma assinatura só, mas não são testadas.
+
 ## O que já existe
 
 - **Header fixo:** logo à esquerda; à direita, tamanho do texto (P / M / G), tema claro/escuro, rede e carteira (endereço, papel e rede). Em telas estreitas, as preferências ficam num painel.
@@ -39,6 +49,13 @@ Os clientes gerados (`onchain/clients/src/generated`) estão versionados no repo
   - **Nota fiscal ou recibo do lote de venda:** opcional; vira o `evidencias_hash` no mesmo formato das referências de origem, e a trilha encontra o lote pelo texto.
 - **Coletor:** **Minha carteira** (nome e QR Code com o endereço da carteira, para a cooperativa escanear na entrega) e **Meus lotes** (grade com os lotes de origem da carteira em qualquer cooperativa, o lote de venda e a situação de cada um, com link para a trilha).
 - **Transportador:** **Minha carteira**, para a cooperativa conferir quem retira o lote.
+- **Retiradas** (cooperativa e transportador): a retirada exige a assinatura das duas partes (`transportador_pickup_lote`).
+  1. A cooperativa seleciona o lote vendido, identifica o transportador pelo QR da tela Minha carteira dele (ou pela lista) e assina.
+  2. A tela mostra um QR com a assinatura da cooperativa, o lote, as duas carteiras e o blockhash. O código vale por cerca de um minuto; depois, "Gerar novo código".
+  3. O transportador, em **Assinar retirada**, lê o QR. O aparelho dele remonta a mesma transação a partir da blockchain, confere a assinatura da cooperativa, mostra o lote para conferência, assina e envia.
+  4. A tela da cooperativa percebe a retirada sozinha. O lote vai para "Em transporte", e o recibo digital, para a carteira do transportador.
+
+  O transportador vê na grade os lotes que retirou. Código em `src/solana/retirada.ts`.
 - **Trilha pública** (sem carteira): busca pelo nome de um participante (coletor, cooperativa, indústria, transportador), pela referência de um comprovante (o hash é recalculado no navegador) ou pelo endereço de um lote ou carteira, e mostra lote de origem → lote de venda → consumo pela indústria → crédito de carbono. Aceita `?q=` na URL para compartilhar o link. No RPC público da devnet, buscas grandes podem esbarrar no limite de requisições (429).
 - **Páginas:** o painel ainda é um esqueleto, e as demais operações abrem uma página provisória.
 
@@ -48,12 +65,12 @@ Sem depender da devnet (nem da carteira de administração):
 
 ```bash
 cd ../onchain && NO_DNA=1 anchor build        # os .so em target/deploy
-cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, cooperativa, 2 coletores, transportador, materiais e balança
+cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participantes de teste, materiais, balança e um lote vendido
 # em outro terminal, com o rpcUrl/wsUrl que o script mostrar:
 cd web && VITE_RPC_LOCALNET=<rpcUrl> VITE_WS_LOCALNET=<wsUrl> npm run dev
 ```
 
-Na interface, escolha a rede **Localnet**. As chaves de teste (cooperativa, balança, coletor 1 e transportador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
+Na interface, escolha a rede **Localnet**. O lote de venda #1 já está vendido à Indústria Demo, esperando a retirada. As chaves de teste (cooperativa, balança, coletor 1 e transportador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
 
 As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegador.
 
@@ -72,7 +89,7 @@ As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegad
 |---|---|
 | `src/layout/` | `Shell` (header + menu + conteúdo), `Header`, `MenuLateral`, `Carteira`, `Controles` |
 | `src/navegacao/menu.ts` | itens do menu e quais papéis veem cada um |
-| `src/solana/` | redes, cliente Kit por rede, `useCadastro` (papéis da carteira) |
+| `src/solana/` | redes, cliente Kit por rede, `useCadastro` (papéis da carteira), `retirada.ts` (assinatura em dois aparelhos) |
 | `src/preferencias/` | tema, fonte, idioma e rede |
 | `src/i18n/` | traduções |
 | `src/paginas/` | páginas: `admin/`, `cooperativa/`, `coletor/`, `Trilha.tsx`, `MinhaCarteira.tsx` e as provisórias |

@@ -459,7 +459,7 @@ function DialogoEntrega({
                                     <ScanLine className="size-4" /> {t('cooperativa.coletas.lerQr')}
                                 </Botao>
                             </div>
-                            {lendoQr && <LeitorQr aoLer={lerQr} aoCancelar={() => setLendoQr(false)} />}
+                            {lendoQr && <LeitorQr aoLer={lerQr} aoCancelar={() => setLendoQr(false)} instrucao={t('leitorQr.aponte')} />}
                             {avisoQr && (
                                 <p role="status" className={`text-sm ${avisoQr.tipo === 'ok' ? 'text-acento' : 'text-perigo'}`}>
                                     {avisoQr.texto}

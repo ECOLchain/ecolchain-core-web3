@@ -225,7 +225,10 @@
     "MaterialDiferente": "Todos os lotes de origem precisam ser do mesmo material do lote de venda.",
     "TransicaoInvalida": "Esta ação não vale para a situação atual do lote. Atualize a tela.",
     "PesagemExpirada": "A pesagem expirou. Pese de novo.",
-    "PesagemDivergente": "A pesagem assinada pela balança não confere com os dados enviados."
+    "PesagemDivergente": "A pesagem assinada pela balança não confere com os dados enviados.",
+    "carteiraAlterou": "A carteira alterou a transação ao assinar, e a assinatura da cooperativa deixou de valer. Use a Solflare ou outra carteira que assine sem alterar.",
+    "carteiraSemAssinatura": "Esta carteira não permite assinar sem enviar. Use a Solflare.",
+    "codigoExpirado": "O código expirou. Peça à cooperativa para gerar outro."
   },
   "cooperativa": {
     "soCooperativa": "Esta tela é só para carteiras de cooperativa.",
@@ -396,5 +399,45 @@
     "qrTitulo": "Código QR da carteira",
     "ajudaColetor": "Mostre este código à cooperativa na entrega ou na venda do material. Ela escaneia e o lote de origem fica registrado em seu nome. O código traz só o endereço da carteira, nenhum dado pessoal.",
     "ajudaTransportador": "Mostre este código à cooperativa na retirada do lote. Ela escaneia e confere que o lote sai com o transportador cadastrado. O código traz só o endereço da carteira, nenhum dado pessoal."
+  },
+  "retiradas": {
+    "soParticipante": "Esta tela é para carteiras cadastradas como cooperativa ou transportador.",
+    "aguardando": "Aguardando retirada",
+    "retiradas": "Já retirados",
+    "prazo": "Prazo de entrega",
+    "registrar": "Registrar retirada",
+    "selecione": "Selecione um lote aguardando retirada",
+    "vazioCooperativa": "Nenhum lote vendido aguardando retirada.",
+    "vazioTransportador": "Nenhum lote retirado com a sua carteira ainda. Toque em \"Assinar retirada\" na cooperativa.",
+    "resumo": "Lote #{{lote}} · {{material}} · {{kg}} kg",
+    "passo1": "Identifique o transportador que vai levar o lote para {{industria}}: leia o QR Code da tela \"Minha carteira\" dele ou escolha na lista.",
+    "escolher": "Escolha o transportador",
+    "semTransportadores": "Nenhum transportador ativo cadastrado. Peça à administração para cadastrar a carteira dele em Participantes.",
+    "qrNaoCarteira": "Este QR Code não é de uma carteira. Peça ao transportador para abrir \"Minha carteira\" no app.",
+    "qrSemCadastro": "Esta carteira não está cadastrada. Peça à administração para cadastrá-la como transportador.",
+    "qrNaoTransportador": "Esta carteira está cadastrada com outro papel, não como transportador.",
+    "qrInativo": "Este transportador está inativo. Peça à administração para reativá-lo.",
+    "qrLido": "Transportador identificado: {{nome}}.",
+    "assinarGerar": "Assinar e gerar código",
+    "passo2": "A cooperativa já assinou. Agora {{nome}} abre \"Retiradas\" no app, toca em \"Assinar retirada\" e lê este código.",
+    "qrTitulo": "Código da retirada para o transportador assinar",
+    "aguardandoTransportador": "Aguardando a assinatura do transportador…",
+    "expirado": "O código expirou (vale por cerca de um minuto). Gere outro e peça ao transportador para ler de novo.",
+    "gerarNovo": "Gerar novo código",
+    "concluida": "Retirada do lote #{{lote}} registrada. O lote está com {{nome}}.",
+    "assinar": "Assinar retirada",
+    "aponte": "Leia o código que aparece na tela da cooperativa, em \"Registrar retirada\".",
+    "confira": "Confira o lote antes de assinar:",
+    "efeito": "Ao assinar, você assume a custódia do lote e o recibo digital passa para a sua carteira. O prazo de entrega à indústria já está valendo.",
+    "confirmarAssinar": "Assinar e confirmar retirada",
+    "confirmada": "Retirada assinada. O lote está com você.",
+    "qr": {
+      "formato": "Este não é um código de retirada da EcolChain. Leia o código da tela \"Registrar retirada\" da cooperativa.",
+      "outroTransportador": "Este código foi gerado para outro transportador. Peça à cooperativa para escolher a sua carteira.",
+      "jaRetirado": "Este lote não está mais aguardando retirada.",
+      "assinaturaInvalida": "O código não confere com a assinatura da cooperativa. Peça para ela gerar outro código."
+    },
+    "aponteTransportador": "Aponte para o QR Code da tela \"Minha carteira\" do transportador",
+    "aponteCamera": "Aponte para o código na tela da cooperativa"
   }
 }

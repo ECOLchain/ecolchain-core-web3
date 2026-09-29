@@ -13,7 +13,7 @@ const LARGURA_ANALISE = 640;
  * Câmera traseira com leitura contínua de QR Code. Chama `aoLer` uma vez, com o texto do primeiro
  * código encontrado, e desliga a câmera. Exige contexto seguro (https ou localhost).
  */
-export function LeitorQr({ aoLer, aoCancelar }: { aoLer: (texto: string) => void; aoCancelar: () => void }) {
+export function LeitorQr({ aoLer, aoCancelar, instrucao }: { aoLer: (texto: string) => void; aoCancelar: () => void; instrucao: string }) {
     const { t } = useTranslation();
     const video = useRef<HTMLVideoElement>(null);
     const [erro, setErro] = useState(false);
@@ -85,7 +85,7 @@ export function LeitorQr({ aoLer, aoCancelar }: { aoLer: (texto: string) => void
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
                         <div className="aspect-square w-3/5 rounded-xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
                     </div>
-                    <p className="absolute inset-x-0 bottom-0 bg-black/50 px-3 py-1.5 text-center text-xs text-white">{t('leitorQr.aponte')}</p>
+                    <p className="absolute inset-x-0 bottom-0 bg-black/50 px-3 py-1.5 text-center text-xs text-white">{instrucao}</p>
                 </div>
             )}
             <Botao type="button" variante="secundario" compacto className="self-start" onClick={aoCancelar}>

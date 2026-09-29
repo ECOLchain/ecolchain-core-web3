@@ -225,7 +225,10 @@
     "MaterialDiferente": "All source lots must be of the same material as the sale lot.",
     "TransicaoInvalida": "This action does not apply to the lot’s current status. Refresh the page.",
     "PesagemExpirada": "The weighing expired. Weigh again.",
-    "PesagemDivergente": "The weighing signed by the scale does not match the data sent."
+    "PesagemDivergente": "The weighing signed by the scale does not match the data sent.",
+    "carteiraAlterou": "The wallet changed the transaction when signing, so the cooperative's signature is no longer valid. Use Solflare or another wallet that signs without changes.",
+    "carteiraSemAssinatura": "This wallet cannot sign without sending. Use Solflare.",
+    "codigoExpirado": "The code expired. Ask the cooperative to generate another."
   },
   "cooperativa": {
     "soCooperativa": "This screen is only for cooperative wallets.",
@@ -396,5 +399,45 @@
     "qrTitulo": "Wallet QR code",
     "ajudaColetor": "Show this code to the cooperative when you deliver or sell material. They scan it and the source lot is registered in your name. The code carries only the wallet address, no personal data.",
     "ajudaTransportador": "Show this code to the cooperative when you pick up the lot. They scan it and check that the lot leaves with the registered carrier. The code carries only the wallet address, no personal data."
+  },
+  "retiradas": {
+    "soParticipante": "This screen is for wallets registered as cooperative or carrier.",
+    "aguardando": "Waiting for pickup",
+    "retiradas": "Picked up",
+    "prazo": "Delivery deadline",
+    "registrar": "Register pickup",
+    "selecione": "Select a lot waiting for pickup",
+    "vazioCooperativa": "No sold lot waiting for pickup.",
+    "vazioTransportador": "No lot picked up with your wallet yet. Tap \"Sign pickup\" at the cooperative.",
+    "resumo": "Lot #{{lote}} · {{material}} · {{kg}} kg",
+    "passo1": "Identify the carrier who will take the lot to {{industria}}: scan the QR code on their \"My wallet\" screen or pick from the list.",
+    "escolher": "Choose the carrier",
+    "semTransportadores": "No active carrier registered. Ask the administration to register their wallet in Participants.",
+    "qrNaoCarteira": "This QR code is not a wallet. Ask the carrier to open \"My wallet\" in the app.",
+    "qrSemCadastro": "This wallet is not registered. Ask the administration to register it as a carrier.",
+    "qrNaoTransportador": "This wallet is registered with another role, not as a carrier.",
+    "qrInativo": "This carrier is inactive. Ask the administration to reactivate it.",
+    "qrLido": "Carrier identified: {{nome}}.",
+    "assinarGerar": "Sign and generate code",
+    "passo2": "The cooperative has signed. Now {{nome}} opens \"Pickups\" in the app, taps \"Sign pickup\" and scans this code.",
+    "qrTitulo": "Pickup code for the carrier to sign",
+    "aguardandoTransportador": "Waiting for the carrier's signature…",
+    "expirado": "The code expired (it is valid for about one minute). Generate another and ask the carrier to scan again.",
+    "gerarNovo": "Generate new code",
+    "concluida": "Pickup of lot #{{lote}} registered. The lot is with {{nome}}.",
+    "assinar": "Sign pickup",
+    "aponte": "Scan the code shown on the cooperative's screen, under \"Register pickup\".",
+    "confira": "Check the lot before signing:",
+    "efeito": "By signing, you take custody of the lot and the digital receipt moves to your wallet. The delivery deadline to the industry is already running.",
+    "confirmarAssinar": "Sign and confirm pickup",
+    "confirmada": "Pickup signed. The lot is with you.",
+    "qr": {
+      "formato": "This is not an EcolChain pickup code. Scan the code on the cooperative's \"Register pickup\" screen.",
+      "outroTransportador": "This code was generated for another carrier. Ask the cooperative to choose your wallet.",
+      "jaRetirado": "This lot is no longer waiting for pickup.",
+      "assinaturaInvalida": "The code does not match the cooperative's signature. Ask them to generate another code."
+    },
+    "aponteTransportador": "Point at the QR code on the carrier's \"My wallet\" screen",
+    "aponteCamera": "Point at the code on the cooperative's screen"
   }
 }

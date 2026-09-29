@@ -225,7 +225,10 @@
     "MaterialDiferente": "Todos los lotes de origen deben ser del mismo material que el lote de venta.",
     "TransicaoInvalida": "Esta acción no vale para la situación actual del lote. Actualice la página.",
     "PesagemExpirada": "La pesada expiró. Pese de nuevo.",
-    "PesagemDivergente": "La pesada firmada por la báscula no coincide con los datos enviados."
+    "PesagemDivergente": "La pesada firmada por la báscula no coincide con los datos enviados.",
+    "carteiraAlterou": "La billetera modificó la transacción al firmar y la firma de la cooperativa dejó de valer. Use Solflare u otra billetera que firme sin modificar.",
+    "carteiraSemAssinatura": "Esta billetera no permite firmar sin enviar. Use Solflare.",
+    "codigoExpirado": "El código expiró. Pida a la cooperativa que genere otro."
   },
   "cooperativa": {
     "soCooperativa": "Esta pantalla es solo para billeteras de cooperativa.",
@@ -396,5 +399,45 @@
     "qrTitulo": "Código QR de la billetera",
     "ajudaColetor": "Muestre este código a la cooperativa al entregar o vender el material. Ella lo escanea y el lote de origen queda registrado a su nombre. El código lleva solo la dirección de la billetera, ningún dato personal.",
     "ajudaTransportador": "Muestre este código a la cooperativa al retirar el lote. Ella lo escanea y confirma que el lote sale con el transportista registrado. El código lleva solo la dirección de la billetera, ningún dato personal."
+  },
+  "retiradas": {
+    "soParticipante": "Esta pantalla es para billeteras registradas como cooperativa o transportista.",
+    "aguardando": "Esperando retiro",
+    "retiradas": "Ya retirados",
+    "prazo": "Plazo de entrega",
+    "registrar": "Registrar retiro",
+    "selecione": "Seleccione un lote que espera retiro",
+    "vazioCooperativa": "Ningún lote vendido espera retiro.",
+    "vazioTransportador": "Aún no hay lotes retirados con su billetera. Toque \"Firmar retiro\" en la cooperativa.",
+    "resumo": "Lote #{{lote}} · {{material}} · {{kg}} kg",
+    "passo1": "Identifique al transportista que llevará el lote a {{industria}}: lea el código QR de su pantalla \"Mi billetera\" o elíjalo en la lista.",
+    "escolher": "Elija el transportista",
+    "semTransportadores": "No hay transportistas activos registrados. Pida a la administración que registre su billetera en Participantes.",
+    "qrNaoCarteira": "Este código QR no es de una billetera. Pida al transportista que abra \"Mi billetera\" en la app.",
+    "qrSemCadastro": "Esta billetera no está registrada. Pida a la administración que la registre como transportista.",
+    "qrNaoTransportador": "Esta billetera está registrada con otro rol, no como transportista.",
+    "qrInativo": "Este transportista está inactivo. Pida a la administración que lo reactive.",
+    "qrLido": "Transportista identificado: {{nome}}.",
+    "assinarGerar": "Firmar y generar código",
+    "passo2": "La cooperativa ya firmó. Ahora {{nome}} abre \"Retiros\" en la app, toca \"Firmar retiro\" y lee este código.",
+    "qrTitulo": "Código de retiro para que el transportista firme",
+    "aguardandoTransportador": "Esperando la firma del transportista…",
+    "expirado": "El código expiró (vale cerca de un minuto). Genere otro y pida al transportista que lo lea de nuevo.",
+    "gerarNovo": "Generar nuevo código",
+    "concluida": "Retiro del lote #{{lote}} registrado. El lote está con {{nome}}.",
+    "assinar": "Firmar retiro",
+    "aponte": "Lea el código que aparece en la pantalla de la cooperativa, en \"Registrar retiro\".",
+    "confira": "Revise el lote antes de firmar:",
+    "efeito": "Al firmar, usted asume la custodia del lote y el recibo digital pasa a su billetera. El plazo de entrega a la industria ya corre.",
+    "confirmarAssinar": "Firmar y confirmar retiro",
+    "confirmada": "Retiro firmado. El lote está con usted.",
+    "qr": {
+      "formato": "Este no es un código de retiro de EcolChain. Lea el código de la pantalla \"Registrar retiro\" de la cooperativa.",
+      "outroTransportador": "Este código fue generado para otro transportista. Pida a la cooperativa que elija su billetera.",
+      "jaRetirado": "Este lote ya no espera retiro.",
+      "assinaturaInvalida": "El código no coincide con la firma de la cooperativa. Pida que genere otro código."
+    },
+    "aponteTransportador": "Apunte al código QR de la pantalla \"Mi billetera\" del transportista",
+    "aponteCamera": "Apunte al código en la pantalla de la cooperativa"
   }
 }
