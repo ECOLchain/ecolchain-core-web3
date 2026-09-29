@@ -40,7 +40,8 @@
     "arbitragem": "Arbitration",
     "materiais": "Materials",
     "coletas": "Source lots",
-    "meusLotes": "My lots"
+    "meusLotes": "My lots",
+    "minhaCarteira": "My wallet"
   },
   "descricoes": {
     "painel": "Summary of your operation.",
@@ -68,7 +69,8 @@
     "arbitragem": "Rule on batch disputes.",
     "materiais": "Register the material types accepted in batches.",
     "coletas": "Weigh and record incoming material: from collectors, in-house sorting, donations, purchases or unregistered pickers.",
-    "meusLotes": "The source lots you delivered, at any cooperative, and the path of each one to the industry."
+    "meusLotes": "The source lots you delivered, at any cooperative, and the path of each one to the industry.",
+    "minhaCarteira": "Your wallet code to show the cooperative at delivery."
   },
   "papel": {
     "coletor": "Collector",
@@ -375,6 +377,8 @@
     "aguardando": "Waiting for a sale lot",
     "trilha": "Trail",
     "vazio": "No source lot registered with your wallet yet.",
-    "resumo": "{{n}} source lot(s), totaling {{kg}} kg"
+    "resumo": "{{n}} source lot(s), totaling {{kg}} kg",
+    "qrTitulo": "QR code of the collector wallet",
+    "qrAjuda": "Show this code to the cooperative when you deliver or sell material. They scan it and the source lot is registered in your name. The code carries only the wallet address, no personal data."
   }
 }

@@ -6,6 +6,7 @@ import { Balancas } from './paginas/admin/Balancas';
 import { Materiais } from './paginas/admin/Materiais';
 import { Participantes } from './paginas/admin/Participantes';
 import { MeusLotes } from './paginas/coletor/MeusLotes';
+import { MinhaCarteira } from './paginas/coletor/MinhaCarteira';
 import { Coletas } from './paginas/cooperativa/Coletas';
 import { Lotes } from './paginas/cooperativa/Lotes';
 import { Painel } from './paginas/Painel';
@@ -24,8 +25,9 @@ const router = createBrowserRouter([
             { path: '/coletas', element: <Coletas /> },
             { path: '/lotes', element: <Lotes /> },
             { path: '/meus-lotes', element: <MeusLotes /> },
+            { path: '/minha-carteira', element: <MinhaCarteira /> },
             { path: '/explorar', element: <Trilha /> },
-            ...TODOS_OS_ITENS.filter((i) => !['/', '/explorar', '/participantes', '/balancas', '/materiais', '/coletas', '/lotes', '/meus-lotes'].includes(i.rota)).map((i) => ({
+            ...TODOS_OS_ITENS.filter((i) => !['/', '/explorar', '/participantes', '/balancas', '/materiais', '/coletas', '/lotes', '/meus-lotes', '/minha-carteira'].includes(i.rota)).map((i) => ({
                 path: i.rota,
                 element: <Operacao item={i} />,
             })),

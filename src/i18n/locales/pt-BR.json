@@ -40,7 +40,8 @@
     "arbitragem": "Arbitragem",
     "materiais": "Materiais",
     "coletas": "Lotes de origem",
-    "meusLotes": "Meus lotes"
+    "meusLotes": "Meus lotes",
+    "minhaCarteira": "Minha carteira"
   },
   "descricoes": {
     "painel": "Resumo da sua operação.",
@@ -68,7 +69,8 @@
     "arbitragem": "Julgue disputas de lotes.",
     "materiais": "Cadastre os tipos de material aceitos nos lotes.",
     "coletas": "Pese e registre o material que chega: de coletores, triagem própria, doações, compras ou catadores avulsos.",
-    "meusLotes": "Os lotes de origem que você entregou, em qualquer cooperativa, e o caminho de cada um até a indústria."
+    "meusLotes": "Os lotes de origem que você entregou, em qualquer cooperativa, e o caminho de cada um até a indústria.",
+    "minhaCarteira": "O código da sua carteira para mostrar à cooperativa na entrega."
   },
   "papel": {
     "coletor": "Coletor",
@@ -375,6 +377,8 @@
     "aguardando": "Aguardando lote de venda",
     "trilha": "Trilha",
     "vazio": "Nenhum lote de origem registrado com a sua carteira ainda.",
-    "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg"
+    "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg",
+    "qrTitulo": "Código QR da carteira do coletor",
+    "qrAjuda": "Mostre este código à cooperativa na entrega ou na venda do material. Ela escaneia e o lote de origem fica registrado em seu nome. O código traz só o endereço da carteira, nenhum dado pessoal."
   }
 }

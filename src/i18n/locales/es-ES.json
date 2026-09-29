@@ -40,7 +40,8 @@
     "arbitragem": "Arbitraje",
     "materiais": "Materiales",
     "coletas": "Lotes de origen",
-    "meusLotes": "Mis lotes"
+    "meusLotes": "Mis lotes",
+    "minhaCarteira": "Mi billetera"
   },
   "descricoes": {
     "painel": "Resumen de tu operación.",
@@ -68,7 +69,8 @@
     "arbitragem": "Resuelve disputas de lotes.",
     "materiais": "Registra los tipos de material aceptados en los lotes.",
     "coletas": "Pese y registre el material que llega: de recolectores, clasificación propia, donaciones, compras o recicladores sin registro.",
-    "meusLotes": "Los lotes de origen que usted entregó, en cualquier cooperativa, y el camino de cada uno hasta la industria."
+    "meusLotes": "Los lotes de origen que usted entregó, en cualquier cooperativa, y el camino de cada uno hasta la industria.",
+    "minhaCarteira": "El código de su billetera para mostrar a la cooperativa en la entrega."
   },
   "papel": {
     "coletor": "Recolector",
@@ -375,6 +377,8 @@
     "aguardando": "Esperando lote de venta",
     "trilha": "Trazabilidad",
     "vazio": "Aún no hay lotes de origen registrados con su billetera.",
-    "resumo": "{{n}} lote(s) de origen, que suman {{kg}} kg"
+    "resumo": "{{n}} lote(s) de origen, que suman {{kg}} kg",
+    "qrTitulo": "Código QR de la billetera del recolector",
+    "qrAjuda": "Muestre este código a la cooperativa al entregar o vender el material. Ella lo escanea y el lote de origen queda registrado a su nombre. El código lleva solo la dirección de la billetera, ningún dato personal."
   }
 }
