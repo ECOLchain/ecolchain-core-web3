@@ -1,19 +1,19 @@
-import { type Address, address, isAddress } from '@solana/kit';
-import { useClient, useRequest } from '@solana/react';
-import { Copy, Plus, Scale, ScanLine } from 'lucide-react';
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { address, isAddress } from '@solana/kit';
+import { useClient } from '@solana/react';
+import { Plus, ScanLine } from 'lucide-react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { coletorRef, origemRef } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { instrucaoPesagem, TipoPesagem } from '@clientes/pesagem';
+import { BotaoBalanca, DialogoBalanca, useBalancaDoParticipante } from '../../componentes/BalancaTeste';
 import { Dialogo } from '../../componentes/dialogo';
 import { LeitorQr } from '../../componentes/LeitorQr';
 import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, useGrade } from '../../componentes/grade';
 import { TituloPagina } from '../../componentes/pagina';
 import { Botao, Campo, Resultado, Selecao } from '../../componentes/ui';
 import { usePreferencias } from '../../preferencias/Preferencias';
-import { useBalancaTeste } from '../../solana/balancaTeste';
 import type { AppClient } from '../../solana/cliente';
 import type { ContaDecodificada } from '../../solana/contas';
 import { useCadastro } from '../../solana/useCadastro';
@@ -54,26 +54,14 @@ export function Coletas() {
     );
 }
 
-/** Situação da balança de teste on-chain: não cadastrada, de outro dono, inativa ou pronta. */
-function useSituacaoBalanca(dispositivo: Address | undefined, cooperativa: Address | undefined) {
-    const client = useClient<AppClient>();
-    const fonte = useCallback(async () => {
-        const conta = await lote.fetchMaybeBalanca(client.rpc, await pLote.balanca(dispositivo!));
-        if (!conta.exists) return 'naoCadastrada' as const;
-        if (conta.data.dono !== cooperativa) return 'outroDono' as const;
-        return conta.data.ativa ? ('pronta' as const) : ('inativa' as const);
-    }, [client, dispositivo, cooperativa]);
-    return useRequest(dispositivo && cooperativa ? fonte : null);
-}
-
 function ConteudoColetas() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
     const client = useClient<AppClient>();
     const { carteira } = useCadastro();
     const cooperativa = carteira ? address(carteira) : undefined;
-    const { balanca, gerar } = useBalancaTeste(cooperativa);
-    const situacaoBalanca = useSituacaoBalanca(balanca?.address, cooperativa);
+    const estadoBalanca = useBalancaDoParticipante(cooperativa);
+    const { balanca, pronta } = estadoBalanca;
     const materiais = useMateriais();
     const participantes = useParticipantes();
     const entregas = useEntregas(cooperativa);
@@ -102,7 +90,6 @@ function ConteudoColetas() {
             vivo = false;
         };
     }, [coletores]);
-    const pronta = situacaoBalanca.data === 'pronta' && !!balanca;
 
     const colunas = useMemo<Coluna<Linha>[]>(() => {
         const quem = (l: Linha) => refs.get(hex(l.dados.origemRef));
@@ -271,13 +258,7 @@ function ConteudoColetas() {
                             ]}
                         />
                         <AcoesGrade>
-                            <Botao compacto variante="secundario" onClick={() => abrir('balanca')}>
-                                <span
-                                    className={`size-2 rounded-full ${pronta ? 'bg-acento' : 'bg-kraft'}`}
-                                    aria-hidden="true"
-                                />
-                                {t('cooperativa.balanca.titulo')}
-                            </Botao>
+                            <BotaoBalanca pronta={pronta} onClick={() => abrir('balanca')} />
                             <Botao compacto onClick={() => abrir(pronta ? 'entrega' : 'balanca')}>
                                 <Plus className="size-4" /> {t('cooperativa.coletas.nova')}
                             </Botao>
@@ -300,43 +281,7 @@ function ConteudoColetas() {
                     aoSalvar={registrar}
                 />
             )}
-            {popup === 'balanca' && (
-                <Dialogo titulo={t('cooperativa.balanca.titulo')} aoFechar={() => setPopup(null)}>
-                    {!balanca ? (
-                        <div className="flex flex-col items-start gap-4">
-                            <p className="text-sm text-texto-suave">{t('cooperativa.balanca.semBalanca')}</p>
-                            <Botao onClick={gerar}>
-                                <Scale className="size-4" /> {t('cooperativa.balanca.gerar')}
-                            </Botao>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-3 text-sm">
-                            <p className="text-texto-suave">{t('cooperativa.balanca.chave')}</p>
-                            <p className="flex items-start gap-2">
-                                <code className="rounded bg-superficie-2 px-2 py-1 break-all text-texto">{balanca.address}</code>
-                                <button
-                                    type="button"
-                                    onClick={() => void navigator.clipboard?.writeText(balanca.address).catch(() => {})}
-                                    aria-label={t('carteira.copiar')}
-                                    title={t('carteira.copiar')}
-                                    className="rounded p-1.5 text-texto-suave hover:text-texto"
-                                >
-                                    <Copy className="size-4" />
-                                </button>
-                            </p>
-                            <p className={pronta ? 'font-medium text-acento' : 'font-medium text-kraft'}>
-                                {situacaoBalanca.data ? t(`cooperativa.balanca.${situacaoBalanca.data}`) : t('admin.carregando')}
-                            </p>
-                            {situacaoBalanca.data && situacaoBalanca.data !== 'pronta' && (
-                                <Botao variante="secundario" className="self-start" onClick={() => situacaoBalanca.refresh()}>
-                                    {t('cooperativa.balanca.verificar')}
-                                </Botao>
-                            )}
-                        </div>
-                    )}
-                    <p className="mt-4 text-xs text-texto-suave">{t('cooperativa.balanca.aviso')}</p>
-                </Dialogo>
-            )}
+            {popup === 'balanca' && <DialogoBalanca estado={estadoBalanca} dono="cooperativa" aoFechar={() => setPopup(null)} />}
         </div>
     );
 }

@@ -238,18 +238,6 @@
     "escolherMaterial": "Choose the material",
     "pesoKg": "Weight (kg)",
     "data": "Date",
-    "balanca": {
-      "titulo": "Scale",
-      "semBalanca": "To weigh, this cooperative needs a scale. On devnet, use a test scale generated in this browser.",
-      "gerar": "Generate test scale",
-      "chave": "Scale key:",
-      "naoCadastrada": "Scale not registered yet. Ask the administration to register it under Scales, with this cooperative as owner.",
-      "outroDono": "This scale is registered to another wallet.",
-      "inativa": "Scale registered but deactivated by the administration.",
-      "pronta": "Scale registered and active. Ready to weigh.",
-      "verificar": "Check again",
-      "aviso": "Test scale: the key is stored in this browser. In real operation, the device itself signs each weighing."
-    },
     "coletas": {
       "nova": "New source lot",
       "escolherColetor": "Choose the collector",
@@ -509,5 +497,43 @@
     "colar": "Or paste the copied code",
     "usarColado": "Use pasted code",
     "abrirCamera": "Open camera"
+  },
+  "balancaTeste": {
+    "titulo": "Scale",
+    "semBalanca": "To weigh, {{quem}} needs a scale. On devnet, use a test scale generated in this browser.",
+    "gerar": "Generate test scale",
+    "chave": "Scale key:",
+    "naoCadastrada": "Scale not registered yet. Ask the administration to register it in Scales, with {{quem}} as owner.",
+    "outroDono": "This scale is registered to another wallet.",
+    "inativa": "Scale registered, but deactivated by the administration.",
+    "pronta": "Scale registered and active. Ready to weigh.",
+    "verificar": "Check again",
+    "aviso": "Test scale: the key is stored in this browser. In real operation, the device itself signs each weighing.",
+    "quem": {
+      "cooperativa": "this cooperative",
+      "industria": "this industry"
+    }
+  },
+  "recebimentos": {
+    "aguardando": "In transit",
+    "recebidos": "Received",
+    "selecione": "Select a lot in transit",
+    "registrar": "Register receipt",
+    "registrarDisputa": "Register and open dispute",
+    "vazio": "No lot on the way or received.",
+    "pesoSaida": "Weight at dispatch",
+    "pesoRecebido": "Weight received",
+    "faixa": "Accepted without dispute",
+    "faixaValor": "from {{min}} to {{max}} kg ({{tol}}% tolerance, set at the sale)",
+    "pesoNaBalanca": "Weight on arrival (kg)",
+    "divergente": "Outside the tolerance: on registering, the lot goes to dispute for weight divergence and the arbiter decides. The material stays with the industry.",
+    "comBalanca": "Weighing attested by the industry scale",
+    "comBalancaAjuda": "The scale signs the weight and the time; the receipt is marked as attested.",
+    "semBalanca": "No scale ready: the weight is recorded as informed, without attestation.",
+    "configurarBalanca": "Set up scale",
+    "registrado": "Receipt of lot #{{lote}} registered. The digital receipt moved to your wallet; the intermediary still has to release the payment to the cooperative.",
+    "emDisputa": "Receipt of lot #{{lote}} registered with weight divergence: the lot is in dispute.",
+    "atestado": "Weight attested by the scale",
+    "informado": "Weight informed, without scale"
   }
 }

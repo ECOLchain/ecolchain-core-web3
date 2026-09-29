@@ -238,18 +238,6 @@
     "escolherMaterial": "Escolha o material",
     "pesoKg": "Peso (kg)",
     "data": "Data",
-    "balanca": {
-      "titulo": "Balança",
-      "semBalanca": "Para pesar, esta cooperativa precisa de uma balança. Na devnet, use uma balança de teste gerada neste navegador.",
-      "gerar": "Gerar balança de teste",
-      "chave": "Chave da balança:",
-      "naoCadastrada": "Balança ainda não cadastrada. Peça à administração para cadastrá-la em Balanças, com esta cooperativa como dona.",
-      "outroDono": "Esta balança está cadastrada para outra carteira.",
-      "inativa": "Balança cadastrada, mas desativada pela administração.",
-      "pronta": "Balança cadastrada e ativa. Pronta para pesar.",
-      "verificar": "Verificar de novo",
-      "aviso": "Balança de teste: a chave fica guardada neste navegador. Na operação real, o próprio equipamento assina cada pesagem."
-    },
     "coletas": {
       "nova": "Novo lote de origem",
       "escolherColetor": "Escolha o coletor",
@@ -509,5 +497,43 @@
     "colar": "Ou cole o código copiado",
     "usarColado": "Usar código colado",
     "abrirCamera": "Abrir câmera"
+  },
+  "balancaTeste": {
+    "titulo": "Balança",
+    "semBalanca": "Para pesar, {{quem}} precisa de uma balança. Na devnet, use uma balança de teste gerada neste navegador.",
+    "gerar": "Gerar balança de teste",
+    "chave": "Chave da balança:",
+    "naoCadastrada": "Balança ainda não cadastrada. Peça à administração para cadastrá-la em Balanças, com {{quem}} como proprietária.",
+    "outroDono": "Esta balança está cadastrada para outra carteira.",
+    "inativa": "Balança cadastrada, mas desativada pela administração.",
+    "pronta": "Balança cadastrada e ativa. Pronta para pesar.",
+    "verificar": "Verificar de novo",
+    "aviso": "Balança de teste: a chave fica guardada neste navegador. Na operação real, o próprio equipamento assina cada pesagem.",
+    "quem": {
+      "cooperativa": "esta cooperativa",
+      "industria": "esta indústria"
+    }
+  },
+  "recebimentos": {
+    "aguardando": "Em transporte",
+    "recebidos": "Recebidos",
+    "selecione": "Selecione um lote em transporte",
+    "registrar": "Registrar recebimento",
+    "registrarDisputa": "Registrar e abrir disputa",
+    "vazio": "Nenhum lote a caminho ou recebido.",
+    "pesoSaida": "Peso na saída",
+    "pesoRecebido": "Peso recebido",
+    "faixa": "Aceito sem disputa",
+    "faixaValor": "de {{min}} a {{max}} kg (tolerância de {{tol}}%, fixada na venda)",
+    "pesoNaBalanca": "Peso na chegada (kg)",
+    "divergente": "Fora da tolerância: ao registrar, o lote vai para disputa por divergência de peso, e o árbitro decide. O material fica com a indústria.",
+    "comBalanca": "Pesagem atestada pela balança da indústria",
+    "comBalancaAjuda": "A balança assina o peso e o horário; o recebimento fica marcado como atestado.",
+    "semBalanca": "Sem balança pronta: o peso fica registrado como informado, sem atestação.",
+    "configurarBalanca": "Configurar balança",
+    "registrado": "Recebimento do lote #{{lote}} registrado. O recibo digital passou para a sua carteira; falta o intermediador liberar o pagamento à cooperativa.",
+    "emDisputa": "Recebimento do lote #{{lote}} registrado com divergência de peso: o lote está em disputa.",
+    "atestado": "Peso atestado pela balança",
+    "informado": "Peso informado, sem balança"
   }
 }

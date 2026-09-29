@@ -62,6 +62,7 @@ Outras carteiras compatíveis com o Wallet Standard aparecem no botão **Conecta
   3. Em **Compras**, a indústria lê, confere, assina e envia. A tela da administração percebe a venda sozinha.
 
   A transação usa um **nonce durável**: uma conta de sistema derivada da carteira do operador (`createAccountWithSeed`, semente `ecolchain-venda`), criada na primeira venda por ≈ 0,0015 SOL. Por isso o código **não expira com o tempo**, só quando outra venda usa o nonce. Cada aparelho remonta a transação a partir da blockchain e confere as assinaturas anteriores antes de assinar. Em Leilões, a administração também encerra leilões vencidos sem lance. Código em `src/solana/venda.ts`.
+- **Recebimentos** (indústria): os lotes em transporte para a indústria, com prazo de entrega (em vermelho se vencido). **Registrar recebimento** mostra o peso de saída e a faixa aceita sem disputa, que usa a tolerância fixada na venda e a mesma conta do programa. Se o peso digitado cair fora da faixa, a tela avisa antes de assinar, e o lote vai para disputa por divergência de peso. Com a balança da indústria pronta, a pesagem é assinada por ela (Ed25519) e o recebimento fica **atestado** (✓ na grade); sem balança, o peso fica como informado. O recibo digital passa para a carteira da indústria. A balança de teste é a mesma da cooperativa (`componentes/BalancaTeste.tsx`), gerada no navegador da indústria e cadastrada pela administração.
 - **Códigos entre aparelhos** (retirada e venda): cada código aparece como QR Code, com o botão **Copiar código**. Quem lê usa a câmera ou **cola o código**, o que permite fazer tudo num computador só, por exemplo numa apresentação com um perfil de navegador por papel (`componentes/CodigoAssinatura.tsx`).
 - **Trilha pública** (sem carteira): busca pelo nome de um participante (coletor, cooperativa, indústria, transportador), pela referência de um comprovante (o hash é recalculado no navegador) ou pelo endereço de um lote ou carteira, e mostra lote de origem → lote de venda → consumo pela indústria → crédito de carbono. Aceita `?q=` na URL para compartilhar o link. No RPC público da devnet, buscas grandes podem esbarrar no limite de requisições (429).
 - **Páginas:** o painel ainda é um esqueleto, e as demais operações abrem uma página provisória.
@@ -72,12 +73,12 @@ Sem depender da devnet (nem da carteira de administração):
 
 ```bash
 cd ../onchain && NO_DNA=1 anchor build        # os .so em target/deploy
-cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participantes de teste, materiais, balança, um lote vendido e um em leilão
+cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participantes de teste, materiais, balanças e três lotes de demonstração
 # em outro terminal, com o rpcUrl/wsUrl que o script mostrar:
 cd web && VITE_RPC_LOCALNET=<rpcUrl> VITE_WS_LOCALNET=<wsUrl> npm run dev
 ```
 
-Na interface, escolha a rede **Localnet**. O lote de venda #1 já está vendido à Indústria Demo, esperando a retirada, e o #2 está em leilão, esperando a venda. As chaves de teste de todos os papéis usados na interface (cooperativa, balança, coletor 1, transportador, indústria, operador e intermediador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
+Na interface, escolha a rede **Localnet**. Os lotes de venda de demonstração: #1 vendido (esperando a retirada), #2 em leilão (esperando a venda) e #3 em transporte (esperando o recebimento, com a balança da indústria já cadastrada). As chaves de teste de todos os papéis usados na interface (cooperativa e sua balança, coletor 1, transportador, indústria e sua balança, operador e intermediador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
 
 As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegador.
 

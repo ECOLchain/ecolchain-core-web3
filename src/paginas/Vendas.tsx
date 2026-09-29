@@ -1,7 +1,7 @@
-import { address, getAddressEncoder } from '@solana/kit';
-import { useClient, useRequest } from '@solana/react';
+import { address } from '@solana/kit';
+import { useClient } from '@solana/react';
 import { Ban, CircleCheck, Gavel, LoaderCircle, PenLine } from 'lucide-react';
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority } from '@clientes/pdas';
@@ -12,16 +12,14 @@ import { TituloPagina } from '../componentes/pagina';
 import { Botao, Campo, Resultado, Selecao } from '../componentes/ui';
 import { usePreferencias } from '../preferencias/Preferencias';
 import type { AppClient } from '../solana/cliente';
-import { type ContaDecodificada, listarContas } from '../solana/contas';
+import type { ContaDecodificada } from '../solana/contas';
 import { useCadastro } from '../solana/useCadastro';
-import { brl, gramasParaKg, reaisParaCentavos, useMateriais, useParticipantes, useTodosLotes } from '../solana/useDados';
+import { brl, gramasParaKg, reaisParaCentavos, useLotesDaIndustria, useMateriais, useParticipantes, useTodosLotes } from '../solana/useDados';
 import { useEnviar } from '../solana/useEnviar';
 import { assinarVenda, CodigoVendaInvalido, type Conferida, conferir, faltam, iniciarVenda, type PapelVenda } from '../solana/venda';
 import { rotuloParticipante, SoPapel } from './admin/comum';
 
 const SEM_CONTA = '11111111111111111111111111111111';
-/** `Lote.industria`: depois do `preco_minimo_centavos` (campos de tamanho fixo antes do `estado`). */
-const OFFSET_INDUSTRIA = 8 + 32 + 8 + 2 + 8 + 8 + 4 + 8 + 32 + 32 + 8;
 /** Enquanto o código está na tela, confere a cada 2 s se a venda já chegou à blockchain. */
 const INTERVALO_MS = 2000;
 
@@ -627,16 +625,8 @@ export function Compras() {
 
 function ConteudoCompras() {
     const { t } = useTranslation();
-    const client = useClient<AppClient>();
     const { carteira } = useCadastro();
-    const fonte = useCallback(
-        () =>
-            listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.LOTE_DISCRIMINATOR, lote.getLoteDecoder(), undefined, [
-                { offset: OFFSET_INDUSTRIA, bytes: getAddressEncoder().encode(address(carteira!)) as Uint8Array },
-            ]),
-        [client, carteira],
-    );
-    const lotes = useRequest(carteira ? fonte : null);
+    const lotes = useLotesDaIndustria(carteira ? address(carteira) : undefined);
     return (
         <TelaAssinatura
             papel="industria"

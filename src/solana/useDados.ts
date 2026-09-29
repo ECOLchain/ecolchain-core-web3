@@ -1,4 +1,4 @@
-import type { Address } from '@solana/kit';
+import { type Address, getAddressEncoder } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
 import { useCallback } from 'react';
 import * as lote from '@clientes/generated/ecol_lote';
@@ -92,4 +92,22 @@ export function reaisParaCentavos(texto: string): bigint | null {
     const n = Number(normal);
     if (!Number.isFinite(n) || n <= 0) return null;
     return BigInt(Math.round(n * 100));
+}
+
+/** `Lote.industria`: depois do `preco_minimo_centavos` (campos de tamanho fixo antes do `estado`). */
+const OFFSET_LOTE_INDUSTRIA = 8 + 32 + 8 + 2 + 8 + 8 + 4 + 8 + 32 + 32 + 8;
+
+/** Lotes comprados por uma indústria (mais recentes primeiro). */
+export function useLotesDaIndustria(industria: Address | undefined) {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        async () =>
+            (
+                await listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.LOTE_DISCRIMINATOR, lote.getLoteDecoder(), undefined, [
+                    { offset: OFFSET_LOTE_INDUSTRIA, bytes: getAddressEncoder().encode(industria!) as Uint8Array },
+                ])
+            ).sort((a, b) => Number(b.dados.atualizadoEm - a.dados.atualizadoEm)),
+        [client, industria],
+    );
+    return useRequest(industria ? fonte : null);
 }
