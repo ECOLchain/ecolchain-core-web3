@@ -228,7 +228,9 @@
     "PesagemDivergente": "A pesagem assinada pela balança não confere com os dados enviados.",
     "carteiraAlterou": "A carteira alterou a transação ao assinar, e a assinatura da cooperativa deixou de valer. Use a Solflare ou outra carteira que assine sem alterar.",
     "carteiraSemAssinatura": "Esta carteira não permite assinar sem enviar. Use a Solflare.",
-    "codigoExpirado": "O código expirou. Peça à cooperativa para gerar outro."
+    "codigoExpirado": "O código expirou. Peça à cooperativa para gerar outro.",
+    "carteiraOutroPapel": "A carteira conectada não é a deste papel nesta venda.",
+    "semNonce": "A administração ainda não preparou a conta de assinatura das vendas."
   },
   "cooperativa": {
     "soCooperativa": "Esta tela é só para carteiras de cooperativa.",
@@ -443,5 +445,69 @@
   "papelAtual": {
     "operando": "Operando como",
     "operandoComo": "Operando como {{papel}}"
+  },
+  "vendas": {
+    "precoMinimo": "Preço mínimo",
+    "prazoLeilao": "Fim do leilão",
+    "valor": "Valor da venda",
+    "anunciados": "Em leilão",
+    "vendidos": "Vendidos",
+    "selecione": "Selecione um lote em leilão",
+    "registrar": "Registrar venda",
+    "encerrarSemLance": "Encerrar sem lance",
+    "encerrado": "Leilão encerrado sem lance.",
+    "vazioLeiloes": "Nenhum lote em leilão.",
+    "vazioEscrow": "Nenhuma venda registrada ainda.",
+    "vazioCompras": "Nenhuma compra registrada com a sua carteira ainda.",
+    "passo1": "Lote da {{cooperativa}}. Preço mínimo: {{minimo}}. Informe o resultado do leilão; depois o intermediador e a indústria conferem e assinam.",
+    "semIndustrias": "Nenhuma indústria ativa cadastrada.",
+    "vencedora": "Indústria vencedora",
+    "escolherIndustria": "Escolha a indústria",
+    "valorLance": "Valor do lance vencedor (R$)",
+    "abaixoMinimo": "Abaixo do preço mínimo ({{minimo}}).",
+    "deposito": "Referência do depósito no escrow",
+    "depositoAjuda": "Informada pelo intermediador (ex.: id do Pix). Na blockchain fica só um código derivado.",
+    "ata": "Referência da apuração do leilão",
+    "ataAjuda": "Ex.: número da ata. Na blockchain fica só um código derivado.",
+    "assinarGerar": "Assinar e gerar código",
+    "passo2": "A administração já assinou. Agora o intermediador, em \"Escrow dos lotes\", e a indústria, em \"Compras\", leem este código (câmera ou copiar e colar) e assinam. O código não expira com o tempo.",
+    "qrTitulo": "Código da venda para as próximas assinaturas",
+    "aguardando": "Aguardando as assinaturas do intermediador e da indústria…",
+    "concluida": "Venda do lote #{{lote}} registrada: {{nome}}, {{valor}}. O lote aguarda a retirada.",
+    "aceitar": "Aceitar compra",
+    "assinarDeposito": "Assinar venda",
+    "confirmarCompra": "Assinar e confirmar compra",
+    "confirmarDeposito": "Assinar e confirmar depósito",
+    "lerCodigo": "Leia o código da venda, gerado pela administração em \"Leilões\" ou pelo intermediador.",
+    "aponte": "Aponte para o código da venda",
+    "conferindo": "Conferindo o código na blockchain…",
+    "assinaturas": "Assinaturas",
+    "efeitoIndustria": "Ao assinar, você compra o lote por este valor. O prazo de entrega começa a contar quando a venda for registrada.",
+    "efeitoIntermediador": "Ao assinar, você atesta que o valor está depositado no escrow com esta referência.",
+    "assinadoProximo": "Assinado. Falta: {{quem}}. Mostre este código (QR ou copiar e colar).",
+    "enviada": "Venda registrada na blockchain.",
+    "soIntermediador": "Esta tela é para a carteira do intermediador de pagamento.",
+    "soIndustria": "Esta tela é para carteiras cadastradas como indústria.",
+    "papel": {
+      "operador": "Administração",
+      "intermediador": "Intermediador",
+      "industria": "Indústria"
+    },
+    "codigo": {
+      "formato": "Este não é um código de venda da EcolChain.",
+      "assinaturaInvalida": "O código não confere com as assinaturas. Peça um novo código à administração.",
+      "vencido": "O código venceu: outra venda foi registrada depois dele. Peça um novo código à administração.",
+      "naoAnunciado": "Este lote não está mais em leilão.",
+      "jaAssinado": "A sua carteira já assinou este código. Passe-o para quem falta."
+    },
+    "assinou": "✓ {{papel}}",
+    "falta": "Falta: {{papel}}"
+  },
+  "codigo": {
+    "copiar": "Copiar código",
+    "copiado": "Código copiado",
+    "colar": "Ou cole o código copiado",
+    "usarColado": "Usar código colado",
+    "abrirCamera": "Abrir câmera"
   }
 }

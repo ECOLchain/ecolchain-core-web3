@@ -11,6 +11,7 @@ import { Lotes } from './paginas/cooperativa/Lotes';
 import { MinhaCarteira } from './paginas/MinhaCarteira';
 import { Painel } from './paginas/Painel';
 import { Retiradas } from './paginas/Retiradas';
+import { Compras, EscrowLotes, Leiloes } from './paginas/Vendas';
 import { Trilha } from './paginas/Trilha';
 import { PreferenciasProvider } from './preferencias/Preferencias';
 import { SolanaProvider } from './solana/SolanaProvider';
@@ -28,8 +29,11 @@ const router = createBrowserRouter([
             { path: '/meus-lotes', element: <MeusLotes /> },
             { path: '/minha-carteira', element: <MinhaCarteira /> },
             { path: '/retiradas', element: <Retiradas /> },
+            { path: '/leiloes', element: <Leiloes /> },
+            { path: '/escrow', element: <EscrowLotes /> },
+            { path: '/compras', element: <Compras /> },
             { path: '/explorar', element: <Trilha /> },
-            ...TODOS_OS_ITENS.filter((i) => !['/', '/explorar', '/participantes', '/balancas', '/materiais', '/coletas', '/lotes', '/meus-lotes', '/minha-carteira', '/retiradas'].includes(i.rota)).map((i) => ({
+            ...TODOS_OS_ITENS.filter((i) => !['/', '/explorar', '/participantes', '/balancas', '/materiais', '/coletas', '/lotes', '/meus-lotes', '/minha-carteira', '/retiradas', '/leiloes', '/escrow', '/compras'].includes(i.rota)).map((i) => ({
                 path: i.rota,
                 element: <Operacao item={i} />,
             })),

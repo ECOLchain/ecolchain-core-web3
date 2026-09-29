@@ -1,10 +1,10 @@
 import { type Address, address, getAddressEncoder, isAddress } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
 import { CircleCheck, LoaderCircle, QrCode, RefreshCw, ScanLine, Truck } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
+import { LerCodigo, MostrarCodigo } from '../componentes/CodigoAssinatura';
 import { Dialogo } from '../componentes/dialogo';
 import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, useGrade } from '../componentes/grade';
 import { LeitorQr } from '../componentes/LeitorQr';
@@ -351,17 +351,7 @@ function DialogoRetirada({
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Resultado erro={erro} sucesso="" />
                     <p className="text-sm text-texto">{t('retiradas.passo2', { nome: r.nome(transportador) })}</p>
-                    {/* Fundo branco também no tema escuro: leitores de QR esperam módulos escuros sobre claro. */}
-                    <div className={`rounded-2xl bg-white p-3 shadow-sm ring-1 ring-linha ${expirado ? 'opacity-25' : ''}`}>
-                        <QRCodeSVG
-                            value={preparada.codigo}
-                            size={320}
-                            level="L"
-                            marginSize={2}
-                            title={t('retiradas.qrTitulo')}
-                            className="block h-auto w-[min(20rem,70vw)]"
-                        />
-                    </div>
+                    <MostrarCodigo codigo={preparada.codigo} titulo={t('retiradas.qrTitulo')} apagado={expirado} />
                     {expirado ? (
                         <div className="flex flex-col items-center gap-2">
                             <p className="text-sm text-kraft">{t('retiradas.expirado')}</p>
@@ -526,7 +516,7 @@ function DialogoAssinarRetirada({
             {!lida || !dados ? (
                 <div className="flex flex-col gap-3">
                     <p className="text-sm text-texto-suave">{t('retiradas.aponte')}</p>
-                    <LeitorQr aoLer={(texto) => void lerQr(texto)} aoCancelar={aoFechar} instrucao={t('retiradas.aponteCamera')} />
+                    <LerCodigo aoLer={(texto) => void lerQr(texto)} instrucaoCamera={t('retiradas.aponteCamera')} />
                     {aviso && (
                         <p role="alert" className="text-sm text-perigo">
                             {aviso}

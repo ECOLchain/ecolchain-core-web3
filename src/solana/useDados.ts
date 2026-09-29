@@ -68,3 +68,28 @@ export function kgParaGramas(texto: string): bigint | null {
 
 export const gramasParaKg = (g: bigint, idioma: string) =>
     (Number(g) / 1000).toLocaleString(idioma, { maximumFractionDigits: 3 });
+
+/** Lotes de todas as cooperativas (telas da administração, do intermediador e da indústria). */
+export function useTodosLotes() {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        async () =>
+            (await listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.LOTE_DISCRIMINATOR, lote.getLoteDecoder())).sort((a, b) =>
+                Number(b.dados.atualizadoEm - a.dados.atualizadoEm),
+            ),
+        [client],
+    );
+    return useRequest(fonte);
+}
+
+export const brl = (centavos: bigint, idioma: string) =>
+    (Number(centavos) / 100).toLocaleString(idioma, { style: 'currency', currency: 'BRL' });
+
+/** Converte "1.250,50" ou "1250,5" (R$) em centavos; `null` se inválido ou não positivo. */
+export function reaisParaCentavos(texto: string): bigint | null {
+    const limpo = texto.trim().replace(/\s|R\$/g, '');
+    const normal = limpo.includes(',') ? limpo.replace(/\./g, '').replace(',', '.') : limpo;
+    const n = Number(normal);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return BigInt(Math.round(n * 100));
+}

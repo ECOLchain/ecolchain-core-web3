@@ -56,6 +56,13 @@ Outras carteiras compatíveis com o Wallet Standard aparecem no botão **Conecta
   4. A tela da cooperativa percebe a retirada sozinha. O lote vai para "Em transporte", e o recibo digital, para a carteira do transportador.
 
   O transportador vê na grade os lotes que retirou. Código em `src/solana/retirada.ts`.
+- **Venda** (administração, intermediador e indústria): `industria_accept_venda` exige as três assinaturas.
+  1. Em **Leilões**, a administração seleciona o lote anunciado e registra o resultado: indústria vencedora, valor (≥ preço mínimo), referência do depósito no escrow e da ata. Assina e mostra o código.
+  2. Em **Escrow dos lotes**, o intermediador lê o código, confere e assina.
+  3. Em **Compras**, a indústria lê, confere, assina e envia. A tela da administração percebe a venda sozinha.
+
+  A transação usa um **nonce durável**: uma conta de sistema derivada da carteira do operador (`createAccountWithSeed`, semente `ecolchain-venda`), criada na primeira venda por ≈ 0,0015 SOL. Por isso o código **não expira com o tempo**, só quando outra venda usa o nonce. Cada aparelho remonta a transação a partir da blockchain e confere as assinaturas anteriores antes de assinar. Em Leilões, a administração também encerra leilões vencidos sem lance. Código em `src/solana/venda.ts`.
+- **Códigos entre aparelhos** (retirada e venda): cada código aparece como QR Code, com o botão **Copiar código**. Quem lê usa a câmera ou **cola o código**, o que permite fazer tudo num computador só, por exemplo numa apresentação com um perfil de navegador por papel (`componentes/CodigoAssinatura.tsx`).
 - **Trilha pública** (sem carteira): busca pelo nome de um participante (coletor, cooperativa, indústria, transportador), pela referência de um comprovante (o hash é recalculado no navegador) ou pelo endereço de um lote ou carteira, e mostra lote de origem → lote de venda → consumo pela indústria → crédito de carbono. Aceita `?q=` na URL para compartilhar o link. No RPC público da devnet, buscas grandes podem esbarrar no limite de requisições (429).
 - **Páginas:** o painel ainda é um esqueleto, e as demais operações abrem uma página provisória.
 
@@ -65,12 +72,12 @@ Sem depender da devnet (nem da carteira de administração):
 
 ```bash
 cd ../onchain && NO_DNA=1 anchor build        # os .so em target/deploy
-cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participantes de teste, materiais, balança e um lote vendido
+cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participantes de teste, materiais, balança, um lote vendido e um em leilão
 # em outro terminal, com o rpcUrl/wsUrl que o script mostrar:
 cd web && VITE_RPC_LOCALNET=<rpcUrl> VITE_WS_LOCALNET=<wsUrl> npm run dev
 ```
 
-Na interface, escolha a rede **Localnet**. O lote de venda #1 já está vendido à Indústria Demo, esperando a retirada. As chaves de teste (cooperativa, balança, coletor 1 e transportador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
+Na interface, escolha a rede **Localnet**. O lote de venda #1 já está vendido à Indústria Demo, esperando a retirada, e o #2 está em leilão, esperando a venda. As chaves de teste de todos os papéis usados na interface (cooperativa, balança, coletor 1, transportador, indústria, operador e intermediador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
 
 As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegador.
 
@@ -89,7 +96,7 @@ As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegad
 |---|---|
 | `src/layout/` | `Shell` (header + menu + conteúdo), `Header`, `MenuLateral`, `Carteira`, `Controles` |
 | `src/navegacao/menu.ts` | itens do menu e quais papéis veem cada um |
-| `src/solana/` | redes, cliente Kit por rede, `useCadastro` (papéis da carteira), `retirada.ts` (assinatura em dois aparelhos) |
+| `src/solana/` | redes, cliente Kit por rede, `useCadastro` (papéis da carteira), `retirada.ts` e `venda.ts` (assinatura em vários aparelhos) |
 | `src/preferencias/` | tema, fonte, idioma e rede |
 | `src/i18n/` | traduções |
 | `src/paginas/` | páginas: `admin/`, `cooperativa/`, `coletor/`, `Trilha.tsx`, `MinhaCarteira.tsx` e as provisórias |

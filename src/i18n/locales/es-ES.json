@@ -228,7 +228,9 @@
     "PesagemDivergente": "La pesada firmada por la báscula no coincide con los datos enviados.",
     "carteiraAlterou": "La billetera modificó la transacción al firmar y la firma de la cooperativa dejó de valer. Use Solflare u otra billetera que firme sin modificar.",
     "carteiraSemAssinatura": "Esta billetera no permite firmar sin enviar. Use Solflare.",
-    "codigoExpirado": "El código expiró. Pida a la cooperativa que genere otro."
+    "codigoExpirado": "El código expiró. Pida a la cooperativa que genere otro.",
+    "carteiraOutroPapel": "La billetera conectada no es la de este rol en esta venta.",
+    "semNonce": "La administración aún no preparó la cuenta de firma de las ventas."
   },
   "cooperativa": {
     "soCooperativa": "Esta pantalla es solo para billeteras de cooperativa.",
@@ -443,5 +445,69 @@
   "papelAtual": {
     "operando": "Operando como",
     "operandoComo": "Operando como {{papel}}"
+  },
+  "vendas": {
+    "precoMinimo": "Precio mínimo",
+    "prazoLeilao": "Fin de la subasta",
+    "valor": "Valor de la venta",
+    "anunciados": "En subasta",
+    "vendidos": "Vendidos",
+    "selecione": "Seleccione un lote en subasta",
+    "registrar": "Registrar venta",
+    "encerrarSemLance": "Cerrar sin ofertas",
+    "encerrado": "Subasta cerrada sin ofertas.",
+    "vazioLeiloes": "Ningún lote en subasta.",
+    "vazioEscrow": "Aún no hay ventas registradas.",
+    "vazioCompras": "Aún no hay compras registradas con su billetera.",
+    "passo1": "Lote de {{cooperativa}}. Precio mínimo: {{minimo}}. Informe el resultado de la subasta; luego el intermediario y la industria revisan y firman.",
+    "semIndustrias": "No hay industrias activas registradas.",
+    "vencedora": "Industria ganadora",
+    "escolherIndustria": "Elija la industria",
+    "valorLance": "Oferta ganadora (R$)",
+    "abaixoMinimo": "Por debajo del precio mínimo ({{minimo}}).",
+    "deposito": "Referencia del depósito en escrow",
+    "depositoAjuda": "Informada por el intermediario (ej.: id del Pix). En la blockchain solo queda un código derivado.",
+    "ata": "Referencia del resultado de la subasta",
+    "ataAjuda": "Ej.: número del acta. En la blockchain solo queda un código derivado.",
+    "assinarGerar": "Firmar y generar código",
+    "passo2": "La administración ya firmó. Ahora el intermediario, en \"Escrow de los lotes\", y la industria, en \"Compras\", leen este código (cámara o copiar y pegar) y firman. El código no expira con el tiempo.",
+    "qrTitulo": "Código de la venta para las próximas firmas",
+    "aguardando": "Esperando las firmas del intermediario y de la industria…",
+    "concluida": "Venta del lote #{{lote}} registrada: {{nome}}, {{valor}}. El lote espera el retiro.",
+    "aceitar": "Aceptar compra",
+    "assinarDeposito": "Firmar venta",
+    "confirmarCompra": "Firmar y confirmar compra",
+    "confirmarDeposito": "Firmar y confirmar depósito",
+    "lerCodigo": "Lea el código de la venta, generado por la administración en \"Subastas\" o por el intermediario.",
+    "aponte": "Apunte al código de la venta",
+    "conferindo": "Verificando el código en la blockchain…",
+    "assinaturas": "Firmas",
+    "efeitoIndustria": "Al firmar, usted compra el lote por este valor. El plazo de entrega empieza cuando la venta se registra.",
+    "efeitoIntermediador": "Al firmar, usted certifica que el valor está depositado en escrow con esta referencia.",
+    "assinadoProximo": "Firmado. Falta: {{quem}}. Muestre este código (QR o copiar y pegar).",
+    "enviada": "Venta registrada en la blockchain.",
+    "soIntermediador": "Esta pantalla es para la billetera del intermediario de pago.",
+    "soIndustria": "Esta pantalla es para billeteras registradas como industria.",
+    "papel": {
+      "operador": "Administración",
+      "intermediador": "Intermediario",
+      "industria": "Industria"
+    },
+    "codigo": {
+      "formato": "Este no es un código de venta de EcolChain.",
+      "assinaturaInvalida": "El código no coincide con las firmas. Pida un nuevo código a la administración.",
+      "vencido": "El código venció: otra venta se registró después. Pida un nuevo código a la administración.",
+      "naoAnunciado": "Este lote ya no está en subasta.",
+      "jaAssinado": "Su billetera ya firmó este código. Páselo a quien falta."
+    },
+    "assinou": "✓ {{papel}}",
+    "falta": "Falta: {{papel}}"
+  },
+  "codigo": {
+    "copiar": "Copiar código",
+    "copiado": "Código copiado",
+    "colar": "O pegue el código copiado",
+    "usarColado": "Usar código pegado",
+    "abrirCamera": "Abrir cámara"
   }
 }
