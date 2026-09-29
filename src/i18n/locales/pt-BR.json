@@ -261,7 +261,13 @@
       "refRegistrada": "Referência registrada",
       "referencia": "Referência",
       "referenciaObrigatoria": "Nota, recibo ou CNPJ. Na blockchain fica só um código derivado. Guarde o texto: com ele o doador encontra o lote na trilha pública.",
-      "referenciaOpcional": "Opcional: ticket ou anotação interna. Na blockchain fica só um código derivado."
+      "referenciaOpcional": "Opcional: ticket ou anotação interna. Na blockchain fica só um código derivado.",
+      "lerQr": "Ler QR",
+      "qrLido": "Coletor identificado: {{nome}}.",
+      "qrInvalido": "Este QR Code não é de uma carteira. Peça ao coletor para abrir \"Minha carteira\" no app.",
+      "qrSemCadastro": "Esta carteira não está cadastrada. Peça à administração para cadastrá-la como coletor.",
+      "qrNaoColetor": "Esta carteira está cadastrada com outro papel, não como coletor.",
+      "qrInativo": "Este coletor está inativo. Peça à administração para reativá-lo."
     },
     "lotes": {
       "montar": "Montar lote",
@@ -380,5 +386,11 @@
     "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg",
     "qrTitulo": "Código QR da carteira do coletor",
     "qrAjuda": "Mostre este código à cooperativa na entrega ou na venda do material. Ela escaneia e o lote de origem fica registrado em seu nome. O código traz só o endereço da carteira, nenhum dado pessoal."
+  },
+  "leitorQr": {
+    "camera": "Imagem da câmera",
+    "aponte": "Aponte para o QR Code da tela \"Minha carteira\" do coletor",
+    "fechar": "Fechar câmera",
+    "semCamera": "Não foi possível abrir a câmera. Permita o acesso à câmera no navegador (a página precisa estar em https) ou escolha o coletor na lista."
   }
 }

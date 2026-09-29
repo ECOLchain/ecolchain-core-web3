@@ -261,7 +261,13 @@
       "refRegistrada": "Reference recorded",
       "referencia": "Reference",
       "referenciaObrigatoria": "Invoice, receipt or tax ID. Only a derived code goes on the blockchain. Keep the text: the donor uses it to find the lot in the public trail.",
-      "referenciaOpcional": "Optional: ticket or internal note. Only a derived code goes on the blockchain."
+      "referenciaOpcional": "Optional: ticket or internal note. Only a derived code goes on the blockchain.",
+      "lerQr": "Scan QR",
+      "qrLido": "Collector identified: {{nome}}.",
+      "qrInvalido": "This QR code is not a wallet. Ask the collector to open \"My wallet\" in the app.",
+      "qrSemCadastro": "This wallet is not registered. Ask the administration to register it as a collector.",
+      "qrNaoColetor": "This wallet is registered with another role, not as a collector.",
+      "qrInativo": "This collector is inactive. Ask the administration to reactivate it."
     },
     "lotes": {
       "montar": "Assemble batch",
@@ -380,5 +386,11 @@
     "resumo": "{{n}} source lot(s), totaling {{kg}} kg",
     "qrTitulo": "QR code of the collector wallet",
     "qrAjuda": "Show this code to the cooperative when you deliver or sell material. They scan it and the source lot is registered in your name. The code carries only the wallet address, no personal data."
+  },
+  "leitorQr": {
+    "camera": "Camera image",
+    "aponte": "Point at the QR code on the collector's \"My wallet\" screen",
+    "fechar": "Close camera",
+    "semCamera": "Could not open the camera. Allow camera access in the browser (the page must be on https) or pick the collector from the list."
   }
 }

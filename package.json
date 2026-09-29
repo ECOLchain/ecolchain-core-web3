@@ -20,6 +20,7 @@
     "@solana/program-client-core": "8.4.0",
     "@solana/react": "8.4.0",
     "i18next": "26.4.2",
+    "jsqr": "1.4.0",
     "lucide-react": "1.48.0",
     "qrcode.react": "4.2.0",
     "react": "19.3.0",

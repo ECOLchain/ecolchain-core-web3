@@ -1,6 +1,6 @@
-import { type Address, address } from '@solana/kit';
+import { type Address, address, isAddress } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
-import { Copy, Plus, Scale } from 'lucide-react';
+import { Copy, Plus, Scale, ScanLine } from 'lucide-react';
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { coletorRef, origemRef } from '@clientes/coletor';
@@ -8,6 +8,7 @@ import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { instrucaoPesagem, TipoPesagem } from '@clientes/pesagem';
 import { Dialogo } from '../../componentes/dialogo';
+import { LeitorQr } from '../../componentes/LeitorQr';
 import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, useGrade } from '../../componentes/grade';
 import { TituloPagina } from '../../componentes/pagina';
 import { Botao, Campo, Resultado, Selecao } from '../../componentes/ui';
@@ -290,6 +291,7 @@ function ConteudoColetas() {
             {popup === 'entrega' && (
                 <DialogoEntrega
                     coletores={coletores.filter((c) => c.dados.ativo)}
+                    participantes={participantes.data ?? []}
                     carregando={!participantes.data}
                     materiais={(materiais.data ?? []).filter((m) => m.dados.ativo)}
                     salvando={envio.isRunning}
@@ -341,6 +343,7 @@ function ConteudoColetas() {
 
 function DialogoEntrega({
     coletores,
+    participantes,
     carregando,
     materiais,
     salvando,
@@ -349,6 +352,8 @@ function DialogoEntrega({
     aoSalvar,
 }: {
     coletores: ContaDecodificada<lote.Participante>[];
+    /** Todos os cadastros, para explicar por que um QR lido não serve (outro papel, inativo). */
+    participantes: ContaDecodificada<lote.Participante>[];
     carregando: boolean;
     materiais: ContaDecodificada<lote.Material>[];
     salvando: boolean;
@@ -359,6 +364,8 @@ function DialogoEntrega({
     const { t } = useTranslation();
     const [origem, setOrigem] = useState<lote.OrigemEntrega>(lote.OrigemEntrega.Coletor);
     const [coletor, setColetor] = useState('');
+    const [lendoQr, setLendoQr] = useState(false);
+    const [avisoQr, setAvisoQr] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
     const [referencia, setReferencia] = useState('');
     const [material, setMaterial] = useState('');
     const [peso, setPeso] = useState('');
@@ -370,6 +377,22 @@ function DialogoEntrega({
         () => [...coletores].sort((a, b) => rotuloParticipante(a.dados).localeCompare(rotuloParticipante(b.dados))),
         [coletores],
     );
+
+    /** QR da tela "Minha carteira" do coletor: só o endereço. Seleciona o coletor se ele puder entregar. */
+    const lerQr = (texto: string) => {
+        setLendoQr(false);
+        const erroQr = (chave: string) => setAvisoQr({ tipo: 'erro', texto: t(chave) });
+        if (!isAddress(texto)) return erroQr('cooperativa.coletas.qrInvalido');
+        const achado = coletores.find((c) => c.dados.carteira === texto);
+        if (achado) {
+            setColetor(achado.dados.carteira);
+            return setAvisoQr({ tipo: 'ok', texto: t('cooperativa.coletas.qrLido', { nome: rotuloParticipante(achado.dados) }) });
+        }
+        const cadastro = participantes.find((p) => p.dados.carteira === texto);
+        if (!cadastro) return erroQr('cooperativa.coletas.qrSemCadastro');
+        if (cadastro.dados.papel !== lote.Papel.Coletor) return erroQr('cooperativa.coletas.qrNaoColetor');
+        return erroQr('cooperativa.coletas.qrInativo');
+    };
 
     const enviar = (e: FormEvent) => {
         e.preventDefault();
@@ -403,16 +426,46 @@ function DialogoEntrega({
                     !carregando && coletores.length === 0 ? (
                         <p className="text-sm text-kraft">{t('cooperativa.coletas.semColetores')}</p>
                     ) : (
-                        <Selecao rotulo={t('papel.coletor')} required value={coletor} onChange={(e) => setColetor(e.target.value)}>
-                            <option value="" disabled>
-                                {t('cooperativa.coletas.escolherColetor')}
-                            </option>
-                            {ordenados.map((c) => (
-                                <option key={c.endereco} value={c.dados.carteira}>
-                                    {rotuloParticipante(c.dados)}
-                                </option>
-                            ))}
-                        </Selecao>
+                        <div className="flex flex-col gap-2">
+                            <div className="grid grid-cols-[1fr_auto] items-end gap-2">
+                                <Selecao
+                                    rotulo={t('papel.coletor')}
+                                    required
+                                    value={coletor}
+                                    onChange={(e) => {
+                                        setColetor(e.target.value);
+                                        setAvisoQr(null);
+                                    }}
+                                >
+                                    <option value="" disabled>
+                                        {t('cooperativa.coletas.escolherColetor')}
+                                    </option>
+                                    {ordenados.map((c) => (
+                                        <option key={c.endereco} value={c.dados.carteira}>
+                                            {rotuloParticipante(c.dados)}
+                                        </option>
+                                    ))}
+                                </Selecao>
+                                <Botao
+                                    type="button"
+                                    variante="secundario"
+                                    className="h-10"
+                                    aria-pressed={lendoQr}
+                                    onClick={() => {
+                                        setAvisoQr(null);
+                                        setLendoQr((v) => !v);
+                                    }}
+                                >
+                                    <ScanLine className="size-4" /> {t('cooperativa.coletas.lerQr')}
+                                </Botao>
+                            </div>
+                            {lendoQr && <LeitorQr aoLer={lerQr} aoCancelar={() => setLendoQr(false)} />}
+                            {avisoQr && (
+                                <p role="status" className={`text-sm ${avisoQr.tipo === 'ok' ? 'text-acento' : 'text-perigo'}`}>
+                                    {avisoQr.texto}
+                                </p>
+                            )}
+                        </div>
                     )
                 ) : (
                     <Campo

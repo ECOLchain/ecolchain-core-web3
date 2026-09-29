@@ -261,7 +261,13 @@
       "refRegistrada": "Referencia registrada",
       "referencia": "Referencia",
       "referenciaObrigatoria": "Factura, recibo o CUIT/NIF. En la blockchain solo queda un código derivado. Guarde el texto: con él el donante encuentra el lote en la trazabilidad pública.",
-      "referenciaOpcional": "Opcional: ticket o nota interna. En la blockchain solo queda un código derivado."
+      "referenciaOpcional": "Opcional: ticket o nota interna. En la blockchain solo queda un código derivado.",
+      "lerQr": "Leer QR",
+      "qrLido": "Recolector identificado: {{nome}}.",
+      "qrInvalido": "Este código QR no es de una billetera. Pida al recolector que abra \"Mi billetera\" en la app.",
+      "qrSemCadastro": "Esta billetera no está registrada. Pida a la administración que la registre como recolector.",
+      "qrNaoColetor": "Esta billetera está registrada con otro rol, no como recolector.",
+      "qrInativo": "Este recolector está inactivo. Pida a la administración que lo reactive."
     },
     "lotes": {
       "montar": "Armar lote",
@@ -380,5 +386,11 @@
     "resumo": "{{n}} lote(s) de origen, que suman {{kg}} kg",
     "qrTitulo": "Código QR de la billetera del recolector",
     "qrAjuda": "Muestre este código a la cooperativa al entregar o vender el material. Ella lo escanea y el lote de origen queda registrado a su nombre. El código lleva solo la dirección de la billetera, ningún dato personal."
+  },
+  "leitorQr": {
+    "camera": "Imagen de la cámara",
+    "aponte": "Apunte al código QR de la pantalla \"Mi billetera\" del recolector",
+    "fechar": "Cerrar cámara",
+    "semCamera": "No fue posible abrir la cámara. Permita el acceso a la cámara en el navegador (la página debe estar en https) o elija el recolector en la lista."
   }
 }
