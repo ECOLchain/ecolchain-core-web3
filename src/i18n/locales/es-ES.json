@@ -39,7 +39,8 @@
     "resgates": "Canjes de cupones",
     "arbitragem": "Arbitraje",
     "materiais": "Materiales",
-    "coletas": "Lotes de origen"
+    "coletas": "Lotes de origen",
+    "meusLotes": "Mis lotes"
   },
   "descricoes": {
     "painel": "Resumen de tu operación.",
@@ -66,7 +67,8 @@
     "resgates": "Registra los canjes de derechos en cupones.",
     "arbitragem": "Resuelve disputas de lotes.",
     "materiais": "Registra los tipos de material aceptados en los lotes.",
-    "coletas": "Pese y registre el material que llega: de recolectores, clasificación propia, donaciones, compras o recicladores sin registro."
+    "coletas": "Pese y registre el material que llega: de recolectores, clasificación propia, donaciones, compras o recicladores sin registro.",
+    "meusLotes": "Los lotes de origen que usted entregó, en cualquier cooperativa, y el camino de cada uno hasta la industria."
   },
   "papel": {
     "coletor": "Recolector",
@@ -367,5 +369,12 @@
     "Aposentado": "Retirado",
     "Rejeitado": "Rechazado",
     "Abandonado": "Abandonado"
+  },
+  "coletor": {
+    "soColetor": "Esta pantalla es para billeteras registradas como recolector.",
+    "aguardando": "Esperando lote de venta",
+    "trilha": "Trazabilidad",
+    "vazio": "Aún no hay lotes de origen registrados con su billetera.",
+    "resumo": "{{n}} lote(s) de origen, que suman {{kg}} kg"
   }
 }

@@ -39,7 +39,8 @@
     "resgates": "Resgates de cupons",
     "arbitragem": "Arbitragem",
     "materiais": "Materiais",
-    "coletas": "Lotes de origem"
+    "coletas": "Lotes de origem",
+    "meusLotes": "Meus lotes"
   },
   "descricoes": {
     "painel": "Resumo da sua operação.",
@@ -66,7 +67,8 @@
     "resgates": "Registre os resgates de direitos em cupons.",
     "arbitragem": "Julgue disputas de lotes.",
     "materiais": "Cadastre os tipos de material aceitos nos lotes.",
-    "coletas": "Pese e registre o material que chega: de coletores, triagem própria, doações, compras ou catadores avulsos."
+    "coletas": "Pese e registre o material que chega: de coletores, triagem própria, doações, compras ou catadores avulsos.",
+    "meusLotes": "Os lotes de origem que você entregou, em qualquer cooperativa, e o caminho de cada um até a indústria."
   },
   "papel": {
     "coletor": "Coletor",
@@ -367,5 +369,12 @@
     "Aposentado": "Aposentado",
     "Rejeitado": "Rejeitado",
     "Abandonado": "Abandonado"
+  },
+  "coletor": {
+    "soColetor": "Esta tela é para carteiras cadastradas como coletor.",
+    "aguardando": "Aguardando lote de venda",
+    "trilha": "Trilha",
+    "vazio": "Nenhum lote de origem registrado com a sua carteira ainda.",
+    "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg"
   }
 }

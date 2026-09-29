@@ -160,12 +160,15 @@ export function Grade<T>({
     vazio,
     carregando,
     onAbrir,
+    larguraMinima = 'min-w-[40rem]',
 }: {
     grade: EstadoGrade<T>;
     vazio: string;
     carregando?: boolean;
     /** Enter na linha focada abre o registro (ex.: o popup de edição). */
     onAbrir?: (linha: T) => void;
+    /** Abaixo dela a tabela rola na horizontal (grades com muitas colunas pedem mais). */
+    larguraMinima?: string;
 }) {
     const { t } = useTranslation();
     const { colunas, visiveis, selecionada, chave, ordem } = grade;
@@ -190,7 +193,7 @@ export function Grade<T>({
         <>
             <div className="overflow-hidden rounded-lg border border-linha">
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[40rem] table-fixed border-collapse text-left text-sm">
+                    <table className={`w-full ${larguraMinima} table-fixed border-collapse text-left text-sm`}>
                         <thead className="bg-barra text-barra-texto">
                             <tr>
                                 {colunas.map((c) => {

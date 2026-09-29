@@ -39,7 +39,8 @@
     "resgates": "Coupon redemptions",
     "arbitragem": "Arbitration",
     "materiais": "Materials",
-    "coletas": "Source lots"
+    "coletas": "Source lots",
+    "meusLotes": "My lots"
   },
   "descricoes": {
     "painel": "Summary of your operation.",
@@ -66,7 +67,8 @@
     "resgates": "Record entitlement redemptions in coupons.",
     "arbitragem": "Rule on batch disputes.",
     "materiais": "Register the material types accepted in batches.",
-    "coletas": "Weigh and record incoming material: from collectors, in-house sorting, donations, purchases or unregistered pickers."
+    "coletas": "Weigh and record incoming material: from collectors, in-house sorting, donations, purchases or unregistered pickers.",
+    "meusLotes": "The source lots you delivered, at any cooperative, and the path of each one to the industry."
   },
   "papel": {
     "coletor": "Collector",
@@ -367,5 +369,12 @@
     "Aposentado": "Retired",
     "Rejeitado": "Rejected",
     "Abandonado": "Abandoned"
+  },
+  "coletor": {
+    "soColetor": "This screen is for wallets registered as collectors.",
+    "aguardando": "Waiting for a sale lot",
+    "trilha": "Trail",
+    "vazio": "No source lot registered with your wallet yet.",
+    "resumo": "{{n}} source lot(s), totaling {{kg}} kg"
   }
 }
