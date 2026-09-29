@@ -1,8 +1,9 @@
 import { address } from '@solana/kit';
 import { useClient } from '@solana/react';
-import { Ban, CircleCheck, Gavel, LoaderCircle, PenLine } from 'lucide-react';
+import { Ban, CircleCheck, Gavel, HandCoins, LoaderCircle, PenLine } from 'lucide-react';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { normalizarReferencia } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority } from '@clientes/pdas';
 import { LerCodigo, MostrarCodigo } from '../componentes/CodigoAssinatura';
@@ -594,18 +595,255 @@ export function EscrowLotes() {
     );
 }
 
+/** Situações do escrow: retido até o recebimento, aguardando liberação, liberado ou devolvido. */
+type FiltroEscrow = 'aguardando' | 'retido' | 'liberados' | 'todos';
+const RETIDO = ['Vendido', 'EmTransporte', 'Recebido', 'EmDisputa'];
+const LIBERADO = ['Reciclado', 'Agregado'];
+const DOMINIO_LIBERACAO = 'ECOLCHAIN:LIBERACAO:v1';
+
 function ConteudoEscrow() {
     const { t } = useTranslation();
+    const client = useClient<AppClient>();
     const lotes = useTodosLotes();
+    const r = useRotulos();
+    const envio = useEnviar();
+    const [filtro, setFiltro] = useState<FiltroEscrow>('aguardando');
+    const [popup, setPopup] = useState<{ tipo: 'venda' } | { tipo: 'liberar'; linha: Linha } | null>(null);
+    const [resultadoVenda, setResultadoVenda] = useState<{ enviada: string } | { codigo: string } | null>(null);
+    const [sucesso, setSucesso] = useState('');
+
     const linhas = useMemo(() => (lotes.data ?? []).filter((l) => l.dados.industria !== SEM_CONTA), [lotes.data]);
+    const colunas = useMemo<Coluna<Linha>[]>(
+        () => [
+            ...colunasBase(t, r),
+            { id: 'industria', titulo: t('trilha.industria'), valor: (l) => r.nome(l.dados.industria), busca: (l) => l.dados.industria },
+            { id: 'valor', titulo: t('vendas.valor'), valor: (l) => l.dados.valorCentavos, celula: (l) => r.reais(l.dados.valorCentavos), numerica: true, largura: 'w-32' },
+            {
+                id: 'recebido',
+                titulo: t('recebimentos.pesoRecebido'),
+                largura: 'w-28',
+                numerica: true,
+                valor: (l) => l.dados.pesoRecebidoG,
+                celula: (l) =>
+                    l.dados.pesoRecebidoG > 0n ? (
+                        <span title={t(l.dados.recebimentoAtestado ? 'recebimentos.atestado' : 'recebimentos.informado')}>
+                            {r.kg(l.dados.pesoRecebidoG)}
+                            {l.dados.recebimentoAtestado && <span className="ml-1 text-acento">✓</span>}
+                        </span>
+                    ) : (
+                        '—'
+                    ),
+            },
+            {
+                id: 'escrow',
+                titulo: t('escrow.coluna'),
+                largura: 'w-44',
+                valor: (l) => escrowDe(l.dados),
+                celula: (l) => {
+                    const e = escrowDe(l.dados);
+                    const cor = e === 'aguardando' ? 'bg-kraft/15 text-kraft' : e === 'liberado' ? 'bg-acento-suave text-acento' : 'bg-superficie-2 text-texto-suave';
+                    return <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${cor}`}>{t(`escrow.situacao.${e}`)}</span>;
+                },
+            },
+        ],
+        [t, r],
+    );
+    const filtrar = useMemo(
+        () => (l: Linha) => {
+            const k = l.dados.estado.__kind;
+            if (filtro === 'aguardando') return k === 'Recebido';
+            if (filtro === 'retido') return RETIDO.includes(k);
+            if (filtro === 'liberados') return LIBERADO.includes(k);
+            return true;
+        },
+        [filtro],
+    );
+    const grade = useGrade(lotes.data ? linhas : undefined, colunas, { chave: (l) => l.endereco, ordem: { id: 'id', desc: true }, filtro: filtrar });
+    const sel = grade.selecionada;
+    const podeLiberar = sel?.dados.estado.__kind === 'Recebido';
+
+    const liberar = async (linha: Linha, referencia: string) => {
+        const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(DOMINIO_LIBERACAO + normalizarReferencia(referencia))));
+        try {
+            await envio.dispatchAsync([
+                await lote.getIntermediadorConfirmLiberacaoInstructionAsync({
+                    intermediador: client.payer,
+                    lote: linha.endereco,
+                    eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
+                    program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
+                    liberacaoRefHash: hash,
+                }),
+            ]);
+            setSucesso(t('escrow.liberado', { lote: linha.dados.loteId, valor: r.reais(linha.dados.valorCentavos), nome: r.nome(linha.dados.cooperativa) }));
+            setPopup(null);
+            lotes.refresh();
+        } catch {
+            // o erro fica em envio.error
+        }
+    };
+
     return (
-        <TelaAssinatura
-            papel="intermediador"
-            linhas={lotes.data ? linhas : undefined}
-            carregando={lotes.status === 'fetching' && !lotes.data}
-            recarregar={lotes.refresh}
-            vazio={t('vendas.vazioEscrow')}
-        />
+        <div className="flex flex-col gap-4">
+            {!popup && resultadoVenda && 'enviada' in resultadoVenda && <Resultado assinatura={resultadoVenda.enviada} sucesso={t('vendas.enviada')} />}
+            {!popup && !resultadoVenda && <Resultado assinatura={envio.data} erro={envio.error} sucesso={sucesso} />}
+            <CartaoGrade
+                barra={
+                    <>
+                        <CampoBusca grade={grade} rotulo={t('grade.buscar')} />
+                        <FiltroGrade
+                            rotulo={t('escrow.coluna')}
+                            valor={filtro}
+                            onChange={(v) => {
+                                setFiltro(v as FiltroEscrow);
+                                grade.reiniciar();
+                            }}
+                            opcoes={[
+                                { valor: 'aguardando', texto: t('escrow.situacao.aguardando') },
+                                { valor: 'retido', texto: t('escrow.filtroRetido') },
+                                { valor: 'liberados', texto: t('escrow.filtroLiberados') },
+                                { valor: 'todos', texto: t('grade.todasSituacoes') },
+                            ]}
+                        />
+                        <AcoesGrade>
+                            <Botao
+                                compacto
+                                variante="secundario"
+                                onClick={() => {
+                                    setResultadoVenda(null);
+                                    setPopup({ tipo: 'venda' });
+                                }}
+                            >
+                                <PenLine className="size-4" /> {t('vendas.assinarDeposito')}
+                            </Botao>
+                            <Botao
+                                compacto
+                                disabled={!podeLiberar}
+                                title={podeLiberar ? undefined : t('escrow.selecione')}
+                                onClick={() => {
+                                    envio.reset();
+                                    setResultadoVenda(null);
+                                    if (sel) setPopup({ tipo: 'liberar', linha: sel });
+                                }}
+                            >
+                                <HandCoins className="size-4" /> {t('escrow.liberar')}
+                            </Botao>
+                        </AcoesGrade>
+                    </>
+                }
+            >
+                <Grade
+                    grade={grade}
+                    larguraMinima="min-w-[66rem]"
+                    vazio={t(filtro === 'aguardando' ? 'escrow.vazioAguardando' : 'vendas.vazioEscrow')}
+                    carregando={lotes.status === 'fetching' && !lotes.data}
+                    onAbrir={(l) => l.dados.estado.__kind === 'Recebido' && setPopup({ tipo: 'liberar', linha: l })}
+                />
+            </CartaoGrade>
+
+            {popup?.tipo === 'venda' && (
+                <DialogoAssinarVenda
+                    papel="intermediador"
+                    rotulos={r}
+                    aoFechar={() => setPopup(null)}
+                    aoConcluir={(res) => {
+                        setResultadoVenda(res);
+                        setPopup(null);
+                        lotes.refresh();
+                    }}
+                />
+            )}
+            {popup?.tipo === 'liberar' && (
+                <DialogoLiberacao
+                    linha={popup.linha}
+                    rotulos={r}
+                    salvando={envio.isRunning}
+                    erro={envio.error}
+                    aoFechar={() => setPopup(null)}
+                    aoSalvar={(ref) => void liberar(popup.linha, ref)}
+                />
+            )}
+        </div>
+    );
+}
+
+/** Onde está o dinheiro do lote, do ponto de vista do intermediador. */
+function escrowDe(l: lote.Lote): 'retido' | 'aguardando' | 'liberado' | 'devolvido' | 'emDisputa' {
+    const k = l.estado.__kind;
+    if (k === 'Recebido') return 'aguardando';
+    if (k === 'EmDisputa') return 'emDisputa';
+    if (LIBERADO.includes(k)) return 'liberado';
+    if (k === 'Reembolsado') return 'devolvido';
+    return 'retido';
+}
+
+/** Confere o recebimento e registra a referência do repasse à cooperativa. */
+function DialogoLiberacao({
+    linha,
+    rotulos: r,
+    salvando,
+    erro,
+    aoFechar,
+    aoSalvar,
+}: {
+    linha: Linha;
+    rotulos: Rotulos;
+    salvando: boolean;
+    erro: unknown;
+    aoFechar: () => void;
+    aoSalvar: (referencia: string) => void;
+}) {
+    const { t } = useTranslation();
+    const [referencia, setReferencia] = useState('');
+    const d = linha.dados;
+    return (
+        <Dialogo
+            titulo={t('escrow.liberar')}
+            subtitulo={t('retiradas.resumo', { lote: d.loteId, material: r.material(d.material), kg: r.kg(d.pesoG) })}
+            formId="form-liberacao"
+            salvando={salvando}
+            podeSalvar={referencia.trim() !== ''}
+            rotuloSalvar={t('escrow.confirmar')}
+            iconeSalvar={HandCoins}
+            aoFechar={aoFechar}
+        >
+            <form
+                id="form-liberacao"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    if (referencia.trim()) aoSalvar(referencia.trim());
+                }}
+                className="flex flex-col gap-4"
+            >
+                <Resultado erro={erro} sucesso="" />
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-lg border border-linha p-3 text-sm">
+                    <dt className="text-texto-suave">{t('escrow.recebedor')}</dt>
+                    <dd className="text-texto">{r.nome(d.cooperativa)}</dd>
+                    <dt className="text-texto-suave">{t('escrow.pagador')}</dt>
+                    <dd className="text-texto">{r.nome(d.industria)}</dd>
+                    <dt className="text-texto-suave">{t('vendas.valor')}</dt>
+                    <dd className="font-semibold text-texto tabular-nums">{r.reais(d.valorCentavos)}</dd>
+                    <dt className="text-texto-suave">{t('recebimentos.pesoSaida')}</dt>
+                    <dd className="text-texto tabular-nums">{t('trilha.peso', { kg: r.kg(d.pesoG) })}</dd>
+                    <dt className="text-texto-suave">{t('recebimentos.pesoRecebido')}</dt>
+                    <dd className="text-texto tabular-nums">
+                        {t('trilha.peso', { kg: r.kg(d.pesoRecebidoG) })}{' '}
+                        <span className={d.recebimentoAtestado ? 'text-acento' : 'text-kraft'}>
+                            ({t(d.recebimentoAtestado ? 'recebimentos.atestado' : 'recebimentos.informado')})
+                        </span>
+                    </dd>
+                </dl>
+                <Campo
+                    rotulo={t('escrow.referencia')}
+                    required
+                    autoFocus
+                    autoComplete="off"
+                    value={referencia}
+                    onChange={(e) => setReferencia(e.target.value)}
+                    ajuda={t('escrow.referenciaAjuda')}
+                />
+                <p className="text-sm text-texto-suave">{t('escrow.efeito')}</p>
+            </form>
+        </Dialogo>
     );
 }
 

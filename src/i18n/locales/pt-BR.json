@@ -535,5 +535,27 @@
     "emDisputa": "Recebimento do lote #{{lote}} registrado com divergência de peso: o lote está em disputa.",
     "atestado": "Peso atestado pela balança",
     "informado": "Peso informado, sem balança"
+  },
+  "escrow": {
+    "coluna": "Escrow",
+    "situacao": {
+      "retido": "Retido",
+      "aguardando": "Aguardando liberação",
+      "liberado": "Liberado à cooperativa",
+      "devolvido": "Devolvido à indústria",
+      "emDisputa": "Retido (em disputa)"
+    },
+    "filtroRetido": "Retidos",
+    "filtroLiberados": "Liberados",
+    "selecione": "Selecione um lote recebido pela indústria",
+    "liberar": "Liberar pagamento",
+    "vazioAguardando": "Nenhum lote recebido aguardando liberação.",
+    "recebedor": "Recebe (cooperativa)",
+    "pagador": "Pagou (indústria)",
+    "referencia": "Referência do repasse à cooperativa",
+    "referenciaAjuda": "Ex.: id do Pix enviado. Na blockchain fica só um código derivado dela.",
+    "efeito": "Ao assinar, você atesta que repassou o valor retido à cooperativa. O lote passa a Reciclado e pode entrar num crédito de carbono.",
+    "confirmar": "Assinar e liberar",
+    "liberado": "Pagamento do lote #{{lote}} liberado: {{valor}} para {{nome}}. O lote está Reciclado."
   }
 }

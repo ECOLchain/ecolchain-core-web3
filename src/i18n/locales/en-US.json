@@ -535,5 +535,27 @@
     "emDisputa": "Receipt of lot #{{lote}} registered with weight divergence: the lot is in dispute.",
     "atestado": "Weight attested by the scale",
     "informado": "Weight informed, without scale"
+  },
+  "escrow": {
+    "coluna": "Escrow",
+    "situacao": {
+      "retido": "Held",
+      "aguardando": "Waiting for release",
+      "liberado": "Released to the cooperative",
+      "devolvido": "Refunded to the industry",
+      "emDisputa": "Held (in dispute)"
+    },
+    "filtroRetido": "Held",
+    "filtroLiberados": "Released",
+    "selecione": "Select a lot received by the industry",
+    "liberar": "Release payment",
+    "vazioAguardando": "No received lot waiting for release.",
+    "recebedor": "Receives (cooperative)",
+    "pagador": "Paid (industry)",
+    "referencia": "Reference of the transfer to the cooperative",
+    "referenciaAjuda": "E.g. id of the Pix sent. Only a derived code goes on the blockchain.",
+    "efeito": "By signing, you attest that you transferred the held amount to the cooperative. The lot becomes Recycled and can join a carbon credit.",
+    "confirmar": "Sign and release",
+    "liberado": "Payment of lot #{{lote}} released: {{valor}} to {{nome}}. The lot is Recycled."
   }
 }
