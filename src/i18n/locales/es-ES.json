@@ -439,5 +439,9 @@
     },
     "aponteTransportador": "Apunte al código QR de la pantalla \"Mi billetera\" del transportista",
     "aponteCamera": "Apunte al código en la pantalla de la cooperativa"
+  },
+  "papelAtual": {
+    "operando": "Operando como",
+    "operandoComo": "Operando como {{papel}}"
   }
 }

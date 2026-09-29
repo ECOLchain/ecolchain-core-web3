@@ -439,5 +439,9 @@
     },
     "aponteTransportador": "Point at the QR code on the carrier's \"My wallet\" screen",
     "aponteCamera": "Point at the code on the cooperative's screen"
+  },
+  "papelAtual": {
+    "operando": "Operating as",
+    "operandoComo": "Operating as {{papel}}"
   }
 }

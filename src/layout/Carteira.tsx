@@ -131,10 +131,10 @@ function Conectada({ client }: { client: AppClient }) {
                 className="flex h-11 items-center gap-2.5 rounded-lg border border-linha bg-superficie py-1 pr-2 pl-1.5 text-left transition-colors hover:border-texto-suave"
             >
                 <img src={conectada.wallet.icon} alt={conectada.wallet.name} className="size-8 rounded-md" />
-                <span className="flex min-w-0 flex-col leading-tight">
+                {/* Celular: só o ícone, para o selo do papel caber; o endereço fica no menu da carteira. */}
+                <span className="hidden min-w-0 flex-col leading-tight sm:flex">
                     <span className="text-sm font-semibold whitespace-nowrap text-texto tabular-nums">
                         {abreviar(endereco)}
-                        <span className="hidden font-normal text-texto-suave sm:inline"> · {papel}</span>
                     </span>
                     <span className="flex items-center gap-1.5 text-xs whitespace-nowrap text-kraft">
                         <span className="size-1.5 rounded-full bg-kraft" aria-hidden="true" />

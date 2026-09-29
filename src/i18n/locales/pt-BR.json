@@ -439,5 +439,9 @@
     },
     "aponteTransportador": "Aponte para o QR Code da tela \"Minha carteira\" do transportador",
     "aponteCamera": "Aponte para o código na tela da cooperativa"
+  },
+  "papelAtual": {
+    "operando": "Operando como",
+    "operandoComo": "Operando como {{papel}}"
   }
 }

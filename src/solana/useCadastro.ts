@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { fetchMaybeCreditoConfig } from '@clientes/generated/ecol_credito';
 import { fetchMaybeGlobalConfig, fetchMaybeParticipante, Papel } from '@clientes/generated/ecol_lote';
 import { fetchMaybeReparticaoConfig } from '@clientes/generated/ecol_reparticao';
+import { lerNomeFixo } from '@clientes/nome';
 import { credito, lote, reparticao } from '@clientes/pdas';
 import type { AppClient } from './cliente';
 
@@ -24,6 +25,8 @@ export type Cadastro = {
     papeis: PapelUsuario[];
     /** Participante cadastrado, mas desativado pelo operador. */
     inativo: boolean;
+    /** Nome do cadastro de participante (vazio nos papéis de config e em cadastros sem nome). */
+    nome: string;
 };
 
 const PAPEL_PARTICIPANTE: Record<Papel, PapelUsuario> = {
@@ -63,7 +66,7 @@ async function buscarCadastro(client: AppClient, carteira: Address): Promise<Cad
         if (repConfig.data.intermediador === carteira) papeis.add('intermediador');
         if (repConfig.data.zupy === carteira) papeis.add('zupy');
     }
-    return { papeis: [...papeis], inativo };
+    return { papeis: [...papeis], inativo, nome: participante.exists ? lerNomeFixo(participante.data.nome) : '' };
 }
 
 /**

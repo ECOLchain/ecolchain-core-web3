@@ -27,6 +27,16 @@
     --cor-moldura: #dde3db;
     --cor-linha-alt: #f2f5f0;
     --cor-linha-sel: #dcebe5;
+
+    /* Papel de quem está operando (selo e faixa do header): uma cor por papel, legível de longe. */
+    --papel-texto: #ffffff;
+    --papel-coletor: #95561a;
+    --papel-cooperativa: #1f6b5c;
+    --papel-transportador: #2c5d99;
+    --papel-industria: #6a4a94;
+    --papel-operador: #37474f;
+    --papel-outros: #7a5a2e;
+    --papel-nenhum: #5f6b64;
 }
 
 :root.dark {
@@ -47,6 +57,15 @@
     --cor-moldura: #0c110f;
     --cor-linha-alt: #1c2521;
     --cor-linha-sel: #1f3b34;
+
+    --papel-texto: #0f1512;
+    --papel-coletor: #e3a655;
+    --papel-cooperativa: #5cc2a8;
+    --papel-transportador: #7aa9e6;
+    --papel-industria: #b096dc;
+    --papel-operador: #a9bcc6;
+    --papel-outros: #d0a56a;
+    --papel-nenhum: #9aa7a0;
 }
 
 @theme inline {

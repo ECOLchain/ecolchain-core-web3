@@ -34,7 +34,7 @@ Outras carteiras compatíveis com o Wallet Standard aparecem no botão **Conecta
 
 ## O que já existe
 
-- **Header fixo:** logo à esquerda; à direita, tamanho do texto (P / M / G), tema claro/escuro, rede e carteira (endereço, papel e rede). Em telas estreitas, as preferências ficam num painel.
+- **Header fixo:** logo e, em destaque, o **selo de quem está operando** ("Operando como", papel e nome do cadastro), numa cor por papel, repetida numa faixa no topo do header. Serve para apresentações: de longe dá para ver se a tela é da cooperativa, do coletor, do transportador, da indústria ou da administração. À direita: tamanho do texto (P / M / G), tema claro/escuro, rede e carteira. Em telas estreitas, as preferências ficam num painel e a carteira mostra só o ícone.
 - **Menu lateral:** o botão ☰ recolhe o menu para só ícones (telas largas) ou abre uma gaveta (celular). Sem carteira conectada, todas as opções ficam desabilitadas.
 - **Menu por papel:** ao conectar, a interface lê o `Participante` da carteira no `ecol_lote` e as chaves das três configs. O menu mostra só as operações de cada papel (cooperativa, indústria, transportador, coletor, operador, intermediador, registrador, Zupy, árbitro), definidas em `src/navegacao/menu.ts`.
 - **Idiomas:** pt-BR, en-US e es-ES (`src/i18n/locales`), escolhidos no rodapé do menu lateral, com bandeira. Com o menu recolhido, aparece só a bandeira e a lista abre ao lado.

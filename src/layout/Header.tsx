@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Logo } from '../componentes/Logo';
 import { Carteira } from './Carteira';
+import { PapelAtual, usePapelAtual } from './PapelAtual';
 import { BotaoTema, ControleFonte, SeletorRede } from './Controles';
 import { useSuspenso } from './useSuspenso';
 
@@ -14,9 +15,14 @@ type Props = {
 export function Header({ menuAberto, alternarMenu }: Props) {
     const { t } = useTranslation();
     const ajustes = useSuspenso();
+    const papel = usePapelAtual();
 
     return (
         <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center gap-2 border-b border-linha bg-superficie/90 px-3 backdrop-blur sm:gap-3 sm:px-4">
+            {/* Faixa na cor do papel: numa apresentação, mostra de longe quem está operando. */}
+            {papel && !papel.carregando && (
+                <div className="absolute inset-x-0 top-0 h-1" style={{ background: papel.cor }} aria-hidden="true" />
+            )}
             <button
                 type="button"
                 onClick={alternarMenu}
@@ -28,9 +34,12 @@ export function Header({ menuAberto, alternarMenu }: Props) {
             >
                 <Menu className="size-5" />
             </button>
-            <Link to="/" aria-label={t('app.inicio')} className="rounded-lg">
+            <Link to="/" aria-label={t('app.inicio')} className="hidden rounded-lg min-[420px]:block">
                 <Logo />
             </Link>
+            <div className="min-w-0 sm:ml-2">
+                <PapelAtual atual={papel} />
+            </div>
 
             <div className="ml-auto flex items-center gap-2">
                 {/* Telas largas: preferências direto no header. */}
