@@ -70,7 +70,7 @@
     "materiais": "Register the material types accepted in batches.",
     "coletas": "Weigh and record incoming material: from collectors, in-house sorting, donations, purchases or unregistered pickers.",
     "meusLotes": "The source lots you delivered, at any cooperative, and the path of each one to the industry.",
-    "minhaCarteira": "Your wallet code to show the cooperative at delivery."
+    "minhaCarteira": "Your wallet code to show the cooperative at delivery or pickup."
   },
   "papel": {
     "coletor": "Collector",
@@ -383,14 +383,18 @@
     "aguardando": "Waiting for a sale lot",
     "trilha": "Trail",
     "vazio": "No source lot registered with your wallet yet.",
-    "resumo": "{{n}} source lot(s), totaling {{kg}} kg",
-    "qrTitulo": "QR code of the collector wallet",
-    "qrAjuda": "Show this code to the cooperative when you deliver or sell material. They scan it and the source lot is registered in your name. The code carries only the wallet address, no personal data."
+    "resumo": "{{n}} source lot(s), totaling {{kg}} kg"
   },
   "leitorQr": {
     "camera": "Camera image",
     "aponte": "Point at the QR code on the collector's \"My wallet\" screen",
     "fechar": "Close camera",
     "semCamera": "Could not open the camera. Allow camera access in the browser (the page must be on https) or pick the collector from the list."
+  },
+  "minhaCarteira": {
+    "soParticipante": "This screen is for wallets registered as collector or carrier.",
+    "qrTitulo": "Wallet QR code",
+    "ajudaColetor": "Show this code to the cooperative when you deliver or sell material. They scan it and the source lot is registered in your name. The code carries only the wallet address, no personal data.",
+    "ajudaTransportador": "Show this code to the cooperative when you pick up the lot. They scan it and check that the lot leaves with the registered carrier. The code carries only the wallet address, no personal data."
   }
 }

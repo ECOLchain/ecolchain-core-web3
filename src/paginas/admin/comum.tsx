@@ -4,13 +4,14 @@ import { bytesDoNome, lerNomeFixo, NOME_FIXO_MAX } from '@clientes/nome';
 import { Campo, Carregando } from '../../componentes/ui';
 import { type PapelUsuario, useCadastro } from '../../solana/useCadastro';
 
-/** Mostra o conteúdo só para carteiras com o `papel`; as demais veem o motivo. */
-export function SoPapel({ papel, aviso, children }: { papel: PapelUsuario; aviso: string; children: ReactNode }) {
+/** Mostra o conteúdo só para carteiras com o `papel` (ou um deles); as demais veem o motivo. */
+export function SoPapel({ papel, aviso, children }: { papel: PapelUsuario | PapelUsuario[]; aviso: string; children: ReactNode }) {
     const { t } = useTranslation();
     const { carteira, cadastro, status } = useCadastro();
     if (!carteira) return <Aviso texto={t('menu.conecteParaUsar')} />;
     if (!cadastro && status === 'fetching') return <Carregando />;
-    if (!cadastro?.papeis.includes(papel)) return <Aviso texto={aviso} />;
+    const aceitos = Array.isArray(papel) ? papel : [papel];
+    if (!cadastro?.papeis.some((p) => aceitos.includes(p))) return <Aviso texto={aviso} />;
     return <>{children}</>;
 }
 

@@ -70,7 +70,7 @@
     "materiais": "Registra los tipos de material aceptados en los lotes.",
     "coletas": "Pese y registre el material que llega: de recolectores, clasificación propia, donaciones, compras o recicladores sin registro.",
     "meusLotes": "Los lotes de origen que usted entregó, en cualquier cooperativa, y el camino de cada uno hasta la industria.",
-    "minhaCarteira": "El código de su billetera para mostrar a la cooperativa en la entrega."
+    "minhaCarteira": "El código de su billetera para mostrar a la cooperativa en la entrega o el retiro."
   },
   "papel": {
     "coletor": "Recolector",
@@ -383,14 +383,18 @@
     "aguardando": "Esperando lote de venta",
     "trilha": "Trazabilidad",
     "vazio": "Aún no hay lotes de origen registrados con su billetera.",
-    "resumo": "{{n}} lote(s) de origen, que suman {{kg}} kg",
-    "qrTitulo": "Código QR de la billetera del recolector",
-    "qrAjuda": "Muestre este código a la cooperativa al entregar o vender el material. Ella lo escanea y el lote de origen queda registrado a su nombre. El código lleva solo la dirección de la billetera, ningún dato personal."
+    "resumo": "{{n}} lote(s) de origen, que suman {{kg}} kg"
   },
   "leitorQr": {
     "camera": "Imagen de la cámara",
     "aponte": "Apunte al código QR de la pantalla \"Mi billetera\" del recolector",
     "fechar": "Cerrar cámara",
     "semCamera": "No fue posible abrir la cámara. Permita el acceso a la cámara en el navegador (la página debe estar en https) o elija el recolector en la lista."
+  },
+  "minhaCarteira": {
+    "soParticipante": "Esta pantalla es para billeteras registradas como recolector o transportista.",
+    "qrTitulo": "Código QR de la billetera",
+    "ajudaColetor": "Muestre este código a la cooperativa al entregar o vender el material. Ella lo escanea y el lote de origen queda registrado a su nombre. El código lleva solo la dirección de la billetera, ningún dato personal.",
+    "ajudaTransportador": "Muestre este código a la cooperativa al retirar el lote. Ella lo escanea y confirma que el lote sale con el transportista registrado. El código lleva solo la dirección de la billetera, ningún dato personal."
   }
 }

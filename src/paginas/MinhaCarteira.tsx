@@ -7,18 +7,24 @@ import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { lerNomeFixo } from '@clientes/nome';
 import { lote as pLote } from '@clientes/pdas';
-import { TituloPagina } from '../../componentes/pagina';
-import { Botao } from '../../componentes/ui';
-import type { AppClient } from '../../solana/cliente';
-import { useCadastro } from '../../solana/useCadastro';
-import { SoPapel } from '../admin/comum';
+import { TituloPagina } from '../componentes/pagina';
+import { Botao } from '../componentes/ui';
+import type { AppClient } from '../solana/cliente';
+import { useCadastro } from '../solana/useCadastro';
+import { SoPapel } from './admin/comum';
+
+/** Quem mostra o QR e em que momento: o coletor na entrega, o transportador na retirada. */
+const USO: Partial<Record<lote.Papel, { papel: string; ajuda: string }>> = {
+    [lote.Papel.Coletor]: { papel: 'papel.coletor', ajuda: 'minhaCarteira.ajudaColetor' },
+    [lote.Papel.Transportador]: { papel: 'papel.transportador', ajuda: 'minhaCarteira.ajudaTransportador' },
+};
 
 export function MinhaCarteira() {
     const { t } = useTranslation();
     return (
         <>
             <TituloPagina titulo={t('itens.minhaCarteira')} />
-            <SoPapel papel="coletor" aviso={t('coletor.soColetor')}>
+            <SoPapel papel={['coletor', 'transportador']} aviso={t('minhaCarteira.soParticipante')}>
                 <ConteudoMinhaCarteira />
             </SoPapel>
         </>
@@ -38,8 +44,8 @@ function useParticipante(carteira: Address | undefined) {
 const emGrupos = (endereco: string) => endereco.match(/.{1,4}/g)?.join(' ') ?? endereco;
 
 /**
- * Cartão do coletor para a entrega: o QR Code traz só o endereço da carteira (o mesmo que a
- * cooperativa escolheria na lista), então qualquer leitor o entende e nada pessoal é exposto.
+ * Cartão do participante para mostrar à cooperativa: o QR Code traz só o endereço da carteira (o
+ * mesmo que ela escolheria na lista), então qualquer leitor o entende e nada pessoal é exposto.
  */
 function ConteudoMinhaCarteira() {
     const { t } = useTranslation();
@@ -50,6 +56,8 @@ function ConteudoMinhaCarteira() {
 
     const dados = participante.data?.exists ? participante.data.data : undefined;
     const nome = dados ? lerNomeFixo(dados.nome) : '';
+    const uso = dados ? USO[dados.papel] : undefined;
+    const rotuloPapel = uso ? t(uso.papel) : '';
 
     const copiar = async () => {
         try {
@@ -64,9 +72,9 @@ function ConteudoMinhaCarteira() {
     return (
         <section className="mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-xl border border-linha bg-superficie p-6 text-center shadow-sm sm:p-8">
             <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-semibold text-texto">{nome || t('papel.coletor')}</h2>
+                <h2 className="text-2xl font-semibold text-texto">{nome || rotuloPapel}</h2>
                 <p className="text-sm text-texto-suave">
-                    {t('papel.coletor')}
+                    {rotuloPapel}
                     {dados && !dados.ativo && ` (${t('papel.inativo')})`}
                 </p>
             </div>
@@ -78,7 +86,7 @@ function ConteudoMinhaCarteira() {
                     size={256}
                     level="M"
                     marginSize={2}
-                    title={t('coletor.qrTitulo')}
+                    title={t('minhaCarteira.qrTitulo')}
                     className="block h-auto w-[min(16rem,64vw)]"
                 />
             </div>
@@ -90,7 +98,7 @@ function ConteudoMinhaCarteira() {
                 {copiado ? t('carteira.copiado') : t('carteira.copiar')}
             </Botao>
 
-            <p className="max-w-sm text-sm text-texto-suave">{t('coletor.qrAjuda')}</p>
+            {uso && <p className="max-w-sm text-sm text-texto-suave">{t(uso.ajuda)}</p>}
         </section>
     );
 }

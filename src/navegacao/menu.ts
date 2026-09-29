@@ -74,7 +74,7 @@ export const ITENS_GERAIS: readonly ItemMenu[] = [I.painel, I.explorar];
 export const ITENS_POR_PAPEL: Record<PapelUsuario, readonly ItemMenu[]> = {
     cooperativa: [I.coletas, I.lotes, I.retiradas, I.disputas, I.direitos],
     industria: [I.marketplace, I.compras, I.recebimentos, I.disputas, I.direitos],
-    transportador: [I.retiradas, I.entregas, I.disputas, I.direitos],
+    transportador: [I.minhaCarteira, I.retiradas, I.entregas, I.disputas, I.direitos],
     coletor: [I.minhaCarteira, I.meusLotes, I.direitos],
     operador: [I.participantes, I.balancas, I.materiais, I.leiloes, I.creditos, I.distribuicoes],
     intermediador: [I.escrow, I.vendasCredito, I.repasses],

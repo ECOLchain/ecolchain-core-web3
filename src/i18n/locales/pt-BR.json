@@ -70,7 +70,7 @@
     "materiais": "Cadastre os tipos de material aceitos nos lotes.",
     "coletas": "Pese e registre o material que chega: de coletores, triagem própria, doações, compras ou catadores avulsos.",
     "meusLotes": "Os lotes de origem que você entregou, em qualquer cooperativa, e o caminho de cada um até a indústria.",
-    "minhaCarteira": "O código da sua carteira para mostrar à cooperativa na entrega."
+    "minhaCarteira": "O código da sua carteira para mostrar à cooperativa na entrega ou na retirada."
   },
   "papel": {
     "coletor": "Coletor",
@@ -383,14 +383,18 @@
     "aguardando": "Aguardando lote de venda",
     "trilha": "Trilha",
     "vazio": "Nenhum lote de origem registrado com a sua carteira ainda.",
-    "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg",
-    "qrTitulo": "Código QR da carteira do coletor",
-    "qrAjuda": "Mostre este código à cooperativa na entrega ou na venda do material. Ela escaneia e o lote de origem fica registrado em seu nome. O código traz só o endereço da carteira, nenhum dado pessoal."
+    "resumo": "{{n}} lote(s) de origem, somando {{kg}} kg"
   },
   "leitorQr": {
     "camera": "Imagem da câmera",
     "aponte": "Aponte para o QR Code da tela \"Minha carteira\" do coletor",
     "fechar": "Fechar câmera",
     "semCamera": "Não foi possível abrir a câmera. Permita o acesso à câmera no navegador (a página precisa estar em https) ou escolha o coletor na lista."
+  },
+  "minhaCarteira": {
+    "soParticipante": "Esta tela é para carteiras cadastradas como coletor ou transportador.",
+    "qrTitulo": "Código QR da carteira",
+    "ajudaColetor": "Mostre este código à cooperativa na entrega ou na venda do material. Ela escaneia e o lote de origem fica registrado em seu nome. O código traz só o endereço da carteira, nenhum dado pessoal.",
+    "ajudaTransportador": "Mostre este código à cooperativa na retirada do lote. Ela escaneia e confere que o lote sai com o transportador cadastrado. O código traz só o endereço da carteira, nenhum dado pessoal."
   }
 }
