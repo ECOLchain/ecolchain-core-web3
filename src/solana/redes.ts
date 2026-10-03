@@ -7,6 +7,12 @@ export const REDES = {
         wsUrl: import.meta.env.VITE_WS_DEVNET as string | undefined,
         explorer: (endereco: string) => `https://explorer.solana.com/address/${endereco}?cluster=devnet`,
     },
+    testnet: {
+        chain: 'solana:testnet',
+        rpcUrl: import.meta.env.VITE_RPC_TESTNET ?? 'https://api.testnet.solana.com',
+        wsUrl: import.meta.env.VITE_WS_TESTNET as string | undefined,
+        explorer: (endereco: string) => `https://explorer.solana.com/address/${endereco}?cluster=testnet`,
+    },
     localnet: {
         chain: 'solana:localnet',
         rpcUrl: RPC_LOCALNET,
@@ -18,8 +24,11 @@ export const REDES = {
 
 export type Rede = keyof typeof REDES;
 
-export const REDE_PADRAO: Rede = 'devnet';
-
 export function ehRede(valor: unknown): valor is Rede {
     return typeof valor === 'string' && valor in REDES;
 }
+
+// Rede padrão por ambiente de build (dev usa devnet; build de prod recebe
+// VITE_REDE_PADRAO=testnet na esteira). Fallback seguro: devnet.
+const redeEnv = import.meta.env.VITE_REDE_PADRAO;
+export const REDE_PADRAO: Rede = ehRede(redeEnv) ? redeEnv : 'devnet';
