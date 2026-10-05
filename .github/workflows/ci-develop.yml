@@ -22,6 +22,7 @@ env:
   S3_ENDPOINT: https://grmykw8bmw9d.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
   DEPLOY_BUCKET: ecolchain-web-dev
   PREVIEW_URL: https://app-dev-tester.ecolchain.com
+  PROD_URL: https://app.ecolchain.com
 
 jobs:
   build-deploy-pr:
@@ -72,14 +73,18 @@ jobs:
           AUTH_USER="${BASIC_AUTH%%:*}"
           AUTH_PASS="${BASIC_AUTH#*:}"
 
-          PR_BODY="🚀 **Ambiente de Preview (Staging) publicado no domínio de DEV!**
+          PR_BODY="🚀 **Release pronta para produção!**
 
-          🔗 **URL de Preview:** [$PREVIEW_URL]($PREVIEW_URL)
+          🔗 **URL de Produção:** [$PROD_URL]($PROD_URL)
+
+          ---
+          Preview desta build **antes do merge** (mesmo conteúdo publicado em dev):
+          🔗 [$PREVIEW_URL]($PREVIEW_URL)
           🔐 **Acesso (Basic Auth):** usuário \`$AUTH_USER\` / senha \`$AUTH_PASS\`
 
           ---
           PR automático para promoção de versão de \`develop\` para \`main\`.
-          ⚠️ **Atenção:** Requer aprovação para subir em produção (**app.ecolchain.com**, rede **testnet**)."
+          ⚠️ **Atenção:** Requer aprovação para subir em produção (rede **testnet**)."
 
           EXISTING_PR=$(gh pr list --head develop --base main --json number --jq '.[0].number')
 
@@ -93,5 +98,5 @@ jobs:
           else
             echo "Atualizando PR #$EXISTING_PR..."
             gh pr edit "$EXISTING_PR" --body "$PR_BODY" || true
-            gh pr comment "$EXISTING_PR" --body "🔄 **Novo Deploy de Preview Gerado no ambiente DEV!**\n\n🔗 **URL para validação:** [$PREVIEW_URL]($PREVIEW_URL)\n🔐 **Basic Auth:** \`$AUTH_USER\` / \`$AUTH_PASS\`" || true
+            gh pr comment "$EXISTING_PR" --body "🔄 **Nova build promovida para release!**\n\n🔗 **Produção (após merge):** [$PROD_URL]($PROD_URL)\n\n🔗 **Preview dev agora:** [$PREVIEW_URL]($PREVIEW_URL)\n🔐 **Basic Auth:** \`$AUTH_USER\` / \`$AUTH_PASS\`" || true
           fi
