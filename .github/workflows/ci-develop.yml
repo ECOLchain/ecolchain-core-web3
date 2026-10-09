@@ -1,0 +1,102 @@
+name: CI & Auto-PR (Develop -> Main)
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.OCI_S3_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_S3_SECRET_KEY }}
+  AWS_DEFAULT_REGION: sa-saopaulo-1
+  AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+  AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
+  S3_ENDPOINT: https://grmykw8bmw9d.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
+  DEPLOY_BUCKET: ecolchain-web-dev
+  PREVIEW_URL: https://app-dev-tester.ecolchain.com
+  PROD_URL: https://app.ecolchain.com
+
+jobs:
+  build-deploy-pr:
+    name: Build, Deploy Dev & Auto PR to Main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Checkout Onchain Clients
+        uses: actions/checkout@v4
+        with:
+          repository: ECOLchain/ecolchain-core-chains
+          path: deps/chains
+          token: ${{ secrets.ONCHAIN_CHECKOUT_PAT }}
+
+      - name: Link Onchain Clients
+        run: ln -sfn "$GITHUB_WORKSPACE/deps/chains/onchain" "$GITHUB_WORKSPACE/../onchain"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Typecheck
+        run: npm run typecheck
+
+      - name: Run Build
+        run: npm run build
+
+      - name: Deploy to OCI Bucket (dev)
+        run: |
+          aws s3 sync dist/ "s3://$DEPLOY_BUCKET" --delete \
+            --endpoint-url "$S3_ENDPOINT" --region "$AWS_DEFAULT_REGION"
+          echo "Deploy dev concluido -> $PREVIEW_URL"
+
+      - name: Auto Create or Update PR to Main
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASIC_AUTH: ${{ secrets.DEV_FRONTEND_BASIC_AUTH }}
+        run: |
+          AUTH_USER="${BASIC_AUTH%%:*}"
+          AUTH_PASS="${BASIC_AUTH#*:}"
+
+          PR_BODY="🚀 **Release pronta para produção!**
+
+          🔗 **URL de Produção:** [$PROD_URL]($PROD_URL)
+
+          ---
+          Preview desta build **antes do merge** (mesmo conteúdo publicado em dev):
+          🔗 [$PREVIEW_URL]($PREVIEW_URL)
+          🔐 **Acesso (Basic Auth):** usuário \`$AUTH_USER\` / senha \`$AUTH_PASS\`
+
+          ---
+          PR automático para promoção de versão de \`develop\` para \`main\`.
+          ⚠️ **Atenção:** Requer aprovação para subir em produção (rede **testnet**)."
+
+          EXISTING_PR=$(gh pr list --head develop --base main --json number --jq '.[0].number')
+
+          if [ -z "$EXISTING_PR" ]; then
+            echo "Criando novo PR de develop para main..."
+            gh pr create \
+              --head develop \
+              --base main \
+              --title "release: promover alterações de develop para main" \
+              --body "$PR_BODY" || echo "⚠️ Para criar PRs automáticos via GitHub Actions, ative a opção 'Allow GitHub Actions to create and approve pull requests' em Settings -> Actions -> General."
+          else
+            echo "Atualizando PR #$EXISTING_PR..."
+            gh pr edit "$EXISTING_PR" --body "$PR_BODY" || true
+            gh pr comment "$EXISTING_PR" --body "🔄 **Nova build promovida para release!**\n\n🔗 **Produção (após merge):** [$PROD_URL]($PROD_URL)\n\n🔗 **Preview dev agora:** [$PREVIEW_URL]($PREVIEW_URL)\n🔐 **Basic Auth:** \`$AUTH_USER\` / \`$AUTH_PASS\`" || true
+          fi

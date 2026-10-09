@@ -1,0 +1,77 @@
+name: Deploy Production (Main -> OCI/Cloudflare)
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.OCI_S3_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.OCI_S3_SECRET_KEY }}
+  AWS_DEFAULT_REGION: sa-saopaulo-1
+  AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+  AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
+  S3_ENDPOINT: https://grmykw8bmw9d.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
+  DEPLOY_BUCKET: ecolchain-web-prod
+  VITE_REDE_PADRAO: testnet
+
+jobs:
+  deploy-production:
+    name: Deploy to Production (app.ecolchain.com, testnet)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Checkout Onchain Clients
+        uses: actions/checkout@v4
+        with:
+          repository: ECOLchain/ecolchain-core-chains
+          path: deps/chains
+          token: ${{ secrets.ONCHAIN_CHECKOUT_PAT }}
+
+      - name: Link Onchain Clients
+        run: ln -sfn "$GITHUB_WORKSPACE/deps/chains/onchain" "$GITHUB_WORKSPACE/../onchain"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Typecheck
+        run: npm run typecheck
+
+      - name: Run Build (testnet)
+        run: npm run build
+
+      - name: Deploy to OCI Bucket (prod)
+        run: |
+          aws s3 sync dist/ "s3://$DEPLOY_BUCKET" --delete \
+            --endpoint-url "$S3_ENDPOINT" --region "$AWS_DEFAULT_REGION"
+          echo "Deploy prod concluido -> https://app.ecolchain.com"
+
+      - name: Purge Cloudflare Cache
+        env:
+          CF_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
+          CF_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          curl -sf -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+            -H "X-Auth-Email: $CF_EMAIL" \
+            -H "X-Auth-Key: $CF_API_KEY" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' | head -c 300
+          echo ""
+          echo "Cache Cloudflare purgado."
