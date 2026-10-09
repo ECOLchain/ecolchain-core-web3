@@ -26,6 +26,11 @@ import {
     Truck,
     Users,
     Wallet,
+    Wine,
+    ChartColumn,
+    Send,
+    FileBadge,
+    Receipt,
 } from 'lucide-react';
 import type { PapelUsuario } from '../solana/useCadastro';
 
@@ -47,7 +52,9 @@ const I = {
     minhaCarteira: item('minhaCarteira', '/minha-carteira', QrCode),
     retiradas: item('retiradas', '/retiradas', Handshake),
     entregas: item('entregas', '/entregas', Truck),
+    // "Disputa" (ADR 0012): lotes à venda por preço fixo; a rota mantém o nome antigo.
     marketplace: item('marketplace', '/marketplace', Store),
+    vendas: item('vendas', '/vendas', Receipt),
     compras: item('compras', '/compras', Factory),
     recebimentos: item('recebimentos', '/recebimentos', PackageCheck),
     disputas: item('disputas', '/disputas', ShieldAlert),
@@ -65,6 +72,12 @@ const I = {
     aposentadorias: item('aposentadorias', '/aposentadorias', BadgeCheck),
     resgates: item('resgates', '/resgates', Ticket),
     arbitragem: item('arbitragem', '/arbitragem', ScrollText),
+    // Importador (ADR 0011): o painel é a página inicial dele.
+    painelImportador: item('painelImportador', '/importador', ChartColumn),
+    distribuicoesImportador: item('distribuicoesImportador', '/importador/distribuicoes', Wine),
+    coletasImportador: item('coletasImportador', '/importador/coletas', ClipboardList),
+    entregasImportador: item('entregasImportador', '/importador/entregas', Send),
+    reciclagemImportador: item('reciclagemImportador', '/importador/reciclagem', FileBadge),
 } as const;
 
 /** Sempre visíveis (habilitados só com a carteira conectada). */
@@ -72,8 +85,19 @@ export const ITENS_GERAIS: readonly ItemMenu[] = [I.painel, I.explorar];
 
 /** O que cada papel opera, na ordem do fluxo. Espelha quem assina cada instrução nos programas. */
 export const ITENS_POR_PAPEL: Record<PapelUsuario, readonly ItemMenu[]> = {
-    cooperativa: [I.coletas, I.lotes, I.retiradas, I.disputas, I.direitos],
-    industria: [I.marketplace, I.compras, I.recebimentos, I.disputas, I.direitos],
+    cooperativa: [I.coletas, I.lotes, I.marketplace, I.vendas, I.retiradas, I.disputas, I.direitos, I.minhaCarteira],
+    // A Clean Tech opera como a cooperativa (ADR 0011).
+    cleantech: [I.coletas, I.lotes, I.marketplace, I.vendas, I.retiradas, I.disputas, I.direitos, I.minhaCarteira],
+    importador: [
+        I.painelImportador,
+        I.distribuicoesImportador,
+        I.coletasImportador,
+        I.entregasImportador,
+        I.reciclagemImportador,
+        I.minhaCarteira,
+    ],
+    // Retiradas: quando a indústria escolhe retirar ela mesma o lote comprado (ADR 0012).
+    industria: [I.marketplace, I.compras, I.retiradas, I.recebimentos, I.disputas, I.direitos, I.minhaCarteira],
     transportador: [I.minhaCarteira, I.retiradas, I.entregas, I.disputas, I.direitos],
     coletor: [I.minhaCarteira, I.meusLotes, I.direitos],
     operador: [I.participantes, I.balancas, I.materiais, I.leiloes, I.creditos, I.distribuicoes],
@@ -85,7 +109,9 @@ export const ITENS_POR_PAPEL: Record<PapelUsuario, readonly ItemMenu[]> = {
 
 /** Ordem dos grupos no menu quando a carteira acumula papéis. */
 export const ORDEM_PAPEIS: readonly PapelUsuario[] = [
+    'importador',
     'cooperativa',
+    'cleantech',
     'industria',
     'transportador',
     'coletor',

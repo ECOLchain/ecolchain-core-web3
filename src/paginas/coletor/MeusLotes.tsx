@@ -1,4 +1,4 @@
-import { type Address, address } from '@solana/kit';
+import { type Address } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
 import { Route } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -14,6 +14,7 @@ import { type ContaDecodificada, listarContas } from '../../solana/contas';
 import { useCadastro } from '../../solana/useCadastro';
 import { gramasParaKg, useMateriais, useParticipantes } from '../../solana/useDados';
 import { rotuloParticipante, SoPapel } from '../admin/comum';
+import { rotuloEstado } from '../venda/comum';
 
 /** Endereço "vazio" (Pubkey::default): lote de origem ainda sem lote de venda. */
 const SEM_LOTE = '11111111111111111111111111111111';
@@ -60,8 +61,8 @@ function useMeusLotes(carteira: Address | undefined) {
 function ConteudoMeusLotes() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
-    const { carteira } = useCadastro();
-    const meus = useMeusLotes(carteira ? address(carteira) : undefined);
+    const { ator } = useCadastro();
+    const meus = useMeusLotes(ator);
     const materiais = useMateriais();
     const participantes = useParticipantes();
     const [filtroMaterial, setFiltroMaterial] = useState('');
@@ -71,7 +72,7 @@ function ConteudoMeusLotes() {
     const cadastro = useMemo(() => new Map((participantes.data ?? []).map((p) => [p.dados.carteira as string, p.dados])), [participantes.data]);
     /** "Aguardando lote de venda" ou o estado do lote de venda. */
     const situacao = useCallback(
-        (l: Linha) => (l.venda ? t(`estadoLote.${l.venda.estado.__kind}`) : t('coletor.aguardando')),
+        (l: Linha) => (l.venda ? rotuloEstado(t, l.venda) : t('coletor.aguardando')),
         [t],
     );
     const situacoes = useMemo(() => [...new Set((meus.data ?? []).map(situacao))].sort(), [meus.data, situacao]);

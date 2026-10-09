@@ -21,7 +21,7 @@
     "anuncios": "Anuncios",
     "retiradas": "Retiros",
     "entregas": "Entregas en curso",
-    "marketplace": "Marketplace",
+    "marketplace": "Mercado",
     "compras": "Compras",
     "recebimentos": "Recepciones",
     "disputas": "Disputas",
@@ -41,16 +41,22 @@
     "materiais": "Materiales",
     "coletas": "Lotes de origen",
     "meusLotes": "Mis lotes",
-    "minhaCarteira": "Mi billetera"
+    "minhaCarteira": "Mi billetera",
+    "painelImportador": "Panel",
+    "distribuicoesImportador": "Lotes de distribución",
+    "coletasImportador": "Recolecciones",
+    "entregasImportador": "Entregas",
+    "reciclagemImportador": "Reciclaje (factura)",
+    "vendas": "Ventas"
   },
   "descricoes": {
     "painel": "Resumen de tu operación.",
     "explorar": "Consulta la trazabilidad de cualquier lote, crédito o distribución.",
-    "lotes": "Junte lotes de origen del mismo material, pese el lote consolidado y publíquelo en la subasta.",
+    "lotes": "Junte lotes de origen del mismo material, pese el lote consolidado y póngalo a la venta o márquelo como vendido.",
     "anuncios": "Anuncia lotes en el marketplace, cambia el precio o retira anuncios.",
     "retiradas": "Confirma el traspaso de custodia entre cooperativa y transportista.",
     "entregas": "Lotes en transporte y plazos de entrega.",
-    "marketplace": "Lotes anunciados por las cooperativas.",
+    "marketplace": "Lotes a la venta de las cooperativas y Clean Techs. La industria compra indicando el valor y quién retira.",
     "compras": "Pujas ganadoras y ventas pendientes de firma.",
     "recebimentos": "Confirma la recepción y el peso a la llegada.",
     "disputas": "Abre o sigue disputas de tus lotes.",
@@ -70,7 +76,13 @@
     "materiais": "Registra los tipos de material aceptados en los lotes.",
     "coletas": "Pese y registre el material que llega: de recolectores, clasificación propia, donaciones, compras o recicladores sin registro.",
     "meusLotes": "Los lotes de origen que usted entregó, en cualquier cooperativa, y el camino de cada uno hasta la industria.",
-    "minhaCarteira": "El código de su billetera para mostrar a la cooperativa en la entrega o el retiro."
+    "minhaCarteira": "El código de su billetera para mostrar a la cooperativa en la entrega o el retiro.",
+    "painelImportador": "Botellas que puso en el mercado y cuántas ya volvieron al reciclaje.",
+    "distribuicoesImportador": "Registre las botellas que liberó al mercado (factura o declaración de importación).",
+    "coletasImportador": "Registre las botellas recogidas en los puntos de recolección.",
+    "entregasImportador": "Envíe las recolecciones a una cooperativa o Clean Tech.",
+    "reciclagemImportador": "Adjunte la factura del reciclaje cuando el lote se recicle.",
+    "vendas": "Lotes vendidos: comprador, valor, retiro y confirmación del pago."
   },
   "papel": {
     "coletor": "Recolector",
@@ -84,7 +96,9 @@
     "arbitro": "Árbitro",
     "semCadastro": "Sin registro",
     "verificando": "Verificando registro…",
-    "inativo": "inactivo"
+    "inativo": "inactivo",
+    "importador": "Importador",
+    "cleantech": "Clean Tech"
   },
   "preferencias": {
     "fonte": "Tamaño del texto",
@@ -121,7 +135,7 @@
     "etapas": "El recorrido de un lote",
     "etapa": {
       "pesagem": "Pesaje en la cooperativa",
-      "venda": "Venta en el marketplace",
+      "venda": "Venta en el mercado",
       "transporte": "Transporte",
       "recebimento": "Recepción en la industria",
       "credito": "Crédito de carbono",
@@ -163,7 +177,23 @@
         "metal": "Metal",
         "outros": "Otros"
       },
-      "editar": "Editar material"
+      "editar": "Editar material",
+      "variacoes": "Variantes",
+      "variacoesTitulo": "Variantes de {{nome}}",
+      "variacoesAjuda": "Con alguna variante, todo lote de este material indica el color y un lote de venta no mezcla colores. Las variantes no se borran: se desactivan.",
+      "semVariacoes": "Sin variantes: los lotes no indican color.",
+      "novaVariacao": "Nueva variante",
+      "novaVariacaoExemplo": "Ej.: Verde",
+      "incluirVariacao": "Agregar",
+      "contaGarrafas": "Cuenta botellas",
+      "contaGarrafasAjuda": "Los lotes indican la cantidad aproximada de botellas, además del peso.",
+      "sim": "Sí",
+      "nao": "—",
+      "cores": {
+        "transparente": "Transparente",
+        "verde": "Verde",
+        "marrom": "Ámbar"
+      }
     },
     "participantes": {
       "novo": "Nuevo participante",
@@ -230,7 +260,26 @@
     "carteiraSemAssinatura": "Esta billetera no permite firmar sin enviar. Use Solflare.",
     "codigoExpirado": "El código expiró. Pida a la cooperativa que genere otro.",
     "carteiraOutroPapel": "La billetera conectada no es la de este rol en esta venta.",
-    "semNonce": "La administración aún no preparó la cuenta de firma de las ventas."
+    "VariacaoObrigatoria": "Este material tiene variantes: elija el color.",
+    "VariacaoInvalida": "La variante no pertenece a este material.",
+    "VariacaoInativa": "Esta variante está desactivada.",
+    "VariacaoDiferente": "Los lotes de origen deben tener el mismo color que el lote de venta.",
+    "LimiteDeVariacoes": "Se alcanzó el límite de variantes del material.",
+    "MaterialSemGarrafas": "Este material no cuenta botellas.",
+    "CarteiraNaoAutorizada": "Esta billetera no está vinculada (o fue desactivada) para firmar por este participante.",
+    "CarteiraEmUso": "Esta billetera ya pertenece a otro participante.",
+    "ColetaEstadoInvalido": "La recolección no está en la etapa correcta para esta operación.",
+    "ColetaDeOutroDestino": "Esta recolección fue enviada a otro destino.",
+    "ColetaDivergente": "Material o color diferente de la recolección.",
+    "ColetaAusente": "Elija la recolección del importador.",
+    "LoteNaoReciclado": "El lote de venta aún no fue reciclado.",
+    "GarrafasInvalidas": "Informe la cantidad de botellas.",
+    "DataInvalida": "Fecha inválida (vacía o en el futuro).",
+    "LoteNaoEhVendaDireta": "Este lote no está a la venta a precio fijo.",
+    "LoteEmVendaDireta": "Este lote está a la venta a precio fijo: la industria lo compra en el Mercado.",
+    "ModoRetiradaInvalido": "Elija quién retira el lote.",
+    "RetiradaDeOutroModo": "El retiro no coincide con el modo elegido en la compra (propio o por transportista).",
+    "ValorAbaixoDoMinimo": "El valor está por debajo del precio del lote."
   },
   "cooperativa": {
     "soCooperativa": "Esta pantalla es solo para billeteras de cooperativa.",
@@ -260,7 +309,11 @@
       "qrInvalido": "Este código QR no es de una billetera. Pida al recolector que abra \"Mi billetera\" en la app.",
       "qrSemCadastro": "Esta billetera no está registrada. Pida a la administración que la registre como recolector.",
       "qrNaoColetor": "Esta billetera está registrada con otro rol, no como recolector.",
-      "qrInativo": "Este recolector está inactivo. Pida a la administración que lo reactive."
+      "qrInativo": "Este recolector está inactivo. Pida a la administración que lo reactive.",
+      "coletaImportador": "Recolección del importador",
+      "escolherColeta": "Elija la recolección recibida",
+      "opcaoColeta": "#{{id}} · {{importador}} · {{cor}} · {{garrafas}} botellas",
+      "semColetasImportador": "Ninguna recolección de importador en camino a esta unidad."
     },
     "lotes": {
       "montar": "Armar lote",
@@ -308,7 +361,8 @@
     "Reembolsado": "Reembolsado",
     "EmMontagem": "En armado",
     "EmDesmontagem": "Deshaciendo",
-    "Desfeito": "Deshecho"
+    "Desfeito": "Deshecho",
+    "VendidoFora": "Vendido (fuera)"
   },
   "grade": {
     "buscar": "Buscar",
@@ -333,7 +387,8 @@
     "TriagemPropria": "Clasificación propia",
     "Doacao": "Donación",
     "Compra": "Compra",
-    "Avulso": "Reciclador sin registro"
+    "Avulso": "Reciclador sin registro",
+    "Importador": "Recolección del importador"
   },
   "trilha": {
     "busca": "Nombre, referencia o dirección",
@@ -360,7 +415,9 @@
     "pesoRotulo": "Peso",
     "coletor": "Recolector",
     "limite": "Mostrando {{n}} de {{total}} resultados. Refine la búsqueda para ver los demás.",
-    "participantes": "Participantes encontrados: {{nomes}}"
+    "participantes": "Participantes encontrados: {{nomes}}",
+    "coletaImportador": "Recolección del importador",
+    "nfReciclagem": "factura del reciclaje registrada"
   },
   "estadoCredito": {
     "EmFormacao": "En formación",
@@ -391,7 +448,7 @@
     "ajudaTransportador": "Muestre este código a la cooperativa al retirar el lote. Ella lo escanea y confirma que el lote sale con el transportista registrado. El código lleva solo la dirección de la billetera, ningún dato personal."
   },
   "retiradas": {
-    "soParticipante": "Esta pantalla es para billeteras registradas como cooperativa o transportista.",
+    "soParticipante": "Esta pantalla es para billeteras registradas como cooperativa, Clean Tech, transportista o industria.",
     "aguardando": "Esperando retiro",
     "retiradas": "Ya retirados",
     "prazo": "Plazo de entrega",
@@ -428,7 +485,12 @@
       "assinaturaInvalida": "El código no coincide con la firma de la cooperativa. Pida que genere otro código."
     },
     "aponteTransportador": "Apunte al código QR de la pantalla \"Mi billetera\" del transportista",
-    "aponteCamera": "Apunte al código en la pantalla de la cooperativa"
+    "aponteCamera": "Apunte al código en la pantalla de la cooperativa",
+    "propria": "La propia industria",
+    "passo1Propria": "En la compra, {{industria}} eligió retirar el lote ella misma. Lea el código QR de la pantalla \"Mi billetera\" de quien vino a buscarlo, o confirme la industria en la lista.",
+    "quemRetira": "Quién retira",
+    "qrNaoCompradora": "Esta billetera no es de la industria que compró el lote.",
+    "vazioIndustria": "Ninguna compra con retiro propio. Cuando compre eligiendo \"Transportista propio\", el lote aparece aquí para firmar el retiro en la cooperativa."
   },
   "papelAtual": {
     "operando": "Operando como",
@@ -458,9 +520,10 @@
     "ata": "Referencia del resultado de la subasta",
     "ataAjuda": "Ej.: número del acta. En la blockchain solo queda un código derivado.",
     "assinarGerar": "Firmar y generar código",
-    "passo2": "La administración ya firmó. Ahora el intermediario, en \"Escrow de los lotes\", y la industria, en \"Compras\", leen este código (cámara o copiar y pegar) y firman. El código no expira con el tiempo.",
+    "passo2": "La administración ya firmó. Ahora el intermediario, en \"Escrow de los lotes\", y la industria, en \"Compras\", leen este código (cámara o copiar y pegar) y firman. El código vale cerca de un minuto: deje las tres pantallas abiertas antes de empezar.",
     "qrTitulo": "Código de la venta para las próximas firmas",
     "aguardando": "Esperando las firmas del intermediario y de la industria…",
+    "expirado": "El código expiró antes de las tres firmas (vale cerca de un minuto). Genere otro y páselo enseguida al intermediario y a la industria.",
     "concluida": "Venta del lote #{{lote}} registrada: {{nome}}, {{valor}}. El lote espera el retiro.",
     "aceitar": "Aceptar compra",
     "assinarDeposito": "Firmar venta",
@@ -484,12 +547,13 @@
     "codigo": {
       "formato": "Este no es un código de venta de EcolChain.",
       "assinaturaInvalida": "El código no coincide con las firmas. Pida un nuevo código a la administración.",
-      "vencido": "El código venció: otra venta se registró después. Pida un nuevo código a la administración.",
+      "vencido": "El código expiró (vale cerca de un minuto). Pida un nuevo código a la administración.",
       "naoAnunciado": "Este lote ya no está en subasta.",
       "jaAssinado": "Su billetera ya firmó este código. Páselo a quien falta."
     },
     "assinou": "✓ {{papel}}",
-    "falta": "Falta: {{papel}}"
+    "falta": "Falta: {{papel}}",
+    "carteiraIndustria": "Billetera que firma por la industria"
   },
   "codigo": {
     "copiar": "Copiar código",
@@ -531,7 +595,7 @@
     "comBalancaAjuda": "La balanza firma el peso y la hora; la recepción queda marcada como certificada.",
     "semBalanca": "Sin balanza lista: el peso queda registrado como informado, sin certificación.",
     "configurarBalanca": "Configurar balanza",
-    "registrado": "Recepción del lote #{{lote}} registrada. El recibo digital pasó a su billetera; falta que el intermediario libere el pago a la cooperativa.",
+    "registrado": "Recepción del lote #{{lote}} registrada. El recibo digital pasó a su billetera; falta liberar el pago a la cooperativa.",
     "emDisputa": "Recepción del lote #{{lote}} registrada con divergencia de peso: el lote está en disputa.",
     "atestado": "Peso certificado por la balanza",
     "informado": "Peso informado, sin balanza"
@@ -557,5 +621,168 @@
     "efeito": "Al firmar, usted certifica que traspasó el valor retenido a la cooperativa. El lote pasa a Reciclado y puede entrar en un crédito de carbono.",
     "confirmar": "Firmar y liberar",
     "liberado": "Pago del lote #{{lote}} liberado: {{valor}} a {{nome}}. El lote está Reciclado."
+  },
+  "estadoColeta": {
+    "Coletada": "Recogida",
+    "EmEntrega": "En camino",
+    "Entregue": "Entregada",
+    "Reciclada": "Reciclada"
+  },
+  "material": {
+    "variacao": "Color / variante",
+    "escolherVariacao": "Elija el color",
+    "garrafas": "Botellas (aprox.)",
+    "garrafasCurto": "Botellas",
+    "garrafasAjuda": "Cantidad aproximada; el peso sigue siendo la medida oficial.",
+    "garrafasInvalidas": "Ingrese un número entero de botellas.",
+    "garrafasN": "{{n}} botellas"
+  },
+  "graficos": {
+    "verTabela": "Ver tabla",
+    "verGrafico": "Ver gráfico"
+  },
+  "carteiras": {
+    "titulo": "Billeteras",
+    "explicacao": "Cada billetera tiene un nombre y firma por el participante (mostrador, conductor, portería). Una billetera pertenece a un solo participante. Solo el titular o la administración agregan y desactivan billeteras.",
+    "titular": "Billetera titular",
+    "nomear": "Nombrar",
+    "vincular": "Vincular billetera",
+    "nenhumaVinculada": "Ninguna billetera vinculada.",
+    "endereco": "Dirección de la billetera",
+    "enderecoAjuda": "Pida el QR de la pantalla Mi billetera o pegue la dirección.",
+    "nome": "Nombre de la billetera",
+    "nomeExemplo": "Ej.: Mostrador, Conductor 2",
+    "nomeAjuda": "Lo ven quienes operan; no use datos personales."
+  },
+  "importador": {
+    "soImportador": "Esta pantalla es del importador. Conecte la billetera del importador (titular o vinculada).",
+    "registrar": "Registrar",
+    "emissao": "Emisión",
+    "registradoEm": "Registrado el",
+    "pesoEstimado": "Peso estimado (kg)",
+    "pesoEstimadoAjuda": "Opcional. Vale el peso de la báscula de quien recibe.",
+    "novaDistribuicao": "Nueva distribución",
+    "semDistribuicoes": "Ninguna distribución registrada.",
+    "distribuicaoRegistrada": "Distribución registrada.",
+    "distribuicoesAjuda": "Cada lote de distribución registra botellas que puso en el mercado, con la factura o declaración de importación. Es la base de la tasa de recuperación.",
+    "novaColeta": "Nueva recolección",
+    "semColetas": "Ninguna recolección registrada.",
+    "coletaRegistrada": "Recolección registrada.",
+    "coletasAjuda": "Registre las botellas recogidas. Luego envíe la recolección a una cooperativa o Clean Tech, que la pesa y registra el lote de origen.",
+    "dataColeta": "Fecha de recolección",
+    "dataFutura": "La fecha no puede estar en el futuro.",
+    "semMaterialGarrafas": "Ningún material activo cuenta botellas. Pida a la administración activar \"cuenta botellas\" en Vidrio.",
+    "form": {
+      "distribuicao": {
+        "titulo": "Nueva distribución",
+        "referencia": "Factura o declaración de importación",
+        "referenciaAjuda": "Solo el hash del número va a la blockchain; quien tenga el documento encuentra el lote en la trazabilidad.",
+        "data": "Fecha de emisión"
+      },
+      "coleta": {
+        "titulo": "Nueva recolección",
+        "referencia": "Punto de recolección",
+        "referenciaAjuda": "Tienda, condominio, evento… Solo como hash (privacidad).",
+        "data": "Fecha de recolección"
+      }
+    },
+    "destino": "Destino",
+    "escolherDestino": "Elija la cooperativa o Clean Tech",
+    "semDestinos": "Ninguna cooperativa o Clean Tech activa.",
+    "enviar": "Enviar",
+    "enviarTitulo": "Enviar recolección #{{id}}",
+    "enviarEfeito": "El destino ve la recolección al registrar el lote de origen y la pesa en su báscula.",
+    "cancelarEnvio": "Cancelar envío",
+    "semPendentes": "Ninguna recolección esperando envío.",
+    "entregasAjuda": "Recolecciones aún con usted o en camino. Si el destino la rechaza, cancele el envío y elija otro.",
+    "loteVenda": "Lote de venta",
+    "aguardandoLote": "Esperando lote",
+    "informarNf": "Informar factura",
+    "nfSoReciclado": "Disponible cuando el lote de venta esté reciclado.",
+    "nfTitulo": "Factura del reciclaje — recolección #{{id}}",
+    "nf": "Número de la factura del reciclaje",
+    "nfAjuda": "Solo el hash va a la blockchain.",
+    "nfRegistrada": "Factura registrada. La recolección está reciclada.",
+    "semEntregues": "Ninguna recolección entregada aún.",
+    "reciclagemAjuda": "Recolecciones ya pesadas por el destino. Cuando su lote de venta se recicle, adjunte la factura del reciclaje.",
+    "painel": {
+      "distribuidas": "Distribuidas",
+      "coletadas": "Recogidas",
+      "entregues": "Entregadas",
+      "recicladas": "Recicladas",
+      "taxa": "Tasa de recuperación",
+      "taxaContexto": "Botellas recicladas (con factura) ÷ distribuidas",
+      "garrafas": "botellas puestas en el mercado",
+      "doDistribuido": "{{pct}} de lo distribuido",
+      "doDistribuidoCurto": "% de lo distribuido",
+      "pendentes": "{{envio}} esperando envío · {{caminho}} en camino",
+      "aguardandoNf": "{{n}} recolección(es) esperando factura",
+      "porMes": "Botellas por mes",
+      "porMesAjuda": "Distribuidas por fecha de factura; recogidas y recicladas por fecha de recolección.",
+      "funil": "Del mercado al reciclaje",
+      "funilAjuda": "Total acumulado en cada etapa.",
+      "porCor": "Por material y color",
+      "porCorAjuda": "Porcentaje: recicladas ÷ distribuidas del mismo color.",
+      "vazio": "Aún no hay distribuciones ni recolecciones. Empiece por Lotes de distribución."
+    }
+  },
+  "venda": {
+    "situacao": "Venta",
+    "titulo": "Venta del lote {{id}}",
+    "selecione": "Seleccione un lote cerrado para ponerlo a la venta o marcarlo como vendido",
+    "aVenda": "A la venta",
+    "aVendaAjuda": "Aparece en el Mercado para las industrias. La primera que compre por el valor (o más) se lo lleva.",
+    "vendido": "Vendido",
+    "vendidoAjuda": "Ya se vendió fuera de la plataforma. Queda registrado sin valor ni comprador.",
+    "valorLote": "Valor del lote (R$)",
+    "valorAjuda": "Valor total del lote, no por kilo. Para cambiarlo después, abra esta ventana de nuevo.",
+    "semEntregas": "Este lote no tiene lotes de origen, por eso no puede ponerse a la venta.",
+    "retirar": "Retirar de la venta",
+    "soParticipante": "Esta pantalla es para billeteras registradas como cooperativa, Clean Tech o industria.",
+    "disputaIndustria": "Lotes a la venta de las cooperativas y Clean Techs. Seleccione un lote y toque \"Comprar\": quien compra primero se lo lleva.",
+    "disputaCooperativa": "Todos los lotes a la venta en la red, los suyos y los de otras cooperativas. Para poner un lote a la venta o cambiar el valor, use \"Lotes de venta\".",
+    "vendedor": "Vendedor",
+    "seuLote": "Su lote",
+    "valor": "Valor",
+    "porKg": "R$/kg",
+    "desde": "A la venta desde",
+    "vazioDisputa": "Ningún lote a la venta en este momento.",
+    "comprar": "Comprar",
+    "selecioneCompra": "Seleccione un lote para comprar",
+    "comprarTitulo": "Comprar el lote {{id}}",
+    "valorCompra": "Valor (R$)",
+    "valorCompraAjuda": "Precio pedido: {{preco}}. Puede ofrecer más.",
+    "abaixoDoPreco": "El valor no puede ser menor que el precio pedido ({{preco}}).",
+    "modoRetirada": "Modo de retiro",
+    "modo": {
+      "terceiro": "Transportista tercero",
+      "terceiroAjuda": "Un transportista registrado busca el lote en la cooperativa.",
+      "propria": "Transportista propio",
+      "propriaAjuda": "La propia industria busca el lote y firma el retiro en \"Retiros\"."
+    },
+    "confirmarCompra": "Firmar y comprar",
+    "efeitoCompra": "El pago se acuerda directamente con la cooperativa. Tras la recepción, ella confirma el pago y el lote queda concluido.",
+    "comprado": "Lote #{{id}} comprado.",
+    "verCompras": "Ver en Compras",
+    "comprador": "Comprador",
+    "foraDaPlataforma": "Fuera de la plataforma",
+    "retirada": "Retiro",
+    "leilao": "Subasta",
+    "aguardandoPagamento": "Esperando el pago",
+    "atualizado": "Actualizado el",
+    "etapa": {
+      "retirada": "Esperando retiro",
+      "transporte": "En transporte",
+      "pagamento": "Esperando el pago",
+      "concluidas": "Concluidas"
+    },
+    "confirmarPagamento": "Confirmar pago",
+    "selecionePagamento": "Seleccione un lote recibido por la industria y aún no pagado",
+    "vazioVendas": "Ningún lote vendido todavía.",
+    "pagamentoConfirmado": "Pago confirmado. El lote está concluido.",
+    "pagamentoTitulo": "Pago del lote {{id}}",
+    "comprovante": "Comprobante del pago",
+    "comprovanteAjuda": "ID del Pix, número de boleto o de factura. Solo el hash va a la blockchain.",
+    "efeitoPagamento": "Al confirmar, el lote pasa a Reciclado y puede entrar en un crédito de carbono."
   }
 }

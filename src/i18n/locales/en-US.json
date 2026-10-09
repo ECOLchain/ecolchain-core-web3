@@ -41,16 +41,22 @@
     "materiais": "Materials",
     "coletas": "Source lots",
     "meusLotes": "My lots",
-    "minhaCarteira": "My wallet"
+    "minhaCarteira": "My wallet",
+    "painelImportador": "Dashboard",
+    "distribuicoesImportador": "Distribution batches",
+    "coletasImportador": "Collections",
+    "entregasImportador": "Deliveries",
+    "reciclagemImportador": "Recycling (invoice)",
+    "vendas": "Sales"
   },
   "descricoes": {
     "painel": "Summary of your operation.",
     "explorar": "Look up the trail of any batch, credit or distribution.",
-    "lotes": "Combine source lots of the same material, weigh the consolidated lot and list it in the auction.",
+    "lotes": "Combine source lots of the same material, weigh the consolidated lot and put it up for sale or mark it as sold.",
     "anuncios": "List batches on the marketplace, reprice or withdraw listings.",
     "retiradas": "Confirm the custody handover between cooperative and carrier.",
     "entregas": "Batches in transit and delivery deadlines.",
-    "marketplace": "Batches listed by cooperatives.",
+    "marketplace": "Lots for sale by cooperatives and Clean Techs. The industry buys by entering the amount and who picks it up.",
     "compras": "Winning bids and sales awaiting signature.",
     "recebimentos": "Confirm receipt and the weight on arrival.",
     "disputas": "Open or follow disputes on your batches.",
@@ -70,7 +76,13 @@
     "materiais": "Register the material types accepted in batches.",
     "coletas": "Weigh and record incoming material: from collectors, in-house sorting, donations, purchases or unregistered pickers.",
     "meusLotes": "The source lots you delivered, at any cooperative, and the path of each one to the industry.",
-    "minhaCarteira": "Your wallet code to show the cooperative at delivery or pickup."
+    "minhaCarteira": "Your wallet code to show the cooperative at delivery or pickup.",
+    "painelImportador": "Bottles you put on the market and how many have come back for recycling.",
+    "distribuicoesImportador": "Record the bottles you released to the market (invoice or import declaration).",
+    "coletasImportador": "Record the bottles picked up at collection points.",
+    "entregasImportador": "Send collections to a cooperative or Clean Tech.",
+    "reciclagemImportador": "Attach the recycling invoice once the batch is recycled.",
+    "vendas": "Sold lots: buyer, amount, pickup and payment confirmation."
   },
   "papel": {
     "coletor": "Collector",
@@ -84,7 +96,9 @@
     "arbitro": "Arbiter",
     "semCadastro": "Not registered",
     "verificando": "Checking registration…",
-    "inativo": "inactive"
+    "inativo": "inactive",
+    "importador": "Importer",
+    "cleantech": "Clean Tech"
   },
   "preferencias": {
     "fonte": "Text size",
@@ -163,7 +177,23 @@
         "metal": "Metal",
         "outros": "Other"
       },
-      "editar": "Edit material"
+      "editar": "Edit material",
+      "variacoes": "Variants",
+      "variacoesTitulo": "Variants of {{nome}}",
+      "variacoesAjuda": "With any variant, every batch of this material states its color and a sale batch never mixes colors. Variants are never deleted: deactivate them.",
+      "semVariacoes": "No variants: batches do not state a color.",
+      "novaVariacao": "New variant",
+      "novaVariacaoExemplo": "E.g.: Green",
+      "incluirVariacao": "Add",
+      "contaGarrafas": "Counts bottles",
+      "contaGarrafasAjuda": "Batches state the approximate number of bottles besides the weight.",
+      "sim": "Yes",
+      "nao": "—",
+      "cores": {
+        "transparente": "Clear",
+        "verde": "Green",
+        "marrom": "Amber"
+      }
     },
     "participantes": {
       "novo": "New participant",
@@ -230,7 +260,26 @@
     "carteiraSemAssinatura": "This wallet cannot sign without sending. Use Solflare.",
     "codigoExpirado": "The code expired. Ask the cooperative to generate another.",
     "carteiraOutroPapel": "The connected wallet is not the one for this role in this sale.",
-    "semNonce": "The administration has not prepared the sales signing account yet."
+    "VariacaoObrigatoria": "This material has variants: choose the color.",
+    "VariacaoInvalida": "The variant does not belong to this material.",
+    "VariacaoInativa": "This variant is deactivated.",
+    "VariacaoDiferente": "Source batches must have the same color as the sale batch.",
+    "LimiteDeVariacoes": "Variant limit reached for this material.",
+    "MaterialSemGarrafas": "This material does not count bottles.",
+    "CarteiraNaoAutorizada": "This wallet is not linked (or was deactivated) to sign for this participant.",
+    "CarteiraEmUso": "This wallet already belongs to another participant.",
+    "ColetaEstadoInvalido": "The collection is not at the right stage for this operation.",
+    "ColetaDeOutroDestino": "This collection was sent to another destination.",
+    "ColetaDivergente": "Material or color differs from the collection.",
+    "ColetaAusente": "Choose the importer's collection.",
+    "LoteNaoReciclado": "The sale batch has not been recycled yet.",
+    "GarrafasInvalidas": "Enter the number of bottles.",
+    "DataInvalida": "Invalid date (empty or in the future).",
+    "LoteNaoEhVendaDireta": "This lot is not for sale at a fixed price.",
+    "LoteEmVendaDireta": "This lot is for sale at a fixed price: the industry buys it on the Marketplace.",
+    "ModoRetiradaInvalido": "Choose who picks up the lot.",
+    "RetiradaDeOutroModo": "The pickup does not match the mode chosen at purchase (own or by carrier).",
+    "ValorAbaixoDoMinimo": "The amount is below the lot price."
   },
   "cooperativa": {
     "soCooperativa": "This screen is only for cooperative wallets.",
@@ -260,7 +309,11 @@
       "qrInvalido": "This QR code is not a wallet. Ask the collector to open \"My wallet\" in the app.",
       "qrSemCadastro": "This wallet is not registered. Ask the administration to register it as a collector.",
       "qrNaoColetor": "This wallet is registered with another role, not as a collector.",
-      "qrInativo": "This collector is inactive. Ask the administration to reactivate it."
+      "qrInativo": "This collector is inactive. Ask the administration to reactivate it.",
+      "coletaImportador": "Importer collection",
+      "escolherColeta": "Choose the received collection",
+      "opcaoColeta": "#{{id}} · {{importador}} · {{cor}} · {{garrafas}} bottles",
+      "semColetasImportador": "No importer collection on its way to this unit."
     },
     "lotes": {
       "montar": "Assemble batch",
@@ -308,7 +361,8 @@
     "Reembolsado": "Refunded",
     "EmMontagem": "Being assembled",
     "EmDesmontagem": "Undoing",
-    "Desfeito": "Undone"
+    "Desfeito": "Undone",
+    "VendidoFora": "Sold (off-platform)"
   },
   "grade": {
     "buscar": "Search",
@@ -333,7 +387,8 @@
     "TriagemPropria": "In-house sorting",
     "Doacao": "Donation",
     "Compra": "Purchase",
-    "Avulso": "Unregistered picker"
+    "Avulso": "Unregistered picker",
+    "Importador": "Importer collection"
   },
   "trilha": {
     "busca": "Name, reference or address",
@@ -360,7 +415,9 @@
     "pesoRotulo": "Weight",
     "coletor": "Collector",
     "limite": "Showing {{n}} of {{total}} results. Refine the search to see the rest.",
-    "participantes": "Participants found: {{nomes}}"
+    "participantes": "Participants found: {{nomes}}",
+    "coletaImportador": "Importer collection",
+    "nfReciclagem": "recycling invoice recorded"
   },
   "estadoCredito": {
     "EmFormacao": "Being formed",
@@ -391,7 +448,7 @@
     "ajudaTransportador": "Show this code to the cooperative when you pick up the lot. They scan it and check that the lot leaves with the registered carrier. The code carries only the wallet address, no personal data."
   },
   "retiradas": {
-    "soParticipante": "This screen is for wallets registered as cooperative or carrier.",
+    "soParticipante": "This screen is for wallets registered as cooperative, Clean Tech, carrier or industry.",
     "aguardando": "Waiting for pickup",
     "retiradas": "Picked up",
     "prazo": "Delivery deadline",
@@ -428,7 +485,12 @@
       "assinaturaInvalida": "The code does not match the cooperative's signature. Ask them to generate another code."
     },
     "aponteTransportador": "Point at the QR code on the carrier's \"My wallet\" screen",
-    "aponteCamera": "Point at the code on the cooperative's screen"
+    "aponteCamera": "Point at the code on the cooperative's screen",
+    "propria": "The industry itself",
+    "passo1Propria": "At purchase, {{industria}} chose to pick up the lot itself. Scan the QR code on the \"My wallet\" screen of whoever came to collect it, or confirm the industry in the list.",
+    "quemRetira": "Picked up by",
+    "qrNaoCompradora": "This wallet does not belong to the industry that bought the lot.",
+    "vazioIndustria": "No purchases with own pickup. When you buy choosing \"Own carrier\", the lot appears here so you can sign the pickup at the cooperative."
   },
   "papelAtual": {
     "operando": "Operating as",
@@ -458,9 +520,10 @@
     "ata": "Auction result reference",
     "ataAjuda": "E.g. minutes number. Only a derived code goes on the blockchain.",
     "assinarGerar": "Sign and generate code",
-    "passo2": "The administration has signed. Now the intermediary, in \"Lot escrow\", and the industry, in \"Purchases\", read this code (camera or copy and paste) and sign. The code does not expire with time.",
+    "passo2": "The administration has signed. Now the intermediary, in \"Lot escrow\", and the industry, in \"Purchases\", read this code (camera or copy and paste) and sign. The code is valid for about one minute: keep the three screens open before you start.",
     "qrTitulo": "Sale code for the next signatures",
     "aguardando": "Waiting for the intermediary's and the industry's signatures…",
+    "expirado": "The code expired before the three signatures (it is valid for about one minute). Generate another one and pass it right away to the intermediary and the industry.",
     "concluida": "Sale of lot #{{lote}} registered: {{nome}}, {{valor}}. The lot is waiting for pickup.",
     "aceitar": "Accept purchase",
     "assinarDeposito": "Sign sale",
@@ -484,12 +547,13 @@
     "codigo": {
       "formato": "This is not an EcolChain sale code.",
       "assinaturaInvalida": "The code does not match the signatures. Ask the administration for a new code.",
-      "vencido": "The code expired: another sale was registered after it. Ask the administration for a new code.",
+      "vencido": "The code expired (it is valid for about one minute). Ask the administration for a new code.",
       "naoAnunciado": "This lot is no longer in auction.",
       "jaAssinado": "Your wallet has already signed this code. Pass it to whoever is missing."
     },
     "assinou": "✓ {{papel}}",
-    "falta": "Missing: {{papel}}"
+    "falta": "Missing: {{papel}}",
+    "carteiraIndustria": "Wallet signing for the industry"
   },
   "codigo": {
     "copiar": "Copy code",
@@ -531,7 +595,7 @@
     "comBalancaAjuda": "The scale signs the weight and the time; the receipt is marked as attested.",
     "semBalanca": "No scale ready: the weight is recorded as informed, without attestation.",
     "configurarBalanca": "Set up scale",
-    "registrado": "Receipt of lot #{{lote}} registered. The digital receipt moved to your wallet; the intermediary still has to release the payment to the cooperative.",
+    "registrado": "Receipt of lot #{{lote}} recorded. The digital receipt moved to your wallet; the payment to the cooperative is still to be released.",
     "emDisputa": "Receipt of lot #{{lote}} registered with weight divergence: the lot is in dispute.",
     "atestado": "Weight attested by the scale",
     "informado": "Weight informed, without scale"
@@ -557,5 +621,168 @@
     "efeito": "By signing, you attest that you transferred the held amount to the cooperative. The lot becomes Recycled and can join a carbon credit.",
     "confirmar": "Sign and release",
     "liberado": "Payment of lot #{{lote}} released: {{valor}} to {{nome}}. The lot is Recycled."
+  },
+  "estadoColeta": {
+    "Coletada": "Collected",
+    "EmEntrega": "On the way",
+    "Entregue": "Delivered",
+    "Reciclada": "Recycled"
+  },
+  "material": {
+    "variacao": "Color / variant",
+    "escolherVariacao": "Choose the color",
+    "garrafas": "Bottles (approx.)",
+    "garrafasCurto": "Bottles",
+    "garrafasAjuda": "Approximate count; weight remains the official measure.",
+    "garrafasInvalidas": "Enter a whole number of bottles.",
+    "garrafasN": "{{n}} bottles"
+  },
+  "graficos": {
+    "verTabela": "Show table",
+    "verGrafico": "Show chart"
+  },
+  "carteiras": {
+    "titulo": "Wallets",
+    "explicacao": "Each wallet has a name and signs for the participant (front desk, driver, gate). A wallet belongs to one participant only. Only the holder or the administration add and deactivate wallets.",
+    "titular": "Holder wallet",
+    "nomear": "Name it",
+    "vincular": "Link wallet",
+    "nenhumaVinculada": "No linked wallets.",
+    "endereco": "Wallet address",
+    "enderecoAjuda": "Ask for the QR on the My wallet screen or paste the address.",
+    "nome": "Wallet name",
+    "nomeExemplo": "E.g.: Front desk, Driver 2",
+    "nomeAjuda": "Shown to operators; do not use personal data."
+  },
+  "importador": {
+    "soImportador": "This screen is for the importer. Connect the importer's wallet (holder or linked).",
+    "registrar": "Record",
+    "emissao": "Issued",
+    "registradoEm": "Recorded on",
+    "pesoEstimado": "Estimated weight (kg)",
+    "pesoEstimadoAjuda": "Optional. The receiver's scale weight is what counts.",
+    "novaDistribuicao": "New distribution",
+    "semDistribuicoes": "No distributions recorded.",
+    "distribuicaoRegistrada": "Distribution recorded.",
+    "distribuicoesAjuda": "Each distribution batch records bottles you put on the market, with the invoice or import declaration. It is the base of the recovery rate.",
+    "novaColeta": "New collection",
+    "semColetas": "No collections recorded.",
+    "coletaRegistrada": "Collection recorded.",
+    "coletasAjuda": "Record the bottles picked up. Then send the collection to a cooperative or Clean Tech, which weighs it and records the source batch.",
+    "dataColeta": "Collection date",
+    "dataFutura": "The date cannot be in the future.",
+    "semMaterialGarrafas": "No active material counts bottles. Ask the administration to enable \"counts bottles\" on Glass.",
+    "form": {
+      "distribuicao": {
+        "titulo": "New distribution",
+        "referencia": "Invoice or import declaration",
+        "referenciaAjuda": "Only the hash of the number goes on-chain; anyone holding the document finds the batch in the trail.",
+        "data": "Issue date"
+      },
+      "coleta": {
+        "titulo": "New collection",
+        "referencia": "Collection point",
+        "referenciaAjuda": "Store, building, event… Stored only as a hash (privacy).",
+        "data": "Collection date"
+      }
+    },
+    "destino": "Destination",
+    "escolherDestino": "Choose the cooperative or Clean Tech",
+    "semDestinos": "No active cooperative or Clean Tech.",
+    "enviar": "Send",
+    "enviarTitulo": "Send collection #{{id}}",
+    "enviarEfeito": "The destination sees the collection when recording the source batch and weighs it on its own scale.",
+    "cancelarEnvio": "Cancel sending",
+    "semPendentes": "No collection waiting to be sent.",
+    "entregasAjuda": "Collections still with you or on their way. If the destination refuses, cancel and choose another.",
+    "loteVenda": "Sale batch",
+    "aguardandoLote": "Waiting for batch",
+    "informarNf": "Add invoice",
+    "nfSoReciclado": "Available once the sale batch is recycled.",
+    "nfTitulo": "Recycling invoice — collection #{{id}}",
+    "nf": "Recycling invoice number",
+    "nfAjuda": "Only the hash goes on-chain.",
+    "nfRegistrada": "Invoice recorded. The collection is recycled.",
+    "semEntregues": "No delivered collections yet.",
+    "reciclagemAjuda": "Collections already weighed by the destination. Once their sale batch is recycled, attach the recycling invoice.",
+    "painel": {
+      "distribuidas": "Distributed",
+      "coletadas": "Collected",
+      "entregues": "Delivered",
+      "recicladas": "Recycled",
+      "taxa": "Recovery rate",
+      "taxaContexto": "Recycled bottles (with invoice) ÷ distributed",
+      "garrafas": "bottles put on the market",
+      "doDistribuido": "{{pct}} of distributed",
+      "doDistribuidoCurto": "% of distributed",
+      "pendentes": "{{envio}} waiting to send · {{caminho}} on the way",
+      "aguardandoNf": "{{n}} collection(s) waiting for invoice",
+      "porMes": "Bottles per month",
+      "porMesAjuda": "Distributed by invoice date; collected and recycled by collection date.",
+      "funil": "From market to recycling",
+      "funilAjuda": "Running total at each stage.",
+      "porCor": "By material and color",
+      "porCorAjuda": "Percentage: recycled ÷ distributed of the same color.",
+      "vazio": "No distributions or collections yet. Start with Distribution batches."
+    }
+  },
+  "venda": {
+    "situacao": "Sale",
+    "titulo": "Sale of lot {{id}}",
+    "selecione": "Select a closed lot to put up for sale or mark as sold",
+    "aVenda": "For sale",
+    "aVendaAjuda": "Shown on the Marketplace to industries. The first one to buy at the price (or more) gets it.",
+    "vendido": "Sold",
+    "vendidoAjuda": "Already sold outside the platform. Recorded with no amount and no buyer.",
+    "valorLote": "Lot price (R$)",
+    "valorAjuda": "Total price of the lot, not per kilo. To change it later, open this window again.",
+    "semEntregas": "This lot has no source lots, so it cannot be put up for sale.",
+    "retirar": "Withdraw from sale",
+    "soParticipante": "This screen is for wallets registered as cooperative, Clean Tech or industry.",
+    "disputaIndustria": "Lots for sale by cooperatives and Clean Techs. Select a lot and tap \"Buy\": first come, first served.",
+    "disputaCooperativa": "All lots for sale on the network, yours and other cooperatives'. To put a lot up for sale or change its price, use \"Sale lots\".",
+    "vendedor": "Seller",
+    "seuLote": "Your lot",
+    "valor": "Amount",
+    "porKg": "R$/kg",
+    "desde": "For sale since",
+    "vazioDisputa": "No lots for sale right now.",
+    "comprar": "Buy",
+    "selecioneCompra": "Select a lot to buy",
+    "comprarTitulo": "Buy lot {{id}}",
+    "valorCompra": "Amount (R$)",
+    "valorCompraAjuda": "Asking price: {{preco}}. You can offer more.",
+    "abaixoDoPreco": "The amount cannot be lower than the asking price ({{preco}}).",
+    "modoRetirada": "Pickup mode",
+    "modo": {
+      "terceiro": "Third-party carrier",
+      "terceiroAjuda": "A registered carrier collects the lot at the cooperative.",
+      "propria": "Own carrier",
+      "propriaAjuda": "The industry itself collects the lot and signs the pickup in \"Pickups\"."
+    },
+    "confirmarCompra": "Sign and buy",
+    "efeitoCompra": "Payment is arranged directly with the cooperative. After receipt, it confirms the payment and the lot is completed.",
+    "comprado": "Lot #{{id}} bought.",
+    "verCompras": "See in Purchases",
+    "comprador": "Buyer",
+    "foraDaPlataforma": "Off-platform",
+    "retirada": "Pickup",
+    "leilao": "Auction",
+    "aguardandoPagamento": "Awaiting payment",
+    "atualizado": "Updated",
+    "etapa": {
+      "retirada": "Awaiting pickup",
+      "transporte": "In transit",
+      "pagamento": "Awaiting payment",
+      "concluidas": "Completed"
+    },
+    "confirmarPagamento": "Confirm payment",
+    "selecionePagamento": "Select a lot received by the industry and not yet paid",
+    "vazioVendas": "No lots sold yet.",
+    "pagamentoConfirmado": "Payment confirmed. The lot is completed.",
+    "pagamentoTitulo": "Payment for lot {{id}}",
+    "comprovante": "Payment receipt",
+    "comprovanteAjuda": "Pix ID, bank slip or invoice number. Only the hash goes on-chain.",
+    "efeitoPagamento": "On confirming, the lot becomes Recycled and can join a carbon credit."
   }
 }

@@ -1,5 +1,5 @@
-import { type Address, address, getAddressEncoder, isAddress } from '@solana/kit';
-import { useClient } from '@solana/react';
+import { type Address, address, getAddressDecoder, getAddressEncoder, isAddress } from '@solana/kit';
+import { useClient, useRequest } from '@solana/react';
 import { ExternalLink, LoaderCircle, Search } from 'lucide-react';
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,8 +14,9 @@ import { usePreferencias } from '../preferencias/Preferencias';
 import type { AppClient } from '../solana/cliente';
 import { type ContaDecodificada, listarContas } from '../solana/contas';
 import { REDES } from '../solana/redes';
-import { gramasParaKg, useMateriais, useParticipantes } from '../solana/useDados';
+import { gramasParaKg, nomeVariacao, useMateriais, useParticipantes, useVariacoes } from '../solana/useDados';
 import { abreviar } from './admin/comum';
+import { rotuloEstado } from './venda/comum';
 
 const SEM_CONTA = '11111111111111111111111111111111';
 /** Mais que isso, a busca pede para refinar (cada trilha custa algumas leituras). */
@@ -248,7 +249,21 @@ function CartaoTrilha({ trilha }: { trilha: Trilha }) {
         };
     }, [participantes.data, nome]);
     const coletor = (e: Entrega) => (e.dados.origem === lote.OrigemEntrega.Coletor ? coletores.get(hex(e.dados.origemRef)) : undefined);
-    const nomeMaterial = (codigo: number) => materiais.data?.find((m) => m.dados.codigo === codigo)?.dados.nome ?? String(codigo);
+    const variacoes = useVariacoes();
+    const nomeMaterial = (codigo: number, variacao = 0) =>
+        [materiais.data?.find((m) => m.dados.codigo === codigo)?.dados.nome ?? String(codigo), nomeVariacao(variacoes.data, codigo, variacao)]
+            .filter(Boolean)
+            .join(' · ');
+    const garrafas = (n: number) => t('material.garrafasN', { n: n.toLocaleString(idioma) });
+    // Origem Importador: a referência é a conta da coleta (ADR 0011) — mostra o importador e a NF.
+    const client = useClient<AppClient>();
+    const enderecoColeta =
+        trilha.origem?.dados.origem === lote.OrigemEntrega.Importador
+            ? (getAddressDecoder().decode(new Uint8Array(trilha.origem.dados.origemRef)) as Address)
+            : undefined;
+    const fonteColeta = useCallback(() => lote.fetchMaybeColeta(client.rpc, enderecoColeta!), [client, enderecoColeta]);
+    const coleta = useRequest(enderecoColeta ? fonteColeta : null).data;
+    const dadosColeta = coleta?.exists ? coleta.data : undefined;
     const data = (ts: bigint) => new Date(Number(ts) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' });
     const kg = (g: bigint) => t('trilha.peso', { kg: gramasParaKg(g, idioma) });
     const link = (endereco: string) => (
@@ -272,8 +287,18 @@ function CartaoTrilha({ trilha }: { trilha: Trilha }) {
                 <Etapa titulo={t('trilha.loteOrigem')} marca={`#${origem.dados.entregaId}`}>
                     <Dado rotulo={t('cooperativa.coletas.origem')}>{t(`origem.${lote.OrigemEntrega[origem.dados.origem]}`)}</Dado>
                     {coletor(origem) && <Dado rotulo={t('trilha.coletor')}>{coletor(origem)}</Dado>}
-                    <Dado rotulo={t('cooperativa.material')}>{nomeMaterial(origem.dados.material)}</Dado>
+                    {dadosColeta && (
+                        <>
+                            <Dado rotulo={t('papel.importador')}>{nome(dadosColeta.importador)}</Dado>
+                            <Dado rotulo={t('trilha.coletaImportador')}>
+                                {`#${dadosColeta.coletaId} · ${t(`estadoColeta.${lote.EstadoColeta[dadosColeta.estado]}`)}`}
+                                {dadosColeta.estado === lote.EstadoColeta.Reciclada && ` · ${t('trilha.nfReciclagem')}`}
+                            </Dado>
+                        </>
+                    )}
+                    <Dado rotulo={t('cooperativa.material')}>{nomeMaterial(origem.dados.material, origem.dados.variacao)}</Dado>
                     <Dado rotulo={t('trilha.pesoRotulo')}>{kg(origem.dados.pesoG)}</Dado>
+                    {origem.dados.qtdGarrafas > 0 && <Dado rotulo={t('material.garrafasCurto')}>{garrafas(origem.dados.qtdGarrafas)}</Dado>}
                     <Dado rotulo={t('trilha.cooperativa')}>{nome(origem.dados.cooperativa)}</Dado>
                     <p className="text-sm text-texto-suave">{t('trilha.registrado', { data: data(origem.dados.tsPesagem) })}</p>
                     {link(origem.endereco)}
@@ -283,9 +308,12 @@ function CartaoTrilha({ trilha }: { trilha: Trilha }) {
             {venda && (
                 <>
                     <Etapa titulo={t('trilha.loteVenda')} marca={`#${venda.lote.dados.loteId}`}>
-                        <Dado rotulo={t('cooperativa.lotes.estado')}>{t(`estadoLote.${estado}`)}</Dado>
-                        <Dado rotulo={t('cooperativa.material')}>{nomeMaterial(venda.lote.dados.material)}</Dado>
+                        <Dado rotulo={t('cooperativa.lotes.estado')}>{rotuloEstado(t, venda.lote.dados)}</Dado>
+                        <Dado rotulo={t('cooperativa.material')}>{nomeMaterial(venda.lote.dados.material, venda.lote.dados.variacao)}</Dado>
                         {venda.lote.dados.pesoG > 0n && <Dado rotulo={t('trilha.pesoRotulo')}>{kg(venda.lote.dados.pesoG)}</Dado>}
+                        {venda.lote.dados.qtdGarrafas > 0 && (
+                            <Dado rotulo={t('material.garrafasCurto')}>{garrafas(venda.lote.dados.qtdGarrafas)}</Dado>
+                        )}
                         <Dado rotulo={t('trilha.cooperativa')}>{nome(venda.lote.dados.cooperativa)}</Dado>
                         {venda.lote.dados.transportador !== SEM_CONTA && (
                             <Dado rotulo={t('trilha.transportador')}>{nome(venda.lote.dados.transportador)}</Dado>
