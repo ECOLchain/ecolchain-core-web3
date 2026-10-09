@@ -813,5 +813,101 @@
     "lanceVenceu": "O leilão terminou e o seu lance é o maior. Aguarde a Administração registrar a venda: o código para assinar chega em \"Compras\".",
     "lanceEncerradoSemLances": "O leilão terminou sem lances.",
     "lanceSoIndustria": "Só indústrias dão lances."
+  },
+  "contestacoes": {
+    "soParte": "Esta tela é para as partes dos lotes: cooperativa, Clean Tech, indústria e transportador.",
+    "explicacao": "Lotes em que você é parte, da venda até a liberação do pagamento. Se o peso, a classificação ou a entrega não estiverem certos, abra uma contestação: o lote para e o árbitro decide. As provas (fotos, tickets, conversas) vão ao árbitro fora da plataforma; na blockchain fica o motivo.",
+    "filtro": {
+      "emAndamento": "Em andamento",
+      "abertas": "Em contestação"
+    },
+    "seuPapel": "Seu papel",
+    "papel": {
+      "cooperativa": "Vendedora",
+      "industria": "Compradora",
+      "transportador": "Transportador"
+    },
+    "prazoEntrega": "Prazo de entrega",
+    "naEtapa": "aberta em {{etapa}}",
+    "julgadaEm": "já julgada em {{etapa}}",
+    "abrir": "Abrir contestação",
+    "selecione": "Selecione um lote",
+    "naoContestavel": "Este lote não pode ser contestado agora (fora das etapas da venda à liberação, ou já julgado nesta etapa)",
+    "acionarPrazo": "Prazo expirado",
+    "prazoAcionado": "O prazo de entrega do lote #{{lote}} expirou: o lote foi para contestação.",
+    "vazio": "Nenhum lote seu nesta situação.",
+    "abrirTitulo": "Contestar o lote #{{lote}}",
+    "motivoTitulo": "Motivo",
+    "motivo": {
+      "divergenciaPeso": "Divergência de peso",
+      "classificacao": "Classificação contestada",
+      "falhaEntrega": "Falha na entrega",
+      "prazoExpirado": "Prazo expirado",
+      "outro": "Outro motivo"
+    },
+    "motivoAjuda": {
+      "divergenciaPeso": "O peso pesado não confere com o registrado.",
+      "classificacao": "O material não é o anunciado (tipo, cor ou contaminação).",
+      "falhaEntrega": "O lote não foi retirado, entregue ou chegou danificado.",
+      "outro": "Qualquer outro problema; explique ao árbitro."
+    },
+    "assinarAbrir": "Assinar e contestar",
+    "efeito": "O lote fica parado em contestação até o árbitro decidir. Depois que o árbitro julgar uma etapa, ela não pode ser contestada de novo.",
+    "aberta": "Contestação do lote #{{lote}} aberta. O árbitro vai analisar."
+  },
+  "arbitragem": {
+    "soArbitro": "Esta tela é para a carteira do árbitro.",
+    "explicacao": "Lotes em contestação. Prosseguir devolve o lote à etapa em que estava (e pode corrigir o peso): só o árbitro assina. Liberar parcial e Reembolsar mexem no dinheiro retido: o árbitro assina e gera um código, e o intermediador confere e assina na tela Escrow dos lotes.",
+    "julgadas": "Julgadas",
+    "decidir": "Decidir",
+    "selecione": "Selecione um lote em contestação",
+    "vazio": "Nenhum lote em contestação.",
+    "decidirTitulo": "Decisão do lote #{{lote}}",
+    "pesos": "Peso",
+    "pesosValor": "saída {{saida}} kg, chegada {{chegada}} kg",
+    "etapa": "Etapa contestada",
+    "decisao": "Decisão",
+    "tipo": {
+      "prosseguir": "Prosseguir",
+      "liberar": "Liberar parcial",
+      "reembolsar": "Reembolsar"
+    },
+    "ajuda": {
+      "prosseguir": "O lote volta para \"{{etapa}}\" e segue o fluxo. Antes da entrega, o prazo é renovado.",
+      "liberar": "Encerra a venda: parte do valor vai à cooperativa e o resto volta à indústria. O lote vai a Reciclado.",
+      "liberarSoRecebido": "Só para contestação aberta depois do recebimento.",
+      "reembolsar": "Encerra a venda e devolve o valor inteiro à indústria. O lote vai a Reembolsado."
+    },
+    "novoPeso": "Peso corrigido (kg, opcional)",
+    "novoPesoCurto": "Peso corrigido",
+    "novoPesoAjuda": "Em branco mantém o peso atual.",
+    "valorLiberado": "Valor para a cooperativa (R$)",
+    "valorLiberadoAjuda": "Até {{valor}}. O resto volta à indústria.",
+    "liberadoAcima": "Não pode passar do valor da venda ({{valor}}).",
+    "reembolsoResto": "A indústria recebe de volta {{valor}}.",
+    "referencia": "Referência do repasse",
+    "referenciaAjuda": "ID do Pix ou da transferência. Só o hash vai para a blockchain.",
+    "vendaDireta": "Venda direta: não há escrow; o intermediador co-assina só para registrar a decisão.",
+    "comIntermediador": "O intermediador confere e assina na tela Escrow dos lotes, no aparelho dele.",
+    "assinarEnviar": "Assinar e enviar",
+    "assinarGerar": "Assinar e gerar código",
+    "prosseguiu": "Lote #{{lote}} voltou para \"{{etapa}}\".",
+    "passoIntermediador": "Decisão assinada. Mostre o código ao intermediador: ele confere e assina em \"Escrow dos lotes\" › \"Assinar decisão\".",
+    "qrTitulo": "Código da decisão",
+    "aguardando": "Aguardando a assinatura do intermediador…",
+    "decidida": "Decisão do lote #{{lote}} registrada: {{estado}}.",
+    "assinarDecisao": "Assinar decisão",
+    "lerCodigo": "Leia o QR da decisão no aparelho do árbitro ou cole o código.",
+    "confirmarDecisao": "Assinar e enviar",
+    "aCooperativa": "Para a cooperativa",
+    "aIndustria": "De volta à indústria",
+    "efeitoIntermediador": "Ao assinar, você atesta que fez esses repasses do dinheiro retido.",
+    "decisaoEnviada": "Decisão do árbitro registrada.",
+    "codigo": {
+      "formato": "Este código não é de uma decisão do árbitro.",
+      "outroIntermediador": "Esta carteira não é a do intermediador.",
+      "assinaturaInvalida": "A assinatura do árbitro não confere.",
+      "semDisputa": "Este lote não está mais em contestação."
+    }
   }
 }

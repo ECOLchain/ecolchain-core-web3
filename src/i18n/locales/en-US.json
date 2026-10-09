@@ -813,5 +813,101 @@
     "lanceVenceu": "The auction has ended and your bid is the highest. Wait for the administration to record the sale: the signing code arrives in \"Purchases\".",
     "lanceEncerradoSemLances": "The auction ended with no bids.",
     "lanceSoIndustria": "Only industries place bids."
+  },
+  "contestacoes": {
+    "soParte": "This screen is for the parties of the lots: cooperative, Clean Tech, industry and carrier.",
+    "explicacao": "Lots you are a party to, from the sale until the payment is released. If the weight, grading or delivery is not right, open a claim: the lot stops and the arbitrator decides. Evidence (photos, tickets, messages) goes to the arbitrator outside the platform; the blockchain keeps the reason.",
+    "filtro": {
+      "emAndamento": "In progress",
+      "abertas": "Under claim"
+    },
+    "seuPapel": "Your role",
+    "papel": {
+      "cooperativa": "Seller",
+      "industria": "Buyer",
+      "transportador": "Carrier"
+    },
+    "prazoEntrega": "Delivery deadline",
+    "naEtapa": "opened at {{etapa}}",
+    "julgadaEm": "already ruled at {{etapa}}",
+    "abrir": "Open claim",
+    "selecione": "Select a lot",
+    "naoContestavel": "This lot cannot be claimed now (outside the sale-to-release steps, or already ruled at this step)",
+    "acionarPrazo": "Deadline expired",
+    "prazoAcionado": "The delivery deadline of lot #{{lote}} expired: the lot went to claim.",
+    "vazio": "None of your lots in this situation.",
+    "abrirTitulo": "Claim lot #{{lote}}",
+    "motivoTitulo": "Reason",
+    "motivo": {
+      "divergenciaPeso": "Weight mismatch",
+      "classificacao": "Grading disputed",
+      "falhaEntrega": "Delivery failure",
+      "prazoExpirado": "Deadline expired",
+      "outro": "Other reason"
+    },
+    "motivoAjuda": {
+      "divergenciaPeso": "The weighed amount does not match the record.",
+      "classificacao": "The material is not as advertised (type, color or contamination).",
+      "falhaEntrega": "The lot was not picked up, delivered, or arrived damaged.",
+      "outro": "Any other problem; explain it to the arbitrator."
+    },
+    "assinarAbrir": "Sign and claim",
+    "efeito": "The lot stays under claim until the arbitrator decides. Once the arbitrator rules on a step, it cannot be claimed again.",
+    "aberta": "Claim on lot #{{lote}} opened. The arbitrator will review it."
+  },
+  "arbitragem": {
+    "soArbitro": "This screen is for the arbitrator's wallet.",
+    "explicacao": "Lots under claim. Proceed returns the lot to the step it was at (and may correct the weight): only the arbitrator signs. Partial release and Refund move the held money: the arbitrator signs and generates a code, and the intermediary reviews and signs on the Lot escrow screen.",
+    "julgadas": "Ruled",
+    "decidir": "Decide",
+    "selecione": "Select a lot under claim",
+    "vazio": "No lots under claim.",
+    "decidirTitulo": "Decision on lot #{{lote}}",
+    "pesos": "Weight",
+    "pesosValor": "out {{saida}} kg, in {{chegada}} kg",
+    "etapa": "Claimed step",
+    "decisao": "Decision",
+    "tipo": {
+      "prosseguir": "Proceed",
+      "liberar": "Partial release",
+      "reembolsar": "Refund"
+    },
+    "ajuda": {
+      "prosseguir": "The lot returns to \"{{etapa}}\" and continues. Before delivery, the deadline is renewed.",
+      "liberar": "Closes the sale: part of the amount goes to the cooperative and the rest returns to the industry. The lot goes to Recycled.",
+      "liberarSoRecebido": "Only for claims opened after receipt.",
+      "reembolsar": "Closes the sale and returns the full amount to the industry. The lot goes to Refunded."
+    },
+    "novoPeso": "Corrected weight (kg, optional)",
+    "novoPesoCurto": "Corrected weight",
+    "novoPesoAjuda": "Leave blank to keep the current weight.",
+    "valorLiberado": "Amount to the cooperative (R$)",
+    "valorLiberadoAjuda": "Up to {{valor}}. The rest returns to the industry.",
+    "liberadoAcima": "Cannot exceed the sale amount ({{valor}}).",
+    "reembolsoResto": "The industry gets back {{valor}}.",
+    "referencia": "Transfer reference",
+    "referenciaAjuda": "Pix or transfer ID. Only the hash goes to the blockchain.",
+    "vendaDireta": "Direct sale: there is no escrow; the intermediary co-signs only to record the decision.",
+    "comIntermediador": "The intermediary reviews and signs on the Lot escrow screen, on their own device.",
+    "assinarEnviar": "Sign and send",
+    "assinarGerar": "Sign and generate code",
+    "prosseguiu": "Lot #{{lote}} returned to \"{{etapa}}\".",
+    "passoIntermediador": "Decision signed. Show the code to the intermediary: they review and sign at \"Lot escrow\" › \"Sign decision\".",
+    "qrTitulo": "Decision code",
+    "aguardando": "Waiting for the intermediary's signature…",
+    "decidida": "Decision on lot #{{lote}} recorded: {{estado}}.",
+    "assinarDecisao": "Sign decision",
+    "lerCodigo": "Scan the decision QR on the arbitrator's device or paste the code.",
+    "confirmarDecisao": "Sign and send",
+    "aCooperativa": "To the cooperative",
+    "aIndustria": "Back to the industry",
+    "efeitoIntermediador": "By signing, you attest that you made these transfers of the held money.",
+    "decisaoEnviada": "Arbitrator's decision recorded.",
+    "codigo": {
+      "formato": "This code is not an arbitrator decision.",
+      "outroIntermediador": "This wallet is not the intermediary's.",
+      "assinaturaInvalida": "The arbitrator's signature does not match.",
+      "semDisputa": "This lot is no longer under claim."
+    }
   }
 }

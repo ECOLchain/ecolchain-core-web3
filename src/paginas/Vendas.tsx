@@ -1,6 +1,6 @@
 import { address } from '@solana/kit';
 import { useClient } from '@solana/react';
-import { Ban, CircleCheck, Gavel, HandCoins, LoaderCircle, PenLine, RefreshCw } from 'lucide-react';
+import { Ban, CircleCheck, Gavel, HandCoins, LoaderCircle, PenLine, RefreshCw, Scale } from 'lucide-react';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizarReferencia } from '@clientes/coletor';
@@ -29,6 +29,7 @@ import {
 import { useEnviar } from '../solana/useEnviar';
 import { assinarVenda, CodigoVendaInvalido, type Conferida, codigoVencido, conferir, type DadosVenda, faltam, iniciarVenda, type PapelVenda } from '../solana/venda';
 import { abreviar, rotuloParticipante, SoPapel } from './admin/comum';
+import { DialogoAssinarDecisao } from './contestacoes/Contestacoes';
 import { rotuloEstado, rotuloModo } from './venda/comum';
 
 const SEM_CONTA = '11111111111111111111111111111111';
@@ -719,7 +720,7 @@ export function EscrowLotes() {
 }
 
 /** Situações do escrow: retido até o recebimento, aguardando liberação, liberado ou devolvido. */
-type FiltroEscrow = 'aguardando' | 'retido' | 'liberados' | 'todos';
+type FiltroEscrow = 'aguardando' | 'retido' | 'liberados' | 'emDisputa' | 'todos';
 const RETIDO = ['Vendido', 'EmTransporte', 'Recebido', 'EmDisputa'];
 const LIBERADO = ['Reciclado', 'Agregado'];
 const DOMINIO_LIBERACAO = 'ECOLCHAIN:LIBERACAO:v1';
@@ -731,9 +732,11 @@ function ConteudoEscrow() {
     const r = useRotulos();
     const envio = useEnviar();
     const [filtro, setFiltro] = useState<FiltroEscrow>('aguardando');
-    const [popup, setPopup] = useState<{ tipo: 'venda' } | { tipo: 'liberar'; linha: Linha } | null>(null);
+    const [popup, setPopup] = useState<{ tipo: 'venda' } | { tipo: 'decisao' } | { tipo: 'liberar'; linha: Linha } | null>(null);
     const [resultadoVenda, setResultadoVenda] = useState<{ enviada: string } | { codigo: string } | null>(null);
     const [sucesso, setSucesso] = useState('');
+    /** Assinatura da decisão do árbitro enviada pelo diálogo (fora do `envio` desta tela). */
+    const [assinaturaDecisao, setAssinaturaDecisao] = useState<string>();
 
     const linhas = useMemo(() => (lotes.data ?? []).filter((l) => l.dados.industria !== SEM_CONTA), [lotes.data]);
     const colunas = useMemo<Coluna<Linha>[]>(
@@ -777,6 +780,7 @@ function ConteudoEscrow() {
             if (filtro === 'aguardando') return k === 'Recebido';
             if (filtro === 'retido') return RETIDO.includes(k);
             if (filtro === 'liberados') return LIBERADO.includes(k);
+            if (filtro === 'emDisputa') return k === 'EmDisputa';
             return true;
         },
         [filtro],
@@ -786,6 +790,7 @@ function ConteudoEscrow() {
     const podeLiberar = sel?.dados.estado.__kind === 'Recebido';
 
     const liberar = async (linha: Linha, referencia: string) => {
+        setAssinaturaDecisao(undefined);
         const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(DOMINIO_LIBERACAO + normalizarReferencia(referencia))));
         try {
             await envio.dispatchAsync([
@@ -808,7 +813,7 @@ function ConteudoEscrow() {
     return (
         <div className="flex flex-col gap-4">
             {!popup && resultadoVenda && 'enviada' in resultadoVenda && <Resultado assinatura={resultadoVenda.enviada} sucesso={t('vendas.enviada')} />}
-            {!popup && !resultadoVenda && <Resultado assinatura={envio.data} erro={envio.error} sucesso={sucesso} />}
+            {!popup && !resultadoVenda && <Resultado assinatura={assinaturaDecisao ?? envio.data} erro={envio.error} sucesso={sucesso} />}
             <CartaoGrade
                 barra={
                     <>
@@ -824,6 +829,7 @@ function ConteudoEscrow() {
                                 { valor: 'aguardando', texto: t('escrow.situacao.aguardando') },
                                 { valor: 'retido', texto: t('escrow.filtroRetido') },
                                 { valor: 'liberados', texto: t('escrow.filtroLiberados') },
+                                { valor: 'emDisputa', texto: t('escrow.situacao.emDisputa') },
                                 { valor: 'todos', texto: t('grade.todasSituacoes') },
                             ]}
                         />
@@ -837,6 +843,19 @@ function ConteudoEscrow() {
                                 }}
                             >
                                 <PenLine className="size-4" /> {t('vendas.assinarDeposito')}
+                            </Botao>
+                            <Botao
+                                compacto
+                                variante="secundario"
+                                onClick={() => {
+                                    setResultadoVenda(null);
+                                    setSucesso('');
+                                    setAssinaturaDecisao(undefined);
+                                    envio.reset();
+                                    setPopup({ tipo: 'decisao' });
+                                }}
+                            >
+                                <Scale className="size-4" /> {t('arbitragem.assinarDecisao')}
                             </Botao>
                             <Botao
                                 compacto
@@ -870,6 +889,17 @@ function ConteudoEscrow() {
                     aoFechar={() => setPopup(null)}
                     aoConcluir={(res) => {
                         setResultadoVenda(res);
+                        setPopup(null);
+                        lotes.refresh();
+                    }}
+                />
+            )}
+            {popup?.tipo === 'decisao' && (
+                <DialogoAssinarDecisao
+                    aoFechar={() => setPopup(null)}
+                    aoConcluir={(assinatura) => {
+                        setAssinaturaDecisao(assinatura);
+                        setSucesso(t('arbitragem.decisaoEnviada'));
                         setPopup(null);
                         lotes.refresh();
                     }}

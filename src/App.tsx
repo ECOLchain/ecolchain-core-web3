@@ -12,6 +12,7 @@ import { MinhaCarteira } from './paginas/MinhaCarteira';
 import { Painel } from './paginas/Painel';
 import { Retiradas } from './paginas/Retiradas';
 import { Compras, EscrowLotes, Leiloes } from './paginas/Vendas';
+import { Arbitragem, Contestacoes } from './paginas/contestacoes/Contestacoes';
 import { Recebimentos } from './paginas/industria/Recebimentos';
 import { ColetasImportador, DistribuicoesImportador, EntregasImportador, ReciclagemImportador } from './paginas/importador/Operacoes';
 import { PainelImportador } from './paginas/importador/Painel';
@@ -47,6 +48,8 @@ const IMPLEMENTADAS = [
     '/marketplace',
     '/vendas',
     '/recebimentos',
+    '/disputas',
+    '/arbitragem',
     '/importador',
     '/importador/distribuicoes',
     '/importador/coletas',
@@ -73,6 +76,8 @@ const router = createBrowserRouter([
             { path: '/marketplace', element: <Disputa /> },
             { path: '/vendas', element: <VendasCooperativa /> },
             { path: '/recebimentos', element: <Recebimentos /> },
+            { path: '/disputas', element: <Contestacoes /> },
+            { path: '/arbitragem', element: <Arbitragem /> },
             { path: '/explorar', element: <Trilha /> },
             { path: '/importador', element: <PainelImportador /> },
             { path: '/importador/distribuicoes', element: <DistribuicoesImportador /> },
