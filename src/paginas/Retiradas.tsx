@@ -11,6 +11,7 @@ import { LeitorQr } from '../componentes/LeitorQr';
 import { TituloPagina } from '../componentes/pagina';
 import { Botao, Resultado, Selecao } from '../componentes/ui';
 import { usePreferencias } from '../preferencias/Preferencias';
+import { resolverCarteira } from '../solana/ator';
 import type { AppClient } from '../solana/cliente';
 import { type ContaDecodificada, listarContas } from '../solana/contas';
 import {
@@ -22,7 +23,7 @@ import {
     type RetiradaPreparada,
 } from '../solana/retirada';
 import { useCadastro } from '../solana/useCadastro';
-import { gramasParaKg, useLotes, useMateriais, useParticipantes } from '../solana/useDados';
+import { gramasParaKg, useLotes, useLotesDaIndustria, useMateriais, useParticipantes } from '../solana/useDados';
 import { rotuloParticipante, SoPapel } from './admin/comum';
 
 /** Endereço "vazio" (Pubkey::default): lote ainda sem transportador. */
@@ -41,8 +42,14 @@ export function Retiradas() {
     return (
         <>
             <TituloPagina titulo={t('itens.retiradas')} />
-            <SoPapel papel={['cooperativa', 'transportador']} aviso={t('retiradas.soParticipante')}>
-                {cadastro?.papeis.includes('cooperativa') ? <RetiradasCooperativa /> : <RetiradasTransportador />}
+            <SoPapel papel={['cooperativa', 'cleantech', 'transportador', 'industria']} aviso={t('retiradas.soParticipante')}>
+                {cadastro?.papeis.includes('cooperativa') || cadastro?.papeis.includes('cleantech') ? (
+                    <RetiradasCooperativa />
+                ) : cadastro?.papeis.includes('industria') ? (
+                    <RetiradasIndustria />
+                ) : (
+                    <RetiradasDoTransportador />
+                )}
             </SoPapel>
         </>
     );
@@ -90,8 +97,8 @@ function Situacao({ linha, texto }: { linha: Linha; texto: string }) {
 
 function RetiradasCooperativa() {
     const { t } = useTranslation();
-    const { carteira } = useCadastro();
-    const lotes = useLotes(carteira ? address(carteira) : undefined);
+    const { ator } = useCadastro();
+    const lotes = useLotes(ator);
     const r = useRotulos();
     const [filtro, setFiltro] = useState<'todas' | 'aguardando' | 'retiradas'>('aguardando');
     const [popup, setPopup] = useState<Linha | null>(null);
@@ -115,7 +122,16 @@ function RetiradasCooperativa() {
                 valor: (l) => l.dados.prazoEntrega,
                 celula: (l) => <span className="text-texto-suave">{r.data(l.dados.prazoEntrega)}</span>,
             },
-            { id: 'transportador', titulo: t('papel.transportador'), valor: (l) => r.nome(l.dados.transportador), busca: (l) => l.dados.transportador },
+            {
+                id: 'transportador',
+                titulo: t('papel.transportador'),
+                // Retirada própria (ADR 0012): quem retira é a indústria compradora.
+                valor: (l) =>
+                    l.dados.transportador === SEM_CONTA && l.dados.modoRetirada === lote.ModoRetirada.Propria
+                        ? t('retiradas.propria')
+                        : r.nome(l.dados.transportador),
+                busca: (l) => l.dados.transportador,
+            },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-44', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
         ],
         [t, r],
@@ -214,7 +230,12 @@ function DialogoRetirada({
 }) {
     const { t } = useTranslation();
     const client = useClient<AppClient>();
-    const [transportador, setTransportador] = useState('');
+    const { ator: cooperativa } = useCadastro();
+    /** Retirada própria: a indústria compradora assina no lugar do transportador. */
+    const propria = linha.dados.modoRetirada === lote.ModoRetirada.Propria;
+    const [transportador, setTransportador] = useState<string>(propria ? linha.dados.industria : '');
+    /** Carteira com que o transportador vai assinar: a titular (lista) ou a lida no QR (pode ser vinculada). */
+    const [assinanteTransp, setAssinanteTransp] = useState('');
     const [lendoQr, setLendoQr] = useState(false);
     const [avisoQr, setAvisoQr] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
     const [preparada, setPreparada] = useState<RetiradaPreparada | null>(null);
@@ -225,28 +246,36 @@ function DialogoRetirada({
     const transportadores = useMemo(
         () =>
             participantes
-                .filter((p) => p.dados.papel === lote.Papel.Transportador && p.dados.ativo)
+                .filter((p) =>
+                    propria ? p.dados.carteira === linha.dados.industria : p.dados.papel === lote.Papel.Transportador && p.dados.ativo,
+                )
                 .sort((a, b) => rotuloParticipante(a.dados).localeCompare(rotuloParticipante(b.dados))),
-        [participantes],
+        [participantes, propria, linha],
     );
 
-    const lerQr = (texto: string) => {
+    const lerQr = async (texto: string) => {
         setLendoQr(false);
         const falha = (chave: string) => setAvisoQr({ tipo: 'erro', texto: t(chave) });
         if (!isAddress(texto)) return falha('retiradas.qrNaoCarteira');
-        const cadastro = participantes.find((p) => p.dados.carteira === texto);
-        if (!cadastro) return falha('retiradas.qrSemCadastro');
-        if (cadastro.dados.papel !== lote.Papel.Transportador) return falha('retiradas.qrNaoTransportador');
-        if (!cadastro.dados.ativo) return falha('retiradas.qrInativo');
-        setTransportador(cadastro.dados.carteira);
-        setAvisoQr({ tipo: 'ok', texto: t('retiradas.qrLido', { nome: rotuloParticipante(cadastro.dados) }) });
+        // O QR pode ser de uma carteira vinculada ao transportador (ADR 0011): ela assina por ele.
+        const quem = await resolverCarteira(client, address(texto)).catch(() => null);
+        if (!quem) return falha('retiradas.qrSemCadastro');
+        if (propria) {
+            if (quem.titular !== linha.dados.industria) return falha('retiradas.qrNaoCompradora');
+        } else if (quem.participante.papel !== lote.Papel.Transportador) return falha('retiradas.qrNaoTransportador');
+        if (!quem.participante.ativo) return falha('retiradas.qrInativo');
+        setTransportador(quem.titular);
+        setAssinanteTransp(quem.assinante);
+        setAvisoQr({ tipo: 'ok', texto: t('retiradas.qrLido', { nome: rotuloParticipante(quem.participante) }) });
     };
 
     const gerar = async () => {
         setErro(null);
         setAssinando(true);
         try {
-            setPreparada(await prepararRetirada(client, linha.endereco, address(transportador)));
+            setPreparada(
+                await prepararRetirada(client, linha.endereco, cooperativa!, address(transportador), address(assinanteTransp || transportador)),
+            );
             setExpirado(false);
         } catch (e) {
             setErro(e);
@@ -301,18 +330,21 @@ function DialogoRetirada({
             {!preparada ? (
                 <form id="form-retirada" onSubmit={enviar} className="flex flex-col gap-4">
                     <Resultado erro={erro} sucesso="" />
-                    <p className="text-sm text-texto-suave">{t('retiradas.passo1', { industria: r.nome(linha.dados.industria) })}</p>
+                    <p className="text-sm text-texto-suave">
+                        {t(propria ? 'retiradas.passo1Propria' : 'retiradas.passo1', { industria: r.nome(linha.dados.industria) })}
+                    </p>
                     {transportadores.length === 0 ? (
                         <p className="text-sm text-kraft">{t('retiradas.semTransportadores')}</p>
                     ) : (
                         <div className="flex flex-col gap-2">
                             <div className="grid grid-cols-[1fr_auto] items-end gap-2">
                                 <Selecao
-                                    rotulo={t('papel.transportador')}
+                                    rotulo={t(propria ? 'retiradas.quemRetira' : 'papel.transportador')}
                                     required
                                     value={transportador}
                                     onChange={(e) => {
                                         setTransportador(e.target.value);
+                                        setAssinanteTransp('');
                                         setAvisoQr(null);
                                     }}
                                 >
@@ -385,10 +417,31 @@ function useLotesDoTransportador(carteira: Address | undefined) {
     return useRequest(carteira ? fonte : null);
 }
 
-function RetiradasTransportador() {
+/** Indústria que escolheu retirar ela mesma (ADR 0012): os lotes comprados com retirada própria. */
+function RetiradasIndustria() {
+    const { ator } = useCadastro();
+    const lotes = useLotesDaIndustria(ator);
+    const proprias = useMemo(
+        () => lotes.data?.filter((l) => l.dados.modoRetirada === lote.ModoRetirada.Propria),
+        [lotes.data],
+    );
+    return <RetiradasTransportador lotes={{ ...lotes, data: proprias }} vazio="retiradas.vazioIndustria" />;
+}
+
+function RetiradasDoTransportador() {
+    const { ator } = useCadastro();
+    return <RetiradasTransportador lotes={useLotesDoTransportador(ator)} vazio="retiradas.vazioTransportador" />;
+}
+
+/** Quem retira (transportador ou indústria com retirada própria): lê o QR da cooperativa e assina. */
+function RetiradasTransportador({
+    lotes,
+    vazio,
+}: {
+    lotes: { data: Linha[] | undefined; status: string; refresh: () => void };
+    vazio: string;
+}) {
     const { t } = useTranslation();
-    const { carteira } = useCadastro();
-    const lotes = useLotesDoTransportador(carteira ? address(carteira) : undefined);
     const r = useRotulos();
     const [popup, setPopup] = useState(false);
     const [assinatura, setAssinatura] = useState<string>();
@@ -437,7 +490,7 @@ function RetiradasTransportador() {
                 <Grade
                     grade={grade}
                     larguraMinima="min-w-[60rem]"
-                    vazio={t('retiradas.vazioTransportador')}
+                    vazio={t(vazio)}
                     carregando={lotes.status === 'fetching' && !lotes.data}
                 />
             </CartaoGrade>

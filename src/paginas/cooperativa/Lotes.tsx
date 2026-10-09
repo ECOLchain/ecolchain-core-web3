@@ -1,10 +1,11 @@
-import { type Address, address, type Instruction } from '@solana/kit';
+import { type Address, type Instruction } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
-import { Ban, Megaphone, Package, Scale, Undo2 } from 'lucide-react';
+import { Ban, Package, Scale, Tag, Undo2 } from 'lucide-react';
 import { type FormEvent, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { origemRef } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
+import { lerNomeFixo } from '@clientes/nome';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { comContasGravaveis, instrucaoPesagem, TipoPesagem } from '@clientes/pesagem';
 import { Dialogo } from '../../componentes/dialogo';
@@ -12,13 +13,14 @@ import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, u
 import { TituloPagina } from '../../componentes/pagina';
 import { Botao, Campo, Resultado, Selecao } from '../../componentes/ui';
 import { usePreferencias } from '../../preferencias/Preferencias';
+import { useAtor } from '../../solana/ator';
 import { useBalancaTeste } from '../../solana/balancaTeste';
 import type { AppClient } from '../../solana/cliente';
 import type { ContaDecodificada } from '../../solana/contas';
-import { useCadastro } from '../../solana/useCadastro';
-import { gramasParaKg, kgParaGramas, useEntregas, useLotes, useMateriais } from '../../solana/useDados';
+import { gramasParaKg, kgParaGramas, nomeVariacao, reaisParaCentavos, useEntregas, useLotes, useMateriais, useVariacoes } from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
 import { SoPapel } from '../admin/comum';
+import { aVenda, ixsSituacao, rotuloEstado } from '../venda/comum';
 
 const SEM_LOTE = '11111111111111111111111111111111';
 /** Limite do programa por transação ao vincular ou devolver lotes de origem. */
@@ -32,7 +34,7 @@ type Entrega = ContaDecodificada<lote.Entrega>;
 type Popup =
     | { tipo: 'montar' }
     | { tipo: 'fechar'; linha: Linha }
-    | { tipo: 'anunciar'; linha: Linha }
+    | { tipo: 'venda'; linha: Linha }
     | { tipo: 'desfazer'; linha: Linha };
 /** Faixa aceita do consolidado sobre a soma das origens, em bps. */
 type Faixa = { perdaBps: number; excessoBps: number };
@@ -42,7 +44,7 @@ export function Lotes() {
     return (
         <>
             <TituloPagina titulo={t('itens.lotes')} />
-            <SoPapel papel="cooperativa" aviso={t('cooperativa.soCooperativa')}>
+            <SoPapel papel={['cooperativa', 'cleantech']} aviso={t('cooperativa.soCooperativa')}>
                 <ConteudoLotes />
             </SoPapel>
         </>
@@ -72,11 +74,12 @@ function useFaixa(): Faixa {
 function ConteudoLotes() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
-    const client = useClient<AppClient>();
-    const { carteira } = useCadastro();
-    const cooperativa = carteira ? address(carteira) : undefined;
+    const { titular: cooperativa, assinante, vinculo } = useAtor();
+    /** Contas de quem assina pela cooperativa (titular ou carteira vinculada, ADR 0011). */
+    const contasCoop = cooperativa ? { cooperativa, cooperativaAssinante: assinante, cooperativaCarteira: vinculo } : null;
     const { balanca } = useBalancaTeste(cooperativa);
     const materiais = useMateriais();
+    const variacoes = useVariacoes();
     const entregas = useEntregas(cooperativa);
     const lotes = useLotes(cooperativa);
     const faixa = useFaixa();
@@ -95,7 +98,22 @@ function ConteudoLotes() {
     const colunas = useMemo<Coluna<Linha>[]>(
         () => [
             { id: 'id', titulo: '#', valor: (l) => l.dados.loteId, numerica: true, largura: 'w-20' },
-            { id: 'material', titulo: t('cooperativa.material'), valor: (l) => nomeMaterial.get(l.dados.material) ?? String(l.dados.material) },
+            {
+                id: 'material',
+                titulo: t('cooperativa.material'),
+                valor: (l) =>
+                    [nomeMaterial.get(l.dados.material) ?? String(l.dados.material), nomeVariacao(variacoes.data, l.dados.material, l.dados.variacao)]
+                        .filter(Boolean)
+                        .join(' · '),
+            },
+            {
+                id: 'garrafas',
+                titulo: t('material.garrafasCurto'),
+                largura: 'w-28',
+                numerica: true,
+                valor: (l) => l.dados.qtdGarrafas,
+                celula: (l) => (l.dados.qtdGarrafas ? l.dados.qtdGarrafas.toLocaleString(idioma) : <span className="text-texto-suave">—</span>),
+            },
             {
                 id: 'peso',
                 titulo: t('cooperativa.pesoKg'),
@@ -125,25 +143,33 @@ function ConteudoLotes() {
             {
                 id: 'estado',
                 titulo: t('cooperativa.lotes.estado'),
-                valor: (l) => t(`estadoLote.${l.dados.estado.__kind}`),
+                valor: (l) => rotuloEstado(t, l.dados),
                 celula: (l) => (
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="inline-flex rounded-full bg-superficie-2 px-2.5 py-0.5 text-xs font-semibold text-texto">
-                            {t(`estadoLote.${l.dados.estado.__kind}`)}
+                        <span
+                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                aVenda(l.dados) ? 'bg-kraft/15 text-kraft' : 'bg-superficie-2 text-texto'
+                            }`}
+                        >
+                            {rotuloEstado(t, l.dados)}
                         </span>
-                        {l.dados.estado.__kind === 'Anunciado' && (
-                            <span className="text-xs text-texto-suave">
-                                {t('cooperativa.lotes.ate', {
-                                    data: new Date(Number(l.dados.estado.prazoLeilao) * 1000).toLocaleDateString(idioma),
-                                    preco: brl(l.dados.precoMinimoCentavos, idioma),
-                                })}
-                            </span>
+                        {aVenda(l.dados) ? (
+                            <span className="text-xs text-texto-suave tabular-nums">{brl(l.dados.precoMinimoCentavos, idioma)}</span>
+                        ) : (
+                            l.dados.estado.__kind === 'Anunciado' && (
+                                <span className="text-xs text-texto-suave">
+                                    {t('cooperativa.lotes.ate', {
+                                        data: new Date(Number(l.dados.estado.prazoLeilao) * 1000).toLocaleDateString(idioma),
+                                        preco: brl(l.dados.precoMinimoCentavos, idioma),
+                                    })}
+                                </span>
+                            )
                         )}
                     </span>
                 ),
             },
         ],
-        [t, idioma, nomeMaterial],
+        [t, idioma, nomeMaterial, variacoes.data],
     );
     const filtro = useMemo(
         () => (l: Linha) =>
@@ -154,7 +180,10 @@ function ConteudoLotes() {
     const grade = useGrade(lotes.data, colunas, { chave: (l) => l.endereco, ordem: { id: 'id', desc: true }, filtro });
     const sel = grade.selecionada;
     const estadoSel = sel?.dados.estado.__kind;
-    const podeAnunciar = (estadoSel === 'Criado' || estadoSel === 'SemLance') && !!sel && sel.dados.qtdEntregas > 0;
+    /** Situação de venda (à venda / vendido) só depois do fechamento e fora do leilão. */
+    const podeVenda = (l: Linha | null) =>
+        !!l && (['Criado', 'SemLance', 'VendidoFora'].includes(l.dados.estado.__kind) || aVenda(l.dados));
+    const leilao = estadoSel === 'Anunciado' && !!sel && !sel.dados.vendaDireta;
     const podeDesfazer = ['EmMontagem', 'Criado', 'SemLance', 'EmDesmontagem'].includes(estadoSel ?? '');
 
     const abrir = (p: Popup) => {
@@ -168,13 +197,13 @@ function ConteudoLotes() {
 
     /** Pesagem do consolidado, assinada pela balança, + fechamento. */
     const ixsFechar = async (lotePda: Address, pesoG: bigint, loteId: bigint) => {
-        if (!balanca || !cooperativa) throw new Error('sem balança');
+        if (!balanca || !cooperativa || !contasCoop) throw new Error('sem balança');
         const ts = BigInt(Math.floor(Date.now() / 1000));
         return [
             await instrucaoPesagem(balanca, TipoPesagem.Origem, lotePda, pesoG, ts),
             await lote.getCooperativaFecharLoteInstructionAsync({
-                payer: client.payer,
-                cooperativa: client.payer,
+                payer: assinante,
+                ...contasCoop,
                 balanca: await pLote.balanca(balanca.address),
                 lote: lotePda,
                 eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
@@ -188,8 +217,8 @@ function ConteudoLotes() {
     };
 
     /** Abre o lote de venda, vincula as origens (até 10 por transação) e fecha com a pesagem. */
-    const montar = async (material: number, escolhidas: Entrega[], pesoG: bigint, evidencias: string) => {
-        if (!balanca || !cooperativa) return;
+    const montar = async (material: number, variacao: number, escolhidas: Entrega[], pesoG: bigint, evidencias: string) => {
+        if (!balanca || !cooperativa || !contasCoop) return;
         const loteId = (lotes.data ?? []).reduce((m, x) => (x.dados.loteId > m ? x.dados.loteId : m), 0n) + 1n;
         const lotePda = await pLote.lote(cooperativa, loteId);
         const ev = await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS);
@@ -206,22 +235,24 @@ function ConteudoLotes() {
             setProgresso(t('cooperativa.lotes.passo', { n: 1, total }));
             await envio.dispatchAsync([
                 await lote.getCooperativaCreateLoteInstructionAsync({
-                    payer: client.payer,
-                    cooperativa: client.payer,
+                    payer: assinante,
+                    ...contasCoop,
                     materialCadastro: await pLote.material(material),
+                    variacaoCadastro: variacao ? await pLote.variacao(material, variacao) : undefined,
                     lote: lotePda,
                     eventAuthority: ev,
                     program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
                     loteId,
                     material,
                     evidenciasHash: hash,
+                    variacao,
                 }),
             ]);
             for (const [i, grupo] of grupos.entries()) {
                 setProgresso(t('cooperativa.lotes.passo', { n: i + 2, total }));
                 const ix: Instruction = comContasGravaveis(
                     await lote.getCooperativaAddEntregasInstructionAsync({
-                        cooperativa: client.payer,
+                        ...contasCoop,
                         lote: lotePda,
                         eventAuthority: ev,
                         program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
@@ -253,6 +284,7 @@ function ConteudoLotes() {
 
     /** Devolve as origens do lote em grupos de 10; a última transação conclui (Desfeito). */
     const desfazer = async (l: Linha) => {
+        if (!contasCoop) return;
         const minhas = (entregas.data ?? []).filter((e) => e.dados.lote === l.endereco).map((e) => e.endereco);
         const grupos: Address[][] = [];
         for (let i = 0; i < minhas.length; i += ENTREGAS_POR_TX) grupos.push(minhas.slice(i, i + ENTREGAS_POR_TX));
@@ -262,8 +294,8 @@ function ConteudoLotes() {
                 setProgresso(t('cooperativa.lotes.passo', { n: i + 1, total: grupos.length }));
                 const ix: Instruction = comContasGravaveis(
                     await lote.getCooperativaDesmontarLoteInstructionAsync({
-                        payer: client.payer,
-                        cooperativa: client.payer,
+                        payer: assinante,
+                        ...contasCoop,
                         lote: l.endereco,
                         eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
                         program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
@@ -329,16 +361,17 @@ function ConteudoLotes() {
                                     <Scale className="size-4" /> {t('cooperativa.lotes.fechar')}
                                 </Botao>
                             )}
-                            {estadoSel === 'Anunciado' ? (
+                            {(leilao || (sel && aVenda(sel.dados))) && (
                                 <Botao
                                     compacto
                                     variante="secundario"
                                     carregando={envio.isRunning && !popup}
                                     onClick={() =>
                                         sel &&
+                                        contasCoop &&
                                         acaoLote(async () =>
                                             lote.getCooperativaCancelAnuncioInstructionAsync({
-                                                cooperativa: client.payer,
+                                                ...contasCoop,
                                                 lote: sel.endereco,
                                                 eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
                                                 program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
@@ -346,16 +379,18 @@ function ConteudoLotes() {
                                         )
                                     }
                                 >
-                                    <Ban className="size-4" /> {t('cooperativa.lotes.cancelarAnuncio')}
+                                    <Ban className="size-4" /> {t(leilao ? 'cooperativa.lotes.cancelarAnuncio' : 'venda.retirar')}
                                 </Botao>
-                            ) : (
+                            )}
+                            {!leilao && (
                                 <Botao
                                     compacto
                                     variante="secundario"
-                                    disabled={!podeAnunciar}
-                                    onClick={() => sel && abrir({ tipo: 'anunciar', linha: sel })}
+                                    disabled={!podeVenda(sel)}
+                                    title={podeVenda(sel) ? undefined : t('venda.selecione')}
+                                    onClick={() => sel && abrir({ tipo: 'venda', linha: sel })}
                                 >
-                                    <Megaphone className="size-4" /> {t('cooperativa.lotes.anunciar')}
+                                    <Tag className="size-4" /> {t('venda.situacao')}
                                 </Botao>
                             )}
                             <Botao
@@ -380,7 +415,7 @@ function ConteudoLotes() {
                     onAbrir={(l) => {
                         const e = l.dados.estado.__kind;
                         if (e === 'EmMontagem') abrir({ tipo: 'fechar', linha: l });
-                        else if ((e === 'Criado' || e === 'SemLance') && l.dados.qtdEntregas > 0) abrir({ tipo: 'anunciar', linha: l });
+                        else if (podeVenda(l)) abrir({ tipo: 'venda', linha: l });
                     }}
                 />
             </CartaoGrade>
@@ -390,6 +425,7 @@ function ConteudoLotes() {
                     semBalanca={!balanca}
                     faixa={faixa}
                     materiais={(materiais.data ?? []).filter((m) => m.dados.ativo)}
+                    variacoes={variacoes.data}
                     entregas={(entregas.data ?? []).filter((e) => e.dados.lote === SEM_LOTE)}
                     salvando={envio.isRunning}
                     progresso={progresso}
@@ -434,25 +470,23 @@ function ConteudoLotes() {
                     </form>
                 </Dialogo>
             )}
-            {popup?.tipo === 'anunciar' && (
-                <DialogoAnunciar
+            {popup?.tipo === 'venda' && (
+                <DialogoVenda
                     linha={popup.linha}
                     nomeMaterial={nomeMaterial.get(popup.linha.dados.material) ?? ''}
                     salvando={envio.isRunning}
                     erro={envio.error}
                     aoFechar={() => setPopup(null)}
-                    aoSalvar={(centavos, dias) =>
-                        acaoLote(async () =>
-                            lote.getCooperativaListLoteInstructionAsync({
-                                cooperativa: client.payer,
-                                lote: popup.linha.endereco,
-                                eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
-                                program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
-                                prazoLeilao: BigInt(Math.floor(Date.now() / 1000) + dias * 86_400),
-                                precoMinimoCentavos: BigInt(centavos),
-                            }),
-                        )
-                    }
+                    aoSalvar={async (destino) => {
+                        if (!contasCoop) return;
+                        try {
+                            await envio.dispatchAsync(await ixsSituacao(contasCoop, popup.linha, destino));
+                            setPopup(null);
+                            lotes.refresh();
+                        } catch {
+                            // o erro fica em envio.error
+                        }
+                    }}
                 />
             )}
         </div>
@@ -486,6 +520,7 @@ function DialogoMontar({
     semBalanca,
     faixa,
     materiais,
+    variacoes,
     entregas,
     salvando,
     progresso,
@@ -496,27 +531,35 @@ function DialogoMontar({
     semBalanca: boolean;
     faixa: Faixa;
     materiais: ContaDecodificada<lote.Material>[];
+    variacoes: Map<number, ContaDecodificada<lote.MaterialVariacao>[]> | undefined;
     entregas: Entrega[];
     salvando: boolean;
     progresso: string | null;
     erro: unknown;
     aoFechar: () => void;
-    aoSalvar: (material: number, escolhidas: Entrega[], pesoG: bigint, evidencias: string) => void;
+    aoSalvar: (material: number, variacao: number, escolhidas: Entrega[], pesoG: bigint, evidencias: string) => void;
 }) {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
     const [material, setMaterial] = useState('');
+    const [variacao, setVariacao] = useState('');
     const [marcadas, setMarcadas] = useState<Set<Address>>(new Set());
     const [evidencias, setEvidencias] = useState('');
+    const cadastro = materiais.find((m) => String(m.dados.codigo) === material);
+    // Material com variações: o lote de venda é de uma cor só (o programa recusa a mistura).
+    const cores = cadastro && cadastro.dados.qtdVariacoes > 0 ? (variacoes?.get(cadastro.dados.codigo) ?? []) : [];
+    const precisaCor = cores.length > 0;
+    const corEscolhida = precisaCor ? Number(variacao) : 0;
     const disponiveis = useMemo(
         () =>
             entregas
-                .filter((e) => String(e.dados.material) === material)
+                .filter((e) => String(e.dados.material) === material && (!precisaCor || e.dados.variacao === corEscolhida))
                 .sort((a, b) => (a.dados.entregaId < b.dados.entregaId ? -1 : 1)),
-        [entregas, material],
+        [entregas, material, precisaCor, corEscolhida],
     );
     const escolhidas = disponiveis.filter((e) => marcadas.has(e.endereco));
     const soma = escolhidas.reduce((a, e) => a + e.dados.pesoG, 0n);
+    const garrafas = escolhidas.reduce((a, e) => a + e.dados.qtdGarrafas, 0);
     const { pesoG, campo } = usePesoConsolidado(soma, faixa);
     const todas = disponiveis.length > 0 && escolhidas.length === disponiveis.length;
 
@@ -530,7 +573,8 @@ function DialogoMontar({
 
     const enviar = (ev: FormEvent) => {
         ev.preventDefault();
-        if (pesoG && escolhidas.length > 0) aoSalvar(Number(material), escolhidas, pesoG, evidencias.trim());
+        if (pesoG && escolhidas.length > 0 && (!precisaCor || corEscolhida))
+            aoSalvar(Number(material), corEscolhida, escolhidas, pesoG, evidencias.trim());
     };
 
     return (
@@ -557,6 +601,7 @@ function DialogoMontar({
                             value={material}
                             onChange={(e) => {
                                 setMaterial(e.target.value);
+                                setVariacao('');
                                 setMarcadas(new Set());
                             }}
                         >
@@ -569,6 +614,28 @@ function DialogoMontar({
                                 </option>
                             ))}
                         </Selecao>
+                        {precisaCor && (
+                            <Selecao
+                                rotulo={t('material.variacao')}
+                                required
+                                value={variacao}
+                                onChange={(e) => {
+                                    setVariacao(e.target.value);
+                                    setMarcadas(new Set());
+                                }}
+                            >
+                                <option value="" disabled>
+                                    {t('material.escolherVariacao')}
+                                </option>
+                                {cores
+                                    .filter((v) => v.dados.ativa)
+                                    .map((v) => (
+                                        <option key={v.endereco} value={v.dados.indice}>
+                                            {lerNomeFixo(v.dados.nome)}
+                                        </option>
+                                    ))}
+                            </Selecao>
+                        )}
                         <Campo
                             rotulo={t('cooperativa.lotes.evidencias')}
                             value={evidencias}
@@ -577,7 +644,7 @@ function DialogoMontar({
                         />
                     </div>
 
-                    {material && (
+                    {material && (!precisaCor || corEscolhida > 0) && (
                         <fieldset className="flex flex-col gap-2">
                             <div className="flex items-center justify-between gap-3">
                                 <legend className="text-sm font-medium text-texto">{t('cooperativa.lotes.escolherEntregas')}</legend>
@@ -611,7 +678,12 @@ function DialogoMontar({
                                                     className="accent-[var(--cor-acento)]"
                                                 />
                                                 <span className="font-semibold tabular-nums">#{e.dados.entregaId.toString()}</span>
-                                                <span className="tabular-nums">{gramasParaKg(e.dados.pesoG, idioma)} kg</span>
+                                                <span className="whitespace-nowrap tabular-nums">{gramasParaKg(e.dados.pesoG, idioma)} kg</span>
+                                                {e.dados.qtdGarrafas > 0 && (
+                                                    <span className="whitespace-nowrap text-xs tabular-nums">
+                                                        {t('material.garrafasN', { n: e.dados.qtdGarrafas.toLocaleString(idioma) })}
+                                                    </span>
+                                                )}
                                                 <span className="ml-auto truncate text-xs text-texto-suave">
                                                     {t(`origem.${lote.OrigemEntrega[e.dados.origem]}`)}
                                                 </span>
@@ -627,6 +699,7 @@ function DialogoMontar({
                         <div className="grid gap-4 sm:grid-cols-[1fr_16rem] sm:items-end">
                             <p className="text-sm text-texto">
                                 {t('cooperativa.lotes.resumo', { n: escolhidas.length, kg: gramasParaKg(soma, idioma) })}
+                                {garrafas > 0 && ` · ${t('material.garrafasN', { n: garrafas.toLocaleString(idioma) })}`}
                             </p>
                             {campo}
                         </div>
@@ -685,7 +758,8 @@ function DialogoFechar({
     );
 }
 
-function DialogoAnunciar({
+/** "A vender" (com o preço) ou "Vendido" (fora da plataforma, sem valor). */
+function DialogoVenda({
     linha,
     nomeMaterial,
     salvando,
@@ -698,54 +772,80 @@ function DialogoAnunciar({
     salvando: boolean;
     erro: unknown;
     aoFechar: () => void;
-    aoSalvar: (centavos: number, dias: number) => void;
+    aoSalvar: (destino: { tipo: 'aVenda'; centavos: bigint } | { tipo: 'vendido' }) => void;
 }) {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
-    const [preco, setPreco] = useState('');
-    const [dias, setDias] = useState('7');
-    const valor = Number(preco.replace(',', '.'));
-    const pronto = valor > 0 && Number(dias) >= 1 && Number(dias) <= 90;
+    const jaAVenda = aVenda(linha.dados);
+    const [opcao, setOpcao] = useState<'aVenda' | 'vendido'>(linha.dados.estado.__kind === 'VendidoFora' ? 'vendido' : 'aVenda');
+    const [preco, setPreco] = useState(
+        jaAVenda ? (Number(linha.dados.precoMinimoCentavos) / 100).toLocaleString(idioma, { minimumFractionDigits: 2 }) : '',
+    );
+    const centavos = reaisParaCentavos(preco);
+    // Só vai à venda um lote montado com entregas (o programa exige; é a base da repartição).
+    const semEntregas = linha.dados.qtdEntregas === 0;
+    const mudou =
+        opcao === 'aVenda'
+            ? !jaAVenda || centavos !== linha.dados.precoMinimoCentavos
+            : linha.dados.estado.__kind !== 'VendidoFora';
+    const pronto = mudou && (opcao === 'vendido' || (centavos !== null && !semEntregas));
+
+    const opcaoRadio = (valor: typeof opcao, titulo: string, ajuda: string) => (
+        <label
+            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
+                opcao === valor ? 'border-acento bg-acento-suave/40' : 'border-linha'
+            }`}
+        >
+            <input type="radio" name="situacao-venda" className="mt-1 size-4 accent-acento" checked={opcao === valor} onChange={() => setOpcao(valor)} />
+            <span className="flex flex-col gap-0.5">
+                <span className="font-semibold text-texto">{titulo}</span>
+                <span className="text-sm text-texto-suave">{ajuda}</span>
+            </span>
+        </label>
+    );
 
     return (
         <Dialogo
-            titulo={t('cooperativa.lotes.anunciarTitulo', { id: linha.dados.loteId.toString() })}
+            titulo={t('venda.titulo', { id: linha.dados.loteId.toString() })}
             subtitulo={`${nomeMaterial} | ${gramasParaKg(linha.dados.pesoG, idioma)} kg`}
-            formId="form-anuncio"
+            formId="form-venda"
             salvando={salvando}
             podeSalvar={pronto}
-            rotuloSalvar={t('cooperativa.lotes.anunciar')}
+            rotuloSalvar={t('admin.salvar')}
             aoFechar={aoFechar}
         >
             <form
-                id="form-anuncio"
+                id="form-venda"
                 onSubmit={(e) => {
                     e.preventDefault();
-                    if (pronto) aoSalvar(Math.round(valor * 100), Number(dias));
+                    if (!pronto) return;
+                    if (opcao === 'vendido') aoSalvar({ tipo: 'vendido' });
+                    else if (centavos !== null) aoSalvar({ tipo: 'aVenda', centavos });
                 }}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3"
             >
                 <Resultado erro={erro} sucesso="" />
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <Campo
-                        rotulo={t('cooperativa.lotes.precoMinimo')}
-                        inputMode="decimal"
-                        required
-                        autoFocus
-                        value={preco}
-                        placeholder="0,00"
-                        onChange={(e) => setPreco(e.target.value)}
-                    />
-                    <Campo
-                        rotulo={t('cooperativa.lotes.dias')}
-                        type="number"
-                        min={1}
-                        max={90}
-                        required
-                        value={dias}
-                        onChange={(e) => setDias(e.target.value)}
-                    />
-                </div>
+                <fieldset className="flex flex-col gap-2">
+                    <legend className="sr-only">{t('venda.situacao')}</legend>
+                    {opcaoRadio('aVenda', t('venda.aVenda'), t('venda.aVendaAjuda'))}
+                    {opcaoRadio('vendido', t('venda.vendido'), t('venda.vendidoAjuda'))}
+                </fieldset>
+                {opcao === 'aVenda' &&
+                    (semEntregas ? (
+                        <p className="text-sm text-kraft">{t('venda.semEntregas')}</p>
+                    ) : (
+                        <Campo
+                            rotulo={t('venda.valorLote')}
+                            inputMode="decimal"
+                            required
+                            autoFocus
+                            value={preco}
+                            placeholder="0,00"
+                            onChange={(e) => setPreco(e.target.value)}
+                            aria-invalid={preco !== '' && centavos === null}
+                            ajuda={t('venda.valorAjuda')}
+                        />
+                    ))}
             </form>
         </Dialogo>
     );

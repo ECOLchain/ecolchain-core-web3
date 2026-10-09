@@ -1,21 +1,19 @@
-import { getCreateAccountWithSeedInstruction, getInitializeNonceAccountInstruction, getNonceSize, fetchMaybeNonce, SYSTEM_PROGRAM_ADDRESS } from '@solana-program/system';
 import {
     type Address,
     address,
     appendTransactionMessageInstruction,
+    type Blockhash,
     compileTransaction,
-    createAddressWithSeed,
     createNoopSigner,
     createTransactionMessage,
     getBase58Decoder,
     getBase58Encoder,
     getBase64EncodedWireTransaction,
     getPublicKeyFromAddress,
-    type Nonce,
     partiallySignTransactionMessageWithSigners,
     pipe,
     setTransactionMessageFeePayerSigner,
-    setTransactionMessageLifetimeUsingDurableNonce,
+    setTransactionMessageLifetimeUsingBlockhash,
     type SignatureBytes,
     type TransactionSigner,
     verifySignature,
@@ -23,6 +21,7 @@ import {
 import * as lote from '@clientes/generated/ecol_lote';
 import { normalizarReferencia } from '@clientes/coletor';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
+import { vinculoDe } from './ator';
 import type { AppClient } from './cliente';
 
 /**
@@ -34,16 +33,18 @@ import type { AppClient } from './cliente';
  * 2. O **intermediador** confere e assina (atesta o depósito).
  * 3. A **indústria** confere e assina. Quem completar as três assinaturas envia.
  *
- * Passar por três pessoas leva mais que o minuto de um blockhash, então a transação usa um **nonce
- * durável**: uma conta do operador (endereço derivado da carteira dele) cujo valor só muda quando
- * uma transação o usa. O código fica válido até ser enviado ou até outra venda usar o nonce.
+ * A transação usa um blockhash comum, então o código vale por cerca de um minuto: as três
+ * assinaturas precisam acontecer nesse intervalo (depois, a administração gera outro código).
+ * A primeira versão usava um nonce durável, sem prazo, mas a Solflare não reconhece a rede de uma
+ * transação com nonce (o valor do nonce não é um blockhash recente) e bloqueia a assinatura.
  *
  * Cada aparelho remonta a transação a partir da blockchain e do código, confere as assinaturas já
  * feitas e acrescenta a sua. O código viaja por QR ou copiar e colar:
- * `ecolchain:venda:v1:<lote>:<indústria>:<valor>:<depósito>:<ata>:<nonce>:<papel>=<assinatura>,...`
+ * `ecolchain:venda:v3:<lote>:<indústria>:<assinante da indústria>:<valor>:<depósito>:<ata>:<blockhash>:<último bloco>:<papel>=<assinatura>,...`
+ * O assinante da indústria fica vazio quando é a própria carteira titular; senão, é uma carteira
+ * vinculada a ela (ADR 0011), escolhida pelo operador ao registrar a venda.
  */
-const PREFIXO = 'ecolchain:venda:v1:';
-const SEMENTE_NONCE = 'ecolchain-venda';
+const PREFIXO = 'ecolchain:venda:v3:';
 const DOMINIO_ESCROW = 'ECOLCHAIN:ESCROW:v1';
 const DOMINIO_LEILAO = 'ECOLCHAIN:LEILAO:v1';
 
@@ -52,52 +53,24 @@ export const PAPEIS_VENDA: readonly PapelVenda[] = ['operador', 'intermediador',
 
 export type DadosVenda = {
     lote: Address;
+    /** Titular da indústria compradora (vai para `Lote.industria`). */
     industria: Address;
+    /** Carteira que assina pela indústria: a titular ou uma vinculada a ela. */
+    industriaAssinante: Address;
     valorCentavos: bigint;
     /** Referência do depósito no escrow (ex.: id do Pix), informada pelo intermediador. */
     deposito: string;
     /** Referência da apuração do leilão (ex.: número da ata). */
     ata: string;
-    nonce: Nonce;
+    blockhash: Blockhash;
+    /** Última altura de bloco em que o blockhash ainda vale. */
+    ultimoBloco: bigint;
 };
 export type Assinaturas = Partial<Record<PapelVenda, SignatureBytes>>;
 
 async function hashReferencia(dominio: string, texto: string) {
     const bytes = new TextEncoder().encode(dominio + normalizarReferencia(texto));
     return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-}
-
-/** Conta de nonce da venda: derivada da carteira do operador, sem chave própria para guardar. */
-export const enderecoNonce = (operador: Address) =>
-    createAddressWithSeed({ baseAddress: operador, seed: SEMENTE_NONCE, programAddress: SYSTEM_PROGRAM_ADDRESS });
-
-/** Operador: cria a conta de nonce na primeira venda (≈ 0,0015 SOL de rent, recuperável). */
-export async function garantirNonce(client: AppClient): Promise<Address> {
-    const operador = client.payer.address;
-    const conta = await enderecoNonce(operador);
-    if ((await fetchMaybeNonce(client.rpc, conta)).exists) return conta;
-    const espaco = BigInt(getNonceSize());
-    const rent = await client.rpc.getMinimumBalanceForRentExemption(espaco).send();
-    await client.sendTransaction([
-        getCreateAccountWithSeedInstruction({
-            payer: client.payer,
-            newAccount: conta,
-            base: operador,
-            seed: SEMENTE_NONCE,
-            amount: rent,
-            space: espaco,
-            programAddress: SYSTEM_PROGRAM_ADDRESS,
-        }),
-        getInitializeNonceAccountInstruction({ nonceAccount: conta, nonceAuthority: operador }),
-    ]);
-    return conta;
-}
-
-/** Valor atual do nonce do operador (muda a cada venda enviada). */
-export async function nonceAtual(client: AppClient, operador: Address): Promise<Nonce> {
-    const conta = await fetchMaybeNonce(client.rpc, await enderecoNonce(operador));
-    if (!conta.exists) throw new Error('semNonce');
-    return conta.data.blockhash as unknown as Nonce;
 }
 
 /**
@@ -112,13 +85,15 @@ async function montar(client: AppClient, d: DadosVenda, local?: { papel: PapelVe
     const enderecos: Record<PapelVenda, Address> = {
         operador: config.data.operador,
         intermediador: config.data.intermediador,
-        industria: d.industria,
+        industria: d.industriaAssinante,
     };
     const signer = (p: PapelVenda) => (local?.papel === p ? local.signer : createNoopSigner(enderecos[p]));
     if (local && local.signer.address !== enderecos[local.papel]) throw new Error('carteiraOutroPapel');
 
     const ix = await lote.getIndustriaAcceptVendaInstructionAsync({
-        industria: signer('industria'),
+        industria: d.industria,
+        industriaAssinante: signer('industria'),
+        industriaCarteira: await vinculoDe(d.industria, d.industriaAssinante),
         cooperativaPart: await pLote.participante(conta.data.cooperativa),
         operador: signer('operador'),
         intermediador: signer('intermediador'),
@@ -131,25 +106,12 @@ async function montar(client: AppClient, d: DadosVenda, local?: { papel: PapelVe
     });
     const mensagem = pipe(
         createTransactionMessage({ version: 0 }),
-        // O operador paga a taxa e é a autoridade do nonce.
+        // O operador paga a taxa.
         (m) => setTransactionMessageFeePayerSigner(signer('operador'), m),
-        (m) =>
-            setTransactionMessageLifetimeUsingDurableNonce(
-                { nonce: d.nonce, nonceAccountAddress: enderecoNonceCache.get(enderecos.operador)!, nonceAuthorityAddress: enderecos.operador },
-                m,
-            ),
+        (m) => setTransactionMessageLifetimeUsingBlockhash({ blockhash: d.blockhash, lastValidBlockHeight: d.ultimoBloco }, m),
         (m) => appendTransactionMessageInstruction(ix, m),
     );
     return { mensagem, enderecos, lote: conta.data };
-}
-
-// `montar` é síncrono no pipe: o endereço do nonce é resolvido antes e guardado aqui.
-const enderecoNonceCache = new Map<Address, Address>();
-async function prepararNonce(client: AppClient) {
-    const config = await lote.fetchGlobalConfig(client.rpc, await pLote.config());
-    const operador = config.data.operador;
-    if (!enderecoNonceCache.has(operador)) enderecoNonceCache.set(operador, await enderecoNonce(operador));
-    return operador;
 }
 
 const iguais = (a: ArrayLike<number>, b: ArrayLike<number>) => a.length === b.length && Array.from(a).every((x, i) => x === b[i]);
@@ -160,7 +122,17 @@ export function codificar(d: DadosVenda, assinaturas: Assinaturas): string {
         .join(',');
     return (
         PREFIXO +
-        [d.lote, d.industria, d.valorCentavos, encodeURIComponent(d.deposito), encodeURIComponent(d.ata), d.nonce, assin].join(':')
+        [
+            d.lote,
+            d.industria,
+            d.industriaAssinante === d.industria ? '' : d.industriaAssinante,
+            d.valorCentavos,
+            encodeURIComponent(d.deposito),
+            encodeURIComponent(d.ata),
+            d.blockhash,
+            d.ultimoBloco,
+            assin,
+        ].join(':')
     );
 }
 
@@ -174,10 +146,10 @@ export function decodificar(texto: string): { dados: DadosVenda; assinaturas: As
     const limpo = texto.trim();
     if (!limpo.startsWith(PREFIXO)) throw new CodigoVendaInvalido('formato');
     const campos = limpo.slice(PREFIXO.length).split(':');
-    if (campos.length !== 7) throw new CodigoVendaInvalido('formato');
+    if (campos.length !== 9) throw new CodigoVendaInvalido('formato');
     try {
         const assinaturas: Assinaturas = {};
-        for (const par of campos[6].split(',').filter(Boolean)) {
+        for (const par of campos[8].split(',').filter(Boolean)) {
             const [papel, sig] = par.split('=');
             if (!PAPEIS_VENDA.includes(papel as PapelVenda)) throw new Error();
             assinaturas[papel as PapelVenda] = getBase58Encoder().encode(sig) as SignatureBytes;
@@ -186,10 +158,12 @@ export function decodificar(texto: string): { dados: DadosVenda; assinaturas: As
             dados: {
                 lote: address(campos[0]),
                 industria: address(campos[1]),
-                valorCentavos: BigInt(campos[2]),
-                deposito: decodeURIComponent(campos[3]),
-                ata: decodeURIComponent(campos[4]),
-                nonce: campos[5] as Nonce,
+                industriaAssinante: address(campos[2] || campos[1]),
+                valorCentavos: BigInt(campos[3]),
+                deposito: decodeURIComponent(campos[4]),
+                ata: decodeURIComponent(campos[5]),
+                blockhash: campos[6] as Blockhash,
+                ultimoBloco: BigInt(campos[7]),
             },
             assinaturas,
         };
@@ -201,15 +175,14 @@ export function decodificar(texto: string): { dados: DadosVenda; assinaturas: As
 export type Conferida = { dados: DadosVenda; assinaturas: Assinaturas; lote: lote.Lote; enderecos: Record<PapelVenda, Address> };
 
 /**
- * Remonta a transação do código e confere: lote ainda anunciado, nonce ainda válido e cada
+ * Remonta a transação do código e confere: lote ainda anunciado, código no prazo e cada
  * assinatura presente feita pela carteira certa sobre exatamente esta transação.
  */
 export async function conferir(client: AppClient, texto: string): Promise<Conferida> {
     const { dados, assinaturas } = decodificar(texto);
-    const operador = await prepararNonce(client);
     const { mensagem, enderecos, lote: conta } = await montar(client, dados);
     if (conta.estado.__kind !== 'Anunciado') throw new CodigoVendaInvalido('naoAnunciado');
-    if ((await nonceAtual(client, operador)) !== dados.nonce) throw new CodigoVendaInvalido('vencido');
+    await conferirPrazo(client, dados);
     const bytes = compileTransaction(mensagem).messageBytes;
     for (const p of PAPEIS_VENDA) {
         const sig = assinaturas[p];
@@ -223,17 +196,26 @@ export async function conferir(client: AppClient, texto: string): Promise<Confer
 /** Operador: começa a venda com os dados do leilão. Devolve o código para o próximo assinar. */
 export async function iniciarVenda(
     client: AppClient,
-    d: Omit<DadosVenda, 'nonce'>,
+    d: Omit<DadosVenda, 'blockhash' | 'ultimoBloco'>,
 ): Promise<{ codigo: string; dados: DadosVenda }> {
-    await garantirNonce(client);
-    const operador = await prepararNonce(client);
-    const dados: DadosVenda = { ...d, nonce: await nonceAtual(client, operador) };
+    const { value: bloco } = await client.rpc.getLatestBlockhash().send();
+    const dados: DadosVenda = { ...d, blockhash: bloco.blockhash, ultimoBloco: bloco.lastValidBlockHeight };
     const assinaturas = await assinarComCarteira(client, dados, 'operador', {});
     return { codigo: codificar(dados, assinaturas), dados };
 }
 
+/** O blockhash vale até `ultimoBloco`; depois disso a transação não entra mais na blockchain. */
+export async function codigoVencido(client: AppClient, d: Pick<DadosVenda, 'ultimoBloco'>) {
+    return (await client.rpc.getBlockHeight().send()) > d.ultimoBloco;
+}
+
+async function conferirPrazo(client: AppClient, d: DadosVenda) {
+    if (await codigoVencido(client, d)) throw new CodigoVendaInvalido('vencido');
+}
+
 async function assinarComCarteira(client: AppClient, d: DadosVenda, papel: PapelVenda, anteriores: Assinaturas) {
-    await prepararNonce(client);
+    // Sem isso, a carteira assinaria uma transação que já não pode ser enviada.
+    await conferirPrazo(client, d);
     const { mensagem } = await montar(client, d, { papel, signer: client.payer });
     const original = compileTransaction(mensagem).messageBytes;
     const assinada = await partiallySignTransactionMessageWithSigners(mensagem);

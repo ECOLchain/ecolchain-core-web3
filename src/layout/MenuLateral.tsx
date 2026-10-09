@@ -135,7 +135,7 @@ function Item({
         <li>
             <NavLink
                 to={item.rota}
-                end={item.rota === '/'}
+                end={item.rota === '/' || item.rota === '/importador'}
                 onClick={aoNavegar}
                 title={mostrarTexto ? undefined : rotulo}
                 className={({ isActive }) =>

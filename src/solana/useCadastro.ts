@@ -3,7 +3,7 @@ import { useConnectedWallet } from '@solana/kit-plugin-wallet/react';
 import { useClient, useRequest } from '@solana/react';
 import { useCallback } from 'react';
 import { fetchMaybeCreditoConfig } from '@clientes/generated/ecol_credito';
-import { fetchMaybeGlobalConfig, fetchMaybeParticipante, Papel } from '@clientes/generated/ecol_lote';
+import { fetchMaybeCarteira, fetchMaybeGlobalConfig, fetchMaybeParticipante, Papel } from '@clientes/generated/ecol_lote';
 import { fetchMaybeReparticaoConfig } from '@clientes/generated/ecol_reparticao';
 import { lerNomeFixo } from '@clientes/nome';
 import { credito, lote, reparticao } from '@clientes/pdas';
@@ -15,6 +15,8 @@ export type PapelUsuario =
     | 'cooperativa'
     | 'transportador'
     | 'industria'
+    | 'importador'
+    | 'cleantech'
     | 'operador'
     | 'intermediador'
     | 'registrador'
@@ -27,6 +29,15 @@ export type Cadastro = {
     inativo: boolean;
     /** Nome do cadastro de participante (vazio nos papéis de config e em cadastros sem nome). */
     nome: string;
+    /**
+     * Carteira titular do participante (identidade on-chain do ator: seeds dos lotes, campos
+     * `cooperativa`/`industria`/...). É a própria carteira conectada, salvo quando ela é vinculada (ADR 0011).
+     */
+    titular?: Address;
+    /** Conta `Carteira` da carteira conectada, quando ela assina por outro titular (vai nas instruções). */
+    vinculo?: Address;
+    /** Nome da carteira conectada (cadastro de carteiras), quando houver. */
+    nomeCarteira: string;
 };
 
 const PAPEL_PARTICIPANTE: Record<Papel, PapelUsuario> = {
@@ -34,19 +45,28 @@ const PAPEL_PARTICIPANTE: Record<Papel, PapelUsuario> = {
     [Papel.Cooperativa]: 'cooperativa',
     [Papel.Transportador]: 'transportador',
     [Papel.Industria]: 'industria',
+    [Papel.Importador]: 'importador',
+    [Papel.CleanTech]: 'cleantech',
 };
 
 async function buscarCadastro(client: AppClient, carteira: Address): Promise<Cadastro> {
     const rpc = client.rpc;
-    const [participante, global, creditoConfig, repConfig] = await Promise.all([
+    const [proprio, vinculoConta, global, creditoConfig, repConfig] = await Promise.all([
         lote.participante(carteira).then((a) => fetchMaybeParticipante(rpc, a)),
+        lote.carteira(carteira).then((a) => fetchMaybeCarteira(rpc, a)),
         lote.config().then((a) => fetchMaybeGlobalConfig(rpc, a)),
         credito.config().then((a) => fetchMaybeCreditoConfig(rpc, a)),
         reparticao.config().then((a) => fetchMaybeReparticaoConfig(rpc, a)),
     ]);
 
+    // Carteira vinculada (ativa) fala pelo titular; desativada, não opera como ele.
+    const vinculada = !proprio.exists && vinculoConta.exists && vinculoConta.data.participante !== carteira;
+    const participante =
+        vinculada && vinculoConta.data.ativa
+            ? await lote.participante(vinculoConta.data.participante).then((a) => fetchMaybeParticipante(rpc, a))
+            : proprio;
     const papeis = new Set<PapelUsuario>();
-    let inativo = false;
+    let inativo = vinculada && !vinculoConta.data.ativa;
     if (participante.exists) {
         if (participante.data.ativo) papeis.add(PAPEL_PARTICIPANTE[participante.data.papel]);
         else inativo = true;
@@ -66,7 +86,14 @@ async function buscarCadastro(client: AppClient, carteira: Address): Promise<Cad
         if (repConfig.data.intermediador === carteira) papeis.add('intermediador');
         if (repConfig.data.zupy === carteira) papeis.add('zupy');
     }
-    return { papeis: [...papeis], inativo, nome: participante.exists ? lerNomeFixo(participante.data.nome) : '' };
+    return {
+        papeis: [...papeis],
+        inativo,
+        nome: participante.exists ? lerNomeFixo(participante.data.nome) : '',
+        titular: participante.exists ? participante.data.carteira : undefined,
+        vinculo: vinculada && vinculoConta.data.ativa ? vinculoConta.address : undefined,
+        nomeCarteira: vinculoConta.exists ? lerNomeFixo(vinculoConta.data.nome) : '',
+    };
 }
 
 /**
@@ -84,5 +111,9 @@ export function useCadastro() {
         [client, carteira],
     );
     const { data, status, error, refresh } = useRequest(carteira ? fonte : null);
-    return { carteira, cadastro: data ?? undefined, status, error, refresh };
+    const cadastro = data ?? undefined;
+    // `ator`: quem a carteira conectada representa (o titular, se for vinculada). As telas leem e gravam
+    // os dados do ator; a carteira conectada só assina.
+    const ator = cadastro?.titular ?? carteira;
+    return { carteira, ator, cadastro, status, error, refresh };
 }

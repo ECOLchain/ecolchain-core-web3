@@ -1,4 +1,3 @@
-import { address } from '@solana/kit';
 import { useClient } from '@solana/react';
 import { PackageCheck, TriangleAlert } from 'lucide-react';
 import { type FormEvent, useMemo, useState } from 'react';
@@ -14,7 +13,7 @@ import { Botao, Campo, Resultado } from '../../componentes/ui';
 import { usePreferencias } from '../../preferencias/Preferencias';
 import type { AppClient } from '../../solana/cliente';
 import type { ContaDecodificada } from '../../solana/contas';
-import { useCadastro } from '../../solana/useCadastro';
+import { useAtor } from '../../solana/ator';
 import { gramasParaKg, kgParaGramas, useLotesDaIndustria, useMateriais, useParticipantes } from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
 import { rotuloParticipante, SoPapel } from '../admin/comum';
@@ -51,8 +50,7 @@ function ConteudoRecebimentos() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
     const client = useClient<AppClient>();
-    const { carteira } = useCadastro();
-    const industria = carteira ? address(carteira) : undefined;
+    const { titular: industria, assinante, vinculo } = useAtor();
     const lotes = useLotesDaIndustria(industria);
     const estadoBalanca = useBalancaDoParticipante(industria);
     const participantes = useParticipantes();
@@ -142,7 +140,9 @@ function ConteudoRecebimentos() {
         const balanca = estadoBalanca.balanca;
         const ts = BigInt(Math.floor(Date.now() / 1000));
         const confirmar = await lote.getIndustriaConfirmRecebimentoInstructionAsync({
-            industria: client.payer,
+            industria: industria!,
+            industriaAssinante: assinante,
+            industriaCarteira: vinculo,
             balanca: comBalanca && balanca ? await pLote.balanca(balanca.address) : undefined,
             lote: linha.endereco,
             payer: client.payer,

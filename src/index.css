@@ -34,9 +34,17 @@
     --papel-cooperativa: #1f6b5c;
     --papel-transportador: #2c5d99;
     --papel-industria: #6a4a94;
+    --papel-importador: #7d2a45;
+    --papel-cleantech: #1d6f80;
     --papel-operador: #37474f;
     --papel-outros: #7a5a2e;
     --papel-nenhum: #5f6b64;
+
+    /* Gráficos (skill dataviz, validados contra a superfície): séries categóricas em ordem fixa e a grade. */
+    --serie-1: #2a78d6;
+    --serie-2: #eb6834;
+    --serie-3: #1baf7a;
+    --grafico-grade: #e3e8e1;
 }
 
 :root.dark {
@@ -63,9 +71,16 @@
     --papel-cooperativa: #5cc2a8;
     --papel-transportador: #7aa9e6;
     --papel-industria: #b096dc;
+    --papel-importador: #e58aa6;
+    --papel-cleantech: #6ccbdc;
     --papel-operador: #a9bcc6;
     --papel-outros: #d0a56a;
     --papel-nenhum: #9aa7a0;
+
+    --serie-1: #3987e5;
+    --serie-2: #d95926;
+    --serie-3: #199e70;
+    --grafico-grade: #2a3530;
 }
 
 @theme inline {

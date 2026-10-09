@@ -1,5 +1,4 @@
-import { address, isAddress } from '@solana/kit';
-import { useClient } from '@solana/react';
+import { type Address, address, getAddressEncoder, isAddress } from '@solana/kit';
 import { Plus, ScanLine } from 'lucide-react';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,17 +6,27 @@ import { coletorRef, origemRef } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
 import { instrucaoPesagem, TipoPesagem } from '@clientes/pesagem';
+import { lerNomeFixo } from '@clientes/nome';
 import { BotaoBalanca, DialogoBalanca, useBalancaDoParticipante } from '../../componentes/BalancaTeste';
+import { CamposMaterial, ESCOLHA_VAZIA, type EscolhaMaterial, lerEscolha } from '../../componentes/CamposMaterial';
 import { Dialogo } from '../../componentes/dialogo';
 import { LeitorQr } from '../../componentes/LeitorQr';
 import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, useGrade } from '../../componentes/grade';
 import { TituloPagina } from '../../componentes/pagina';
 import { Botao, Campo, Resultado, Selecao } from '../../componentes/ui';
 import { usePreferencias } from '../../preferencias/Preferencias';
-import type { AppClient } from '../../solana/cliente';
+import { useAtor } from '../../solana/ator';
 import type { ContaDecodificada } from '../../solana/contas';
-import { useCadastro } from '../../solana/useCadastro';
-import { gramasParaKg, kgParaGramas, useEntregas, useMateriais, useParticipantes } from '../../solana/useDados';
+import {
+    gramasParaKg,
+    kgParaGramas,
+    nomeVariacao,
+    useColetasDestino,
+    useEntregas,
+    useMateriais,
+    useParticipantes,
+    useVariacoes,
+} from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
 import { rotuloParticipante, SoPapel } from '../admin/comum';
 
@@ -28,13 +37,25 @@ const ORIGENS = [
     lote.OrigemEntrega.Doacao,
     lote.OrigemEntrega.Compra,
     lote.OrigemEntrega.Avulso,
+    lote.OrigemEntrega.Importador,
 ] as const;
 export const nomeOrigem = (o: lote.OrigemEntrega) => `origem.${lote.OrigemEntrega[o]}`;
 /** Doação e compra precisam de documento (nota, recibo, CNPJ); triagem e avulso, não. */
 const referenciaObrigatoria = (o: lote.OrigemEntrega) => o === lote.OrigemEntrega.Doacao || o === lote.OrigemEntrega.Compra;
 
-/** O que o formulário envia: a origem e, conforme ela, o coletor ou o texto da referência. */
-export type NovaOrigem = { origem: lote.OrigemEntrega; coletor: string; referencia: string; material: number; pesoG: bigint };
+/** O que o formulário envia: a origem e, conforme ela, o coletor, a coleta do importador ou o texto da referência. */
+export type NovaOrigem = {
+    origem: lote.OrigemEntrega;
+    coletor: string;
+    referencia: string;
+    /** Coleta do importador enviada a esta cooperativa (origem Importador). */
+    coleta?: Address;
+    material: number;
+    variacao: number;
+    garrafas: number;
+    pesoG: bigint;
+};
+type Coleta = ContaDecodificada<lote.Coleta>;
 
 /** Endereço "vazio" (Pubkey::default): entrega ainda sem lote. */
 const SEM_LOTE = '11111111111111111111111111111111';
@@ -47,7 +68,7 @@ export function Coletas() {
     return (
         <>
             <TituloPagina titulo={t('itens.coletas')} />
-            <SoPapel papel="cooperativa" aviso={t('cooperativa.soCooperativa')}>
+            <SoPapel papel={['cooperativa', 'cleantech']} aviso={t('cooperativa.soCooperativa')}>
                 <ConteudoColetas />
             </SoPapel>
         </>
@@ -57,14 +78,14 @@ export function Coletas() {
 function ConteudoColetas() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
-    const client = useClient<AppClient>();
-    const { carteira } = useCadastro();
-    const cooperativa = carteira ? address(carteira) : undefined;
+    const { titular: cooperativa, assinante, vinculo } = useAtor();
     const estadoBalanca = useBalancaDoParticipante(cooperativa);
     const { balanca, pronta } = estadoBalanca;
     const materiais = useMateriais();
+    const variacoes = useVariacoes();
     const participantes = useParticipantes();
     const entregas = useEntregas(cooperativa);
+    const coletasRecebidas = useColetasDestino(cooperativa);
     const envio = useEnviar();
     const [popup, setPopup] = useState<'entrega' | 'balanca' | null>(null);
     const [filtroLote, setFiltroLote] = useState<'todas' | 'disponiveis' | 'noLote'>('todas');
@@ -91,9 +112,21 @@ function ConteudoColetas() {
         };
     }, [coletores]);
 
+    // Origem Importador: a referência é a conta da coleta; o nome vem do cadastro do importador.
+    const importadorDaColeta = useMemo(() => {
+        const nomes = new Map((participantes.data ?? []).map((p) => [p.dados.carteira, p.dados]));
+        return new Map(
+            (coletasRecebidas.data ?? []).map((c) => [hex(getAddressEncoder().encode(c.endereco)), nomes.get(c.dados.importador)]),
+        );
+    }, [participantes.data, coletasRecebidas.data]);
+
     const colunas = useMemo<Coluna<Linha>[]>(() => {
-        const quem = (l: Linha) => refs.get(hex(l.dados.origemRef));
-        const comColetor = (l: Linha) => l.dados.origem === lote.OrigemEntrega.Coletor;
+        const quem = (l: Linha) =>
+            l.dados.origem === lote.OrigemEntrega.Importador
+                ? importadorDaColeta.get(hex(l.dados.origemRef))
+                : refs.get(hex(l.dados.origemRef));
+        const comColetor = (l: Linha) =>
+            l.dados.origem === lote.OrigemEntrega.Coletor || l.dados.origem === lote.OrigemEntrega.Importador;
         const rotuloQuem = (l: Linha) => {
             if (!comColetor(l)) return t('cooperativa.coletas.refRegistrada');
             const q = quem(l);
@@ -132,7 +165,22 @@ function ConteudoColetas() {
                     ),
                 busca: (l) => quem(l)?.carteira ?? '',
             },
-            { id: 'material', titulo: t('cooperativa.material'), valor: (l) => nomeMaterial.get(l.dados.material) ?? String(l.dados.material) },
+            {
+                id: 'material',
+                titulo: t('cooperativa.material'),
+                valor: (l) =>
+                    [nomeMaterial.get(l.dados.material) ?? String(l.dados.material), nomeVariacao(variacoes.data, l.dados.material, l.dados.variacao)]
+                        .filter(Boolean)
+                        .join(' · '),
+            },
+            {
+                id: 'garrafas',
+                titulo: t('material.garrafasCurto'),
+                largura: 'w-28',
+                numerica: true,
+                valor: (l) => l.dados.qtdGarrafas,
+                celula: (l) => (l.dados.qtdGarrafas ? l.dados.qtdGarrafas.toLocaleString(idioma) : <span className="text-texto-suave">—</span>),
+            },
             {
                 id: 'peso',
                 titulo: t('cooperativa.pesoKg'),
@@ -160,7 +208,7 @@ function ConteudoColetas() {
                 },
             },
         ];
-    }, [t, idioma, refs, nomeMaterial]);
+    }, [t, idioma, refs, nomeMaterial, variacoes.data, importadorDaColeta]);
     const filtro = useMemo(
         () => (l: Linha) =>
             (filtroLote === 'todas' || (filtroLote === 'noLote') === (l.dados.lote !== SEM_LOTE)) &&
@@ -170,7 +218,7 @@ function ConteudoColetas() {
     );
     const grade = useGrade(entregas.data, colunas, { chave: (l) => l.endereco, ordem: { id: 'id', desc: true }, filtro });
 
-    const registrar = async ({ origem, coletor, referencia, material, pesoG }: NovaOrigem) => {
+    const registrar = async ({ origem, coletor, referencia, coleta, material, variacao, garrafas, pesoG }: NovaOrigem) => {
         if (!balanca || !cooperativa) return;
         const proximo = (entregas.data ?? []).reduce((m, x) => (x.dados.entregaId > m ? x.dados.entregaId : m), 0n) + 1n;
         const entrega = await pLote.entrega(cooperativa, proximo);
@@ -178,17 +226,23 @@ function ConteudoColetas() {
         const ref =
             origem === lote.OrigemEntrega.Coletor
                 ? await coletorRef(address(coletor))
-                : await origemRef(referencia.trim() || `${lote.OrigemEntrega[origem]}:${cooperativa}:${proximo}`);
+                : origem === lote.OrigemEntrega.Importador && coleta
+                  ? (getAddressEncoder().encode(coleta) as Uint8Array)
+                  : await origemRef(referencia.trim() || `${lote.OrigemEntrega[origem]}:${cooperativa}:${proximo}`);
         const ts = BigInt(Math.floor(Date.now() / 1000));
         try {
             await envio.dispatchAsync([
                 // A balança assina a pesagem; a instrução Ed25519 vai imediatamente antes.
                 await instrucaoPesagem(balanca, TipoPesagem.Entrega, entrega, pesoG, ts),
                 await lote.getCooperativaRegisterEntregaInstructionAsync({
-                    payer: client.payer,
-                    cooperativa: client.payer,
+                    payer: assinante,
+                    cooperativa,
+                    cooperativaAssinante: assinante,
+                    cooperativaCarteira: vinculo,
                     balanca: await pLote.balanca(balanca.address),
                     materialCadastro: await pLote.material(material),
+                    variacaoCadastro: variacao ? await pLote.variacao(material, variacao) : undefined,
+                    coleta,
                     entrega,
                     eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
                     program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
@@ -198,10 +252,13 @@ function ConteudoColetas() {
                     material,
                     pesoG,
                     tsPesagem: ts,
+                    variacao,
+                    qtdGarrafas: garrafas,
                 }),
             ]);
             setPopup(null);
             entregas.refresh();
+            coletasRecebidas.refresh();
         } catch {
             // o erro fica em envio.error
         }
@@ -275,6 +332,8 @@ function ConteudoColetas() {
                     participantes={participantes.data ?? []}
                     carregando={!participantes.data}
                     materiais={(materiais.data ?? []).filter((m) => m.dados.ativo)}
+                    variacoes={variacoes.data}
+                    coletasPendentes={(coletasRecebidas.data ?? []).filter((c) => c.dados.estado === lote.EstadoColeta.EmEntrega)}
                     salvando={envio.isRunning}
                     erro={envio.error}
                     aoFechar={() => setPopup(null)}
@@ -291,6 +350,8 @@ function DialogoEntrega({
     participantes,
     carregando,
     materiais,
+    variacoes,
+    coletasPendentes,
     salvando,
     erro,
     aoFechar,
@@ -301,23 +362,45 @@ function DialogoEntrega({
     participantes: ContaDecodificada<lote.Participante>[];
     carregando: boolean;
     materiais: ContaDecodificada<lote.Material>[];
+    variacoes: Map<number, ContaDecodificada<lote.MaterialVariacao>[]> | undefined;
+    /** Coletas de importadores a caminho desta cooperativa. */
+    coletasPendentes: Coleta[];
     salvando: boolean;
     erro: unknown;
     aoFechar: () => void;
     aoSalvar: (nova: NovaOrigem) => void;
 }) {
     const { t } = useTranslation();
+    const { idioma } = usePreferencias();
     const [origem, setOrigem] = useState<lote.OrigemEntrega>(lote.OrigemEntrega.Coletor);
     const [coletor, setColetor] = useState('');
     const [lendoQr, setLendoQr] = useState(false);
     const [avisoQr, setAvisoQr] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
     const [referencia, setReferencia] = useState('');
-    const [material, setMaterial] = useState('');
+    const [escolha, setEscolha] = useState<EscolhaMaterial>(ESCOLHA_VAZIA);
+    const [coletaSel, setColetaSel] = useState('');
     const [peso, setPeso] = useState('');
     const pesoG = kgParaGramas(peso);
+    const lido = lerEscolha(escolha, materiais);
     const comColetor = origem === lote.OrigemEntrega.Coletor;
-    const quemOk = comColetor ? !!coletor : !referenciaObrigatoria(origem) || referencia.trim() !== '';
-    const pronto = quemOk && !!material && !!pesoG;
+    const doImportador = origem === lote.OrigemEntrega.Importador;
+    const quemOk = comColetor ? !!coletor : doImportador ? !!coletaSel : !referenciaObrigatoria(origem) || referencia.trim() !== '';
+    const pronto = quemOk && !!lido && !!pesoG;
+    const nomeImportador = (c: Coleta) => {
+        const p = participantes.find((x) => x.dados.carteira === c.dados.importador);
+        return p ? rotuloParticipante(p.dados) : c.dados.importador;
+    };
+    /** Escolher a coleta preenche material, cor e garrafas declaradas pelo importador (as garrafas podem ser recontadas). */
+    const escolherColeta = (endereco: string) => {
+        setColetaSel(endereco);
+        const c = coletasPendentes.find((x) => x.endereco === endereco);
+        if (c)
+            setEscolha({
+                material: String(c.dados.material),
+                variacao: c.dados.variacao ? String(c.dados.variacao) : '',
+                garrafas: String(c.dados.qtdGarrafas),
+            });
+    };
     const ordenados = useMemo(
         () => [...coletores].sort((a, b) => rotuloParticipante(a.dados).localeCompare(rotuloParticipante(b.dados))),
         [coletores],
@@ -341,7 +424,17 @@ function DialogoEntrega({
 
     const enviar = (e: FormEvent) => {
         e.preventDefault();
-        if (pronto && pesoG) aoSalvar({ origem, coletor, referencia, material: Number(material), pesoG });
+        if (pronto && pesoG && lido)
+            aoSalvar({
+                origem,
+                coletor,
+                referencia,
+                coleta: doImportador ? address(coletaSel) : undefined,
+                material: lido.material,
+                variacao: lido.variacao,
+                garrafas: lido.garrafas,
+                pesoG,
+            });
     };
 
     return (
@@ -359,7 +452,10 @@ function DialogoEntrega({
                     rotulo={t('cooperativa.coletas.origem')}
                     autoFocus
                     value={origem}
-                    onChange={(e) => setOrigem(Number(e.target.value) as lote.OrigemEntrega)}
+                    onChange={(e) => {
+                        setOrigem(Number(e.target.value) as lote.OrigemEntrega);
+                        setColetaSel('');
+                    }}
                 >
                     {ORIGENS.map((o) => (
                         <option key={o} value={o}>
@@ -412,6 +508,31 @@ function DialogoEntrega({
                             )}
                         </div>
                     )
+                ) : doImportador ? (
+                    coletasPendentes.length === 0 ? (
+                        <p className="text-sm text-kraft">{t('cooperativa.coletas.semColetasImportador')}</p>
+                    ) : (
+                        <Selecao
+                            rotulo={t('cooperativa.coletas.coletaImportador')}
+                            required
+                            value={coletaSel}
+                            onChange={(e) => escolherColeta(e.target.value)}
+                        >
+                            <option value="" disabled>
+                                {t('cooperativa.coletas.escolherColeta')}
+                            </option>
+                            {coletasPendentes.map((c) => (
+                                <option key={c.endereco} value={c.endereco}>
+                                    {t('cooperativa.coletas.opcaoColeta', {
+                                        id: String(c.dados.coletaId),
+                                        importador: nomeImportador(c),
+                                        garrafas: c.dados.qtdGarrafas.toLocaleString(idioma),
+                                        cor: lerNomeFixo(variacoes?.get(c.dados.material)?.find((v) => v.dados.indice === c.dados.variacao)?.dados.nome ?? []),
+                                    })}
+                                </option>
+                            ))}
+                        </Selecao>
+                    )
                 ) : (
                     <Campo
                         rotulo={t('cooperativa.coletas.referencia')}
@@ -426,17 +547,14 @@ function DialogoEntrega({
                         )}
                     />
                 )}
-                <div className="grid gap-4 sm:grid-cols-[1fr_10rem]">
-                    <Selecao rotulo={t('cooperativa.material')} required value={material} onChange={(e) => setMaterial(e.target.value)}>
-                        <option value="" disabled>
-                            {t('cooperativa.escolherMaterial')}
-                        </option>
-                        {materiais.map((m) => (
-                            <option key={m.endereco} value={m.dados.codigo}>
-                                {m.dados.nome}
-                            </option>
-                        ))}
-                    </Selecao>
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <CamposMaterial
+                        valor={escolha}
+                        onChange={setEscolha}
+                        materiais={materiais}
+                        variacoes={variacoes}
+                        bloqueado={doImportador && !!coletaSel}
+                    />
                     <Campo
                         rotulo={t('cooperativa.pesoKg')}
                         inputMode="decimal"

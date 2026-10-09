@@ -2,8 +2,9 @@ import { type Address, getAddressEncoder } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
 import { useCallback } from 'react';
 import * as lote from '@clientes/generated/ecol_lote';
+import { lerNomeFixo } from '@clientes/nome';
 import type { AppClient } from './cliente';
-import { listarContas } from './contas';
+import { type ContaDecodificada, listarContas } from './contas';
 
 /** Materiais cadastrados, em ordem de código. */
 export function useMateriais() {
@@ -110,4 +111,109 @@ export function useLotesDaIndustria(industria: Address | undefined) {
         [client, industria],
     );
     return useRequest(industria ? fonte : null);
+}
+
+/** Variações cadastradas (cores do vidro), por código do material e em ordem de índice (ADR 0011). */
+export function useVariacoes() {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(async () => {
+        const todas = await listarContas(
+            client,
+            lote.ECOL_LOTE_PROGRAM_ADDRESS,
+            lote.MATERIAL_VARIACAO_DISCRIMINATOR,
+            lote.getMaterialVariacaoDecoder(),
+        );
+        const porMaterial = new Map<number, ContaDecodificada<lote.MaterialVariacao>[]>();
+        for (const v of todas.sort((a, b) => a.dados.indice - b.dados.indice)) {
+            porMaterial.set(v.dados.material, [...(porMaterial.get(v.dados.material) ?? []), v]);
+        }
+        return porMaterial;
+    }, [client]);
+    return useRequest(fonte);
+}
+
+/** Nome da variação (`lerNomeFixo`), ou vazio quando o lote não tem variação. */
+export function nomeVariacao(
+    variacoes: Map<number, ContaDecodificada<lote.MaterialVariacao>[]> | undefined,
+    material: number,
+    indice: number,
+) {
+    if (!indice) return '';
+    const v = variacoes?.get(material)?.find((x) => x.dados.indice === indice);
+    return v ? lerNomeFixo(v.dados.nome) : `#${indice}`;
+}
+
+/** Garrafas postas no mercado por um importador (mais recentes primeiro). */
+export function useDistribuicoes(importador: Address | undefined) {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        async () =>
+            (
+                await listarContas(
+                    client,
+                    lote.ECOL_LOTE_PROGRAM_ADDRESS,
+                    lote.DISTRIBUICAO_DISCRIMINATOR,
+                    lote.getDistribuicaoDecoder(),
+                    importador,
+                )
+            ).sort((a, b) => Number(b.dados.distribId - a.dados.distribId)),
+        [client, importador],
+    );
+    return useRequest(importador ? fonte : null);
+}
+
+/** Coletas de um importador (mais recentes primeiro). */
+export function useColetasImportador(importador: Address | undefined) {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        async () =>
+            (
+                await listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.COLETA_DISCRIMINATOR, lote.getColetaDecoder(), importador)
+            ).sort((a, b) => Number(b.dados.coletaId - a.dados.coletaId)),
+        [client, importador],
+    );
+    return useRequest(importador ? fonte : null);
+}
+
+/** `Coleta.destino`: depois de importador, id, material, variação, garrafas, peso e local. */
+const OFFSET_COLETA_DESTINO = 8 + 32 + 8 + 2 + 1 + 4 + 8 + 32;
+
+/** Coletas de importadores enviadas a uma cooperativa ou Clean Tech (qualquer etapa a partir do envio). */
+export function useColetasDestino(destino: Address | undefined) {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        () =>
+            listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.COLETA_DISCRIMINATOR, lote.getColetaDecoder(), undefined, [
+                { offset: OFFSET_COLETA_DESTINO, bytes: getAddressEncoder().encode(destino!) as Uint8Array },
+            ]),
+        [client, destino],
+    );
+    return useRequest(destino ? fonte : null);
+}
+
+/** Converte "1.200" em número inteiro de garrafas; `null` se inválido ou negativo. */
+export function textoParaGarrafas(texto: string): number | null {
+    const limpo = texto.trim().replace(/[.\s]/g, '');
+    if (limpo === '') return 0;
+    if (!/^\d+$/.test(limpo)) return null;
+    const n = Number(limpo);
+    return n <= 0xffff_ffff ? n : null;
+}
+
+/** `Carteira.participante`: logo depois do endereço da carteira. */
+const OFFSET_CARTEIRA_PARTICIPANTE = 8 + 32;
+
+/** Carteiras vinculadas a um participante (inclui o registro do próprio titular, se tiver nome). */
+export function useCarteiras(participante: Address | undefined) {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        async () =>
+            (
+                await listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.CARTEIRA_DISCRIMINATOR, lote.getCarteiraDecoder(), undefined, [
+                    { offset: OFFSET_CARTEIRA_PARTICIPANTE, bytes: getAddressEncoder().encode(participante!) as Uint8Array },
+                ])
+            ).sort((a, b) => Number(a.dados.criadaEm - b.dados.criadaEm)),
+        [client, participante],
+    );
+    return useRequest(participante ? fonte : null);
 }

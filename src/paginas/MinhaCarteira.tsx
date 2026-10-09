@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { lerNomeFixo } from '@clientes/nome';
 import { lote as pLote } from '@clientes/pdas';
+import { GestaoCarteiras } from '../componentes/Carteiras';
 import { TituloPagina } from '../componentes/pagina';
 import { Botao } from '../componentes/ui';
 import type { AppClient } from '../solana/cliente';
@@ -24,7 +25,10 @@ export function MinhaCarteira() {
     return (
         <>
             <TituloPagina titulo={t('itens.minhaCarteira')} />
-            <SoPapel papel={['coletor', 'transportador']} aviso={t('minhaCarteira.soParticipante')}>
+            <SoPapel
+                papel={['coletor', 'transportador', 'cooperativa', 'cleantech', 'industria', 'importador']}
+                aviso={t('minhaCarteira.soParticipante')}
+            >
                 <ConteudoMinhaCarteira />
             </SoPapel>
         </>
@@ -49,8 +53,9 @@ const emGrupos = (endereco: string) => endereco.match(/.{1,4}/g)?.join(' ') ?? e
  */
 function ConteudoMinhaCarteira() {
     const { t } = useTranslation();
-    const { carteira } = useCadastro();
-    const participante = useParticipante(carteira ? address(carteira) : undefined);
+    const { carteira, ator, cadastro } = useCadastro();
+    // O QR mostra a carteira conectada (a que vai assinar); o cadastro é o do titular que ela representa.
+    const participante = useParticipante(ator ? address(ator) : undefined);
     const [copiado, setCopiado] = useState(false);
     if (!carteira) return null;
 
@@ -70,7 +75,7 @@ function ConteudoMinhaCarteira() {
     };
 
     return (
-        <section className="mx-auto flex w-full max-w-md flex-col items-center gap-5 rounded-xl border border-linha bg-superficie p-6 text-center shadow-sm sm:p-8">
+        <section className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 rounded-xl border border-linha bg-superficie p-6 text-center shadow-sm sm:p-8">
             <div className="flex flex-col gap-1">
                 <h2 className="text-2xl font-semibold text-texto">{nome || rotuloPapel}</h2>
                 <p className="text-sm text-texto-suave">
@@ -98,7 +103,17 @@ function ConteudoMinhaCarteira() {
                 {copiado ? t('carteira.copiado') : t('carteira.copiar')}
             </Botao>
 
+            {cadastro?.nomeCarteira && <p className="-mt-2 text-sm text-texto-suave">{cadastro.nomeCarteira}</p>}
             {uso && <p className="max-w-sm text-sm text-texto-suave">{t(uso.ajuda)}</p>}
+
+            {dados && (
+                <div className="flex w-full flex-col gap-2 border-t border-linha pt-5 text-left">
+                    <h3 className="text-base font-semibold text-texto">{t('carteiras.titulo')}</h3>
+                    <p className="text-sm text-texto-suave">{t('carteiras.explicacao')}</p>
+                    {/* Só o titular gerencia; uma carteira vinculada apenas consulta. */}
+                    <GestaoCarteiras participante={dados} podeEditar={carteira === dados.carteira} />
+                </div>
+            )}
         </section>
     );
 }
