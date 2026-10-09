@@ -11,6 +11,12 @@ import { brl } from '../../solana/useDados';
  */
 export const aVenda = (l: lote.Lote) => l.estado.__kind === 'Anunciado' && l.vendaDireta;
 
+/** Em leilão: os lances são feitos fora da plataforma e a Administração registra o vencedor. */
+export const emLeilao = (l: lote.Lote) => l.estado.__kind === 'Anunciado' && !l.vendaDireta;
+
+/** Fim do leilão (segundos Unix); zero na venda direta, que não tem prazo. */
+export const prazoLeilao = (l: lote.Lote) => (l.estado.__kind === 'Anunciado' && !l.vendaDireta ? l.estado.prazoLeilao : 0n);
+
 /** Nome da situação do lote, distinguindo a venda direta do leilão. */
 export const rotuloEstado = (t: TFunction, l: lote.Lote) => (aVenda(l) ? t('venda.aVenda') : t(`estadoLote.${l.estado.__kind}`));
 

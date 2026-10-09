@@ -129,6 +129,24 @@ function ConteudoLeiloes() {
                 valor: (l) => (l.dados.estado.__kind === 'Anunciado' ? l.dados.estado.prazoLeilao : 0n),
                 celula: (l) => <span className="text-texto-suave">{l.dados.estado.__kind === 'Anunciado' ? r.data(l.dados.estado.prazoLeilao) : '—'}</span>,
             },
+            {
+                id: 'lances',
+                titulo: t('venda.maiorLance'),
+                largura: 'w-44',
+                numerica: true,
+                valor: (l) => l.dados.maiorLanceCentavos,
+                celula: (l) =>
+                    l.dados.qtdLances === 0 ? (
+                        <span className="text-texto-suave">—</span>
+                    ) : (
+                        <span className="flex flex-col items-end">
+                            <span className="font-semibold text-texto">{r.reais(l.dados.maiorLanceCentavos)}</span>
+                            <span className="text-xs text-texto-suave">
+                                {r.nome(l.dados.lanceLider)} · {t('venda.qtdLances', { count: l.dados.qtdLances })}
+                            </span>
+                        </span>
+                    ),
+            },
             { id: 'industria', titulo: t('trilha.industria'), valor: (l) => r.nome(l.dados.industria), busca: (l) => l.dados.industria },
             { id: 'valor', titulo: t('vendas.valor'), valor: (l) => l.dados.valorCentavos, celula: (l) => (l.dados.valorCentavos > 0n ? r.reais(l.dados.valorCentavos) : '—'), numerica: true, largura: 'w-32' },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-36', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
@@ -145,6 +163,9 @@ function ConteudoLeiloes() {
     const sel = grade.selecionada;
     const anunciado = sel?.dados.estado.__kind === 'Anunciado' ? sel.dados.estado : null;
     const prazoVencido = !!anunciado && agora >= anunciado.prazoLeilao;
+    // Leilão com lances on-chain (ADR 0013): a venda espera o prazo e não se encerra "sem lance".
+    const comLances = !!sel && sel.dados.qtdLances > 0;
+    const aguardandoPrazo = comLances && !prazoVencido;
 
     const encerrar = async () => {
         if (!sel) return;
@@ -187,15 +208,15 @@ function ConteudoLeiloes() {
                             ]}
                         />
                         <AcoesGrade>
-                            {prazoVencido && (
+                            {prazoVencido && !comLances && (
                                 <Botao compacto variante="secundario" carregando={envio.isRunning} onClick={() => void encerrar()}>
                                     <Ban className="size-4" /> {t('vendas.encerrarSemLance')}
                                 </Botao>
                             )}
                             <Botao
                                 compacto
-                                disabled={!anunciado}
-                                title={anunciado ? undefined : t('vendas.selecione')}
+                                disabled={!anunciado || aguardandoPrazo}
+                                title={!anunciado ? t('vendas.selecione') : aguardandoPrazo ? t('vendas.aguardaPrazoLances') : undefined}
                                 onClick={() => {
                                     setConcluida(null);
                                     if (sel) setPopup(sel);
@@ -212,7 +233,11 @@ function ConteudoLeiloes() {
                     larguraMinima="min-w-[72rem]"
                     vazio={t('vendas.vazioLeiloes')}
                     carregando={lotes.status === 'fetching' && !lotes.data}
-                    onAbrir={(l) => l.dados.estado.__kind === 'Anunciado' && setPopup(l)}
+                    onAbrir={(l) =>
+                        l.dados.estado.__kind === 'Anunciado' &&
+                        !(l.dados.qtdLances > 0 && agora < l.dados.estado.prazoLeilao) &&
+                        setPopup(l)
+                    }
                 />
             </CartaoGrade>
 
@@ -293,13 +318,18 @@ function DialogoRegistrarVenda({
     aoConcluir: (mensagem: string) => void;
 }) {
     const { t } = useTranslation();
+    const { idioma } = usePreferencias();
     const client = useClient<AppClient>();
-    const [industria, setIndustria] = useState('');
+    // Com lances on-chain, a vencedora e o valor vêm do maior lance (o programa não aceita outros).
+    const vencedor = linha.dados.qtdLances > 0;
+    const [industria, setIndustria] = useState(vencedor ? (linha.dados.lanceLider as string) : '');
     /** Carteira que vai assinar pela indústria (vazio = a titular). */
     const [assinanteInd, setAssinanteInd] = useState('');
     const carteirasInd = useCarteiras(industria ? address(industria) : undefined);
     const vinculadas = (carteirasInd.data ?? []).filter((c) => c.dados.ativa && c.dados.endereco !== industria);
-    const [valor, setValor] = useState('');
+    const [valor, setValor] = useState(
+        vencedor ? (Number(linha.dados.maiorLanceCentavos) / 100).toLocaleString(idioma, { minimumFractionDigits: 2 }) : '',
+    );
     const [deposito, setDeposito] = useState('');
     const [ata, setAta] = useState('');
     const [codigo, setCodigo] = useState<string | null>(null);
@@ -367,12 +397,14 @@ function DialogoRegistrarVenda({
                     <p className="text-sm text-texto-suave">
                         {t('vendas.passo1', { cooperativa: r.nome(linha.dados.cooperativa), minimo: r.reais(linha.dados.precoMinimoCentavos) })}
                     </p>
+                    {vencedor && <p className="rounded-lg bg-acento-suave p-3 text-sm text-acento">{t('vendas.vencedorLances', { count: linha.dados.qtdLances })}</p>}
                     {industrias.length === 0 ? (
                         <p className="text-sm text-kraft">{t('vendas.semIndustrias')}</p>
                     ) : (
                         <Selecao
                             rotulo={t('vendas.vencedora')}
                             required
+                            disabled={vencedor}
                             value={industria}
                             onChange={(e) => {
                                 setIndustria(e.target.value);
@@ -407,6 +439,7 @@ function DialogoRegistrarVenda({
                         rotulo={t('vendas.valorLance')}
                         inputMode="decimal"
                         required
+                        readOnly={vencedor}
                         placeholder="0,00"
                         value={valor}
                         onChange={(e) => setValor(e.target.value)}

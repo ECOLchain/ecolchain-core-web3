@@ -1,4 +1,5 @@
-import { ShoppingCart } from 'lucide-react';
+import { useClient } from '@solana/react';
+import { Crown, Gavel, ShoppingCart } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -10,6 +11,7 @@ import { TituloPagina } from '../../componentes/pagina';
 import { Botao, Campo, Resultado } from '../../componentes/ui';
 import { usePreferencias } from '../../preferencias/Preferencias';
 import { useAtor } from '../../solana/ator';
+import type { AppClient } from '../../solana/cliente';
 import type { ContaDecodificada } from '../../solana/contas';
 import { useCadastro } from '../../solana/useCadastro';
 import {
@@ -24,14 +26,16 @@ import {
 } from '../../solana/useDados';
 import { useEnviar } from '../../solana/useEnviar';
 import { rotuloParticipante, SoPapel } from '../admin/comum';
-import { aVenda } from './comum';
+import { aVenda, emLeilao, prazoLeilao } from './comum';
 
 type Linha = ContaDecodificada<lote.Lote>;
 
 /**
- * Disputa (ADR 0012): os lotes à venda por preço fixo de todas as cooperativas e Clean Techs. A
- * indústria compra (quem paga primeiro leva); a cooperativa acompanha a concorrência e os próprios lotes.
- * Depois da compra o lote sai daqui e vai para Compras (indústria) e Vendas (cooperativa).
+ * Disputa (ADR 0012 e 0013): os lotes à venda de todas as cooperativas e Clean Techs, por preço fixo
+ * ou em leilão. Na venda direta a indústria compra (quem paga primeiro leva); no leilão ela dá lances
+ * na blockchain até o prazo, e a Administração registra a venda ao maior lance (três assinaturas). A
+ * cooperativa acompanha a concorrência e os próprios lotes. Depois da venda o lote sai daqui e vai
+ * para Compras (indústria) e Vendas (cooperativa).
  */
 export function Disputa() {
     const { t } = useTranslation();
@@ -49,13 +53,16 @@ function ConteudoDisputa() {
     const { t } = useTranslation();
     const { idioma } = usePreferencias();
     const { cadastro, ator } = useCadastro();
+    const [aviso, setAviso] = useState<string>();
     const ehIndustria = !!cadastro?.papeis.includes('industria');
     const lotes = useTodosLotes();
     const materiais = useMateriais();
     const variacoes = useVariacoes();
     const participantes = useParticipantes();
     const [filtroMaterial, setFiltroMaterial] = useState('');
+    const [filtroTipo, setFiltroTipo] = useState<'' | 'direta' | 'leilao'>('');
     const [compra, setCompra] = useState<Linha | null>(null);
+    const [lance, setLance] = useState<Linha | null>(null);
     const [comprado, setComprado] = useState<string>();
 
     const nomeMaterial = useMemo(() => new Map((materiais.data ?? []).map((m) => [m.dados.codigo, m.dados.nome])), [materiais.data]);
@@ -68,7 +75,17 @@ function ConteudoDisputa() {
             [nomeMaterial.get(l.material) ?? String(l.material), nomeVariacao(variacoes.data, l.material, l.variacao)].filter(Boolean).join(' · '),
         [nomeMaterial, variacoes.data],
     );
-    const linhas = useMemo(() => (lotes.data ?? []).filter((l) => aVenda(l.dados)), [lotes.data]);
+    const linhas = useMemo(() => (lotes.data ?? []).filter((l) => aVenda(l.dados) || emLeilao(l.dados)), [lotes.data]);
+    const agora = BigInt(Math.floor(Date.now() / 1000));
+    const encerrado = (l: lote.Lote) => emLeilao(l) && prazoLeilao(l) <= agora;
+    const dataHora = (ts: bigint) => new Date(Number(ts) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' });
+    // Venda direta compra; leilão abre a orientação do lance.
+    const abrir = (l: Linha) => {
+        setComprado(undefined);
+        setAviso(undefined);
+        if (emLeilao(l.dados)) setLance(l);
+        else setCompra(l);
+    };
 
     const colunas = useMemo<Coluna<Linha>[]>(
         () => [
@@ -87,6 +104,22 @@ function ConteudoDisputa() {
                     </span>
                 ),
             },
+            {
+                id: 'tipo',
+                titulo: t('venda.tipo'),
+                largura: 'w-40',
+                valor: (l) => (emLeilao(l.dados) ? t('venda.leilao') : t('venda.vendaDireta')),
+                celula: (l) =>
+                    emLeilao(l.dados) ? (
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-kraft-suave px-2 py-0.5 text-xs font-semibold text-kraft">
+                            <Gavel className="size-3.5" aria-hidden /> {t('venda.leilao')}
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-acento-suave px-2 py-0.5 text-xs font-semibold text-acento">
+                            <ShoppingCart className="size-3.5" aria-hidden /> {t('venda.vendaDireta')}
+                        </span>
+                    ),
+            },
             { id: 'material', titulo: t('cooperativa.material'), valor: (l) => material(l.dados) },
             {
                 id: 'garrafas',
@@ -103,7 +136,36 @@ function ConteudoDisputa() {
                 largura: 'w-32',
                 numerica: true,
                 valor: (l) => l.dados.precoMinimoCentavos,
-                celula: (l) => <span className="font-semibold text-texto">{brl(l.dados.precoMinimoCentavos, idioma)}</span>,
+                celula: (l) => (
+                    <span className="flex flex-col">
+                        <span className="font-semibold text-texto">{brl(l.dados.precoMinimoCentavos, idioma)}</span>
+                        {emLeilao(l.dados) && <span className="text-xs text-texto-suave">{t('venda.lanceMinimo')}</span>}
+                    </span>
+                ),
+            },
+            {
+                id: 'maiorLance',
+                titulo: t('venda.maiorLance'),
+                largura: 'w-40',
+                numerica: true,
+                valor: (l) => l.dados.maiorLanceCentavos,
+                celula: (l) =>
+                    !emLeilao(l.dados) ? (
+                        <span className="text-texto-suave">—</span>
+                    ) : l.dados.qtdLances === 0 ? (
+                        <span className="text-texto-suave">{t('venda.semLances')}</span>
+                    ) : (
+                        <span className="flex flex-col items-end">
+                            <span className="font-semibold text-texto">{brl(l.dados.maiorLanceCentavos, idioma)}</span>
+                            {l.dados.lanceLider === ator ? (
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-acento">
+                                    <Crown className="size-3.5" aria-hidden /> {t('venda.voceLidera')}
+                                </span>
+                            ) : (
+                                <span className="text-xs text-texto-suave">{t('venda.qtdLances', { count: l.dados.qtdLances })}</span>
+                            )}
+                        </span>
+                    ),
             },
             {
                 id: 'porKg',
@@ -119,6 +181,20 @@ function ConteudoDisputa() {
                     ),
             },
             {
+                id: 'prazo',
+                titulo: t('venda.prazoLeilao'),
+                largura: 'w-36',
+                valor: (l) => prazoLeilao(l.dados),
+                celula: (l) =>
+                    !emLeilao(l.dados) ? (
+                        <span className="text-texto-suave">—</span>
+                    ) : encerrado(l.dados) ? (
+                        <span className="text-texto-suave">{t('venda.leilaoEncerrado')}</span>
+                    ) : (
+                        <span className="text-texto">{dataHora(prazoLeilao(l.dados))}</span>
+                    ),
+            },
+            {
                 id: 'desde',
                 titulo: t('venda.desde'),
                 largura: 'w-32',
@@ -128,12 +204,22 @@ function ConteudoDisputa() {
         ],
         [t, idioma, nomePart, ator, material],
     );
-    const filtro = useMemo(() => (l: Linha) => filtroMaterial === '' || String(l.dados.material) === filtroMaterial, [filtroMaterial]);
+    const filtro = useMemo(
+        () => (l: Linha) =>
+            (filtroMaterial === '' || String(l.dados.material) === filtroMaterial) &&
+            (filtroTipo === '' || (filtroTipo === 'leilao') === emLeilao(l.dados)),
+        [filtroMaterial, filtroTipo],
+    );
     const grade = useGrade(linhas, colunas, { chave: (l) => l.endereco, ordem: { id: 'desde', desc: true }, filtro });
     const sel = grade.selecionada;
 
     return (
         <div className="flex flex-col gap-4">
+            {aviso && !lance && (
+                <p role="status" className="rounded-lg bg-acento-suave p-3 text-sm text-acento">
+                    {aviso}
+                </p>
+            )}
             {comprado && !compra && (
                 <p role="status" className="rounded-lg bg-acento-suave p-3 text-sm text-acento">
                     {comprado}{' '}
@@ -159,19 +245,30 @@ function ConteudoDisputa() {
                                 ...(materiais.data ?? []).map((m) => ({ valor: String(m.dados.codigo), texto: m.dados.nome })),
                             ]}
                         />
+                        <FiltroGrade
+                            rotulo={t('venda.tipo')}
+                            valor={filtroTipo}
+                            onChange={(v) => {
+                                setFiltroTipo(v as typeof filtroTipo);
+                                grade.reiniciar();
+                            }}
+                            opcoes={[
+                                { valor: '', texto: t('venda.todosTipos') },
+                                { valor: 'direta', texto: t('venda.vendaDireta') },
+                                { valor: 'leilao', texto: t('venda.leilao') },
+                            ]}
+                        />
                         {ehIndustria && (
                             <AcoesGrade>
-                                <Botao
-                                    compacto
-                                    disabled={!sel}
-                                    title={sel ? undefined : t('venda.selecioneCompra')}
-                                    onClick={() => {
-                                        setComprado(undefined);
-                                        if (sel) setCompra(sel);
-                                    }}
-                                >
-                                    <ShoppingCart className="size-4" /> {t('venda.comprar')}
-                                </Botao>
+                                {sel && emLeilao(sel.dados) ? (
+                                    <Botao compacto onClick={() => abrir(sel)}>
+                                        <Gavel className="size-4" /> {t('venda.darLance')}
+                                    </Botao>
+                                ) : (
+                                    <Botao compacto disabled={!sel} title={sel ? undefined : t('venda.selecioneCompra')} onClick={() => sel && abrir(sel)}>
+                                        <ShoppingCart className="size-4" /> {t('venda.comprar')}
+                                    </Botao>
+                                )}
                             </AcoesGrade>
                         )}
                     </>
@@ -179,10 +276,10 @@ function ConteudoDisputa() {
             >
                 <Grade
                     grade={grade}
-                    larguraMinima="min-w-[60rem]"
+                    larguraMinima="min-w-[86rem]"
                     vazio={t('venda.vazioDisputa')}
                     carregando={lotes.status === 'fetching' && !lotes.data}
-                    onAbrir={ehIndustria ? (l) => setCompra(l) : undefined}
+                    onAbrir={ehIndustria ? abrir : undefined}
                 />
             </CartaoGrade>
 
@@ -194,6 +291,21 @@ function ConteudoDisputa() {
                     aoConcluir={() => {
                         setComprado(t('venda.comprado', { id: compra.dados.loteId.toString() }));
                         setCompra(null);
+                        lotes.refresh();
+                    }}
+                />
+            )}
+
+            {lance && (
+                <DialogoLance
+                    linha={lance}
+                    descricao={`${material(lance.dados)} | ${gramasParaKg(lance.dados.pesoG, idioma)} kg | ${nomePart(lance.dados.cooperativa)}`}
+                    lider={lance.dados.qtdLances > 0 ? nomePart(lance.dados.lanceLider) : undefined}
+                    podeDar={ehIndustria}
+                    aoFechar={() => setLance(null)}
+                    aoConcluir={(valor) => {
+                        setAviso(t('venda.lanceRegistrado', { id: lance.dados.loteId.toString(), valor: brl(valor, idioma) }));
+                        setLance(null);
                         lotes.refresh();
                     }}
                 />
@@ -299,6 +411,135 @@ function DialogoCompra({
                 </fieldset>
                 <p className="text-sm text-texto-suave">{t('venda.efeitoCompra')}</p>
             </form>
+        </Dialogo>
+    );
+}
+
+/**
+ * Lance no leilão (ADR 0013): a indústria informa o valor (o mínimo ou mais, e acima do maior lance) e
+ * assina. A primeira vez cria a conta do lance; depois, aumenta o mesmo lance.
+ */
+function DialogoLance({
+    linha,
+    descricao,
+    lider,
+    podeDar,
+    aoFechar,
+    aoConcluir,
+}: {
+    linha: Linha;
+    descricao: string;
+    /** Nome da indústria que lidera; ausente sem lances. */
+    lider?: string;
+    podeDar: boolean;
+    aoFechar: () => void;
+    aoConcluir: (valor: bigint) => void;
+}) {
+    const { t } = useTranslation();
+    const { idioma } = usePreferencias();
+    const client = useClient<AppClient>();
+    const { titular, assinante, vinculo } = useAtor();
+    const envio = useEnviar();
+    const l = linha.dados;
+    const prazo = prazoLeilao(l);
+    const encerrado = prazo <= BigInt(Math.floor(Date.now() / 1000));
+    const lidero = l.qtdLances > 0 && l.lanceLider === titular;
+    // Menor lance aceito: o mínimo, ou um real acima do maior lance.
+    const piso = l.qtdLances > 0 ? l.maiorLanceCentavos + 100n : l.precoMinimoCentavos;
+    const [valor, setValor] = useState((Number(piso) / 100).toLocaleString(idioma, { minimumFractionDigits: 2 }));
+    const centavos = reaisParaCentavos(valor);
+    const abaixoMinimo = centavos !== null && centavos < l.precoMinimoCentavos;
+    const naoSupera = centavos !== null && l.qtdLances > 0 && centavos <= l.maiorLanceCentavos;
+    const pronto = podeDar && !encerrado && centavos !== null && !abaixoMinimo && !naoSupera && !!titular;
+    const dataHora = (ts: bigint) => new Date(Number(ts) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' });
+
+    const darLance = async () => {
+        if (!pronto || !titular || centavos === null) return;
+        try {
+            const contaLance = await pLote.lance(linha.endereco, titular);
+            const comum = {
+                industria: titular,
+                industriaAssinante: assinante,
+                industriaCarteira: vinculo,
+                industriaPart: await pLote.participante(titular),
+                lote: linha.endereco,
+                lance: contaLance,
+                eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
+                program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
+                valorCentavos: centavos,
+            };
+            // A conta do lance fica de rodadas anteriores até ser fechada: aí o lance é "aumentado".
+            const existe = (await lote.fetchMaybeLance(client.rpc, contaLance)).exists;
+            await envio.dispatchAsync([
+                existe
+                    ? await lote.getIndustriaAumentarLanceInstructionAsync(comum)
+                    : await lote.getIndustriaDarLanceInstructionAsync({ ...comum, payer: client.payer }),
+            ]);
+            aoConcluir(centavos);
+        } catch {
+            // o erro fica em envio.error
+        }
+    };
+
+    return (
+        <Dialogo
+            titulo={t('venda.lanceTitulo', { id: l.loteId.toString() })}
+            subtitulo={descricao}
+            formId={podeDar && !encerrado ? 'form-lance' : undefined}
+            salvando={envio.isRunning}
+            podeSalvar={pronto}
+            rotuloSalvar={t('venda.assinarLance')}
+            iconeSalvar={Gavel}
+            aoFechar={aoFechar}
+        >
+            <div className="flex flex-col gap-4 text-sm">
+                <Resultado erro={envio.error} sucesso="" />
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                    <dt className="text-texto-suave">{t('venda.lanceMinimo')}</dt>
+                    <dd className="text-texto">{brl(l.precoMinimoCentavos, idioma)}</dd>
+                    <dt className="text-texto-suave">{t('venda.maiorLance')}</dt>
+                    <dd className="font-semibold text-texto">
+                        {l.qtdLances === 0 ? t('venda.semLances') : `${brl(l.maiorLanceCentavos, idioma)} — ${lidero ? t('venda.voce') : lider}`}
+                    </dd>
+                    <dt className="text-texto-suave">{t('venda.prazoLeilao')}</dt>
+                    <dd className="text-texto">{encerrado ? t('venda.leilaoEncerrado') : dataHora(prazo)}</dd>
+                </dl>
+                {encerrado ? (
+                    <p className="rounded-lg bg-superficie-2 p-3 text-texto-suave">
+                        {lidero ? t('venda.lanceVenceu') : l.qtdLances > 0 ? t('venda.lanceEncerrado') : t('venda.lanceEncerradoSemLances')}
+                    </p>
+                ) : !podeDar ? (
+                    <p className="text-texto-suave">{t('venda.lanceSoIndustria')}</p>
+                ) : (
+                    <form
+                        id="form-lance"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            void darLance();
+                        }}
+                        className="flex flex-col gap-3"
+                    >
+                        {lidero && <p className="font-semibold text-acento">{t('venda.voceLideraAjuda')}</p>}
+                        <Campo
+                            rotulo={t('venda.seuLance')}
+                            inputMode="decimal"
+                            required
+                            autoFocus
+                            value={valor}
+                            onChange={(e) => setValor(e.target.value)}
+                            aria-invalid={abaixoMinimo || naoSupera || (valor !== '' && centavos === null)}
+                            ajuda={
+                                abaixoMinimo
+                                    ? t('venda.abaixoDoMinimoLance', { minimo: brl(l.precoMinimoCentavos, idioma) })
+                                    : naoSupera
+                                      ? t('venda.lanceNaoSupera', { maior: brl(l.maiorLanceCentavos, idioma) })
+                                      : t('venda.lanceAjuda')
+                            }
+                        />
+                        <p className="text-texto-suave">{t('venda.lanceDepois')}</p>
+                    </form>
+                )}
+            </div>
         </Dialogo>
     );
 }
