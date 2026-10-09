@@ -1,11 +1,12 @@
 import { address, type Instruction, isAddress } from '@solana/kit';
 import { useClient } from '@solana/react';
-import { Pencil, Plus, Power } from 'lucide-react';
+import { Pencil, Plus, Power, WalletCards } from 'lucide-react';
 import { type FormEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { lerNomeFixo } from '@clientes/nome';
 import { eventAuthority, lote as pLote } from '@clientes/pdas';
+import { GestaoCarteiras } from '../../componentes/Carteiras';
 import { Dialogo } from '../../componentes/dialogo';
 import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, useGrade } from '../../componentes/grade';
 import { TituloPagina } from '../../componentes/pagina';
@@ -20,6 +21,7 @@ import {
     filtroSituacao,
     type FiltroSituacao,
     nomeAceito,
+    rotuloParticipante,
     sha256,
     SoAdministracao,
     useOpcoesSituacao,
@@ -31,12 +33,14 @@ export const PAPEIS = [
     { valor: lote.Papel.Cooperativa, chave: 'papel.cooperativa' },
     { valor: lote.Papel.Transportador, chave: 'papel.transportador' },
     { valor: lote.Papel.Industria, chave: 'papel.industria' },
+    { valor: lote.Papel.Importador, chave: 'papel.importador' },
+    { valor: lote.Papel.CleanTech, chave: 'papel.cleantech' },
 ] as const;
 export const chavePapel = (p: lote.Papel) => PAPEIS.find((x) => x.valor === p)?.chave ?? '';
 
 type Linha = ContaDecodificada<lote.Participante>;
 /** O que está aberto no popup: inclusão ou alteração do nome. */
-type Popup = { tipo: 'novo' } | { tipo: 'editar'; linha: Linha };
+type Popup = { tipo: 'novo' } | { tipo: 'editar'; linha: Linha } | { tipo: 'carteiras'; linha: Linha };
 
 export function Participantes() {
     const { t } = useTranslation();
@@ -157,6 +161,9 @@ function ConteudoParticipantes() {
                             <Botao compacto variante="secundario" disabled={!sel} onClick={() => sel && abrir({ tipo: 'editar', linha: sel })}>
                                 <Pencil className="size-4" /> {t('admin.editar')}
                             </Botao>
+                            <Botao compacto variante="secundario" disabled={!sel} onClick={() => sel && abrir({ tipo: 'carteiras', linha: sel })}>
+                                <WalletCards className="size-4" /> {t('carteiras.titulo')}
+                            </Botao>
                             <Botao
                                 compacto
                                 variante="secundario"
@@ -192,6 +199,7 @@ function ConteudoParticipantes() {
                                 payer: client.payer,
                                 operador: client.payer,
                                 participante: await pLote.participante(carteira),
+                                vinculo: await pLote.carteira(carteira),
                                 eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
                                 program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
                                 carteira,
@@ -204,6 +212,22 @@ function ConteudoParticipantes() {
                         if (ok) setPopup(null);
                     }}
                 />
+            )}
+            {popup?.tipo === 'carteiras' && (
+                <Dialogo
+                    titulo={t('carteiras.titulo')}
+                    subtitulo={`${rotuloParticipante(popup.linha.dados)} | ${t(chavePapel(popup.linha.dados.papel))}`}
+                    aoFechar={() => {
+                        setPopup(null);
+                        lista.refresh();
+                    }}
+                    largura="lg"
+                >
+                    <div className="flex flex-col gap-3">
+                        <p className="text-sm text-texto-suave">{t('carteiras.explicacao')}</p>
+                        <GestaoCarteiras participante={popup.linha.dados} podeEditar />
+                    </div>
+                </Dialogo>
             )}
             {popup?.tipo === 'editar' && (
                 <DialogoNome

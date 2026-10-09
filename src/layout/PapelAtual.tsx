@@ -8,10 +8,12 @@ import {
     type LucideIcon,
     Recycle,
     ShieldCheck,
+    Sparkles,
     Ticket,
     Truck,
     UserRound,
     Warehouse,
+    Wine,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +27,8 @@ const VISUAL: Record<PapelUsuario, { icone: LucideIcon; cor: string }> = {
     cooperativa: { icone: Warehouse, cor: 'var(--papel-cooperativa)' },
     transportador: { icone: Truck, cor: 'var(--papel-transportador)' },
     industria: { icone: Factory, cor: 'var(--papel-industria)' },
+    importador: { icone: Wine, cor: 'var(--papel-importador)' },
+    cleantech: { icone: Sparkles, cor: 'var(--papel-cleantech)' },
     operador: { icone: ShieldCheck, cor: 'var(--papel-operador)' },
     intermediador: { icone: Landmark, cor: 'var(--papel-outros)' },
     registrador: { icone: FileCheck2, cor: 'var(--papel-outros)' },
@@ -49,6 +53,8 @@ export function usePapelAtual() {
         papel: principal,
         outros: papeis.slice(1),
         nome: cadastro.nome,
+        /** Nome da carteira conectada (ex.: "Loja Centro"), quando ela tem cadastro de carteira. */
+        nomeCarteira: cadastro.nomeCarteira,
         inativo: cadastro.inativo,
         cor: principal ? VISUAL[principal].cor : 'var(--papel-nenhum)',
     };
@@ -63,7 +69,9 @@ export function PapelAtual({ atual }: { atual: ReturnType<typeof usePapelAtual> 
     const Icone = atual.papel ? VISUAL[atual.papel].icone : UserRound;
     const rotulo = atual.papel ? t(`papel.${atual.papel}`) : t('papel.semCadastro');
     const todos = [atual.papel, ...atual.outros].filter(Boolean).map((p) => t(`papel.${p}`));
-    const titulo = [t('papelAtual.operandoComo', { papel: todos.join(', ') || rotulo }), atual.nome].filter(Boolean).join(' — ');
+    const titulo = [t('papelAtual.operandoComo', { papel: todos.join(', ') || rotulo }), atual.nome, atual.nomeCarteira]
+        .filter(Boolean)
+        .join(' — ');
 
     return (
         <div
@@ -82,6 +90,7 @@ export function PapelAtual({ atual }: { atual: ReturnType<typeof usePapelAtual> 
                     <span className="truncate text-sm font-bold sm:text-base">{rotulo}</span>
                     {atual.outros.length > 0 && <span className="text-xs font-semibold opacity-85">+{atual.outros.length}</span>}
                     {atual.nome && <span className="hidden truncate border-l border-[var(--papel-texto)]/35 pl-1.5 text-sm font-medium opacity-90 md:inline">{atual.nome}</span>}
+                    {atual.nomeCarteira && <span className="hidden truncate text-xs font-medium opacity-80 lg:inline">· {atual.nomeCarteira}</span>}
                     {atual.inativo && <span className="text-xs font-semibold opacity-85">({t('papel.inativo')})</span>}
                 </span>
             </span>

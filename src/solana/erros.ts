@@ -33,7 +33,6 @@ export function chaveDoErro(erro: unknown): string {
     if (tudo.includes('carteiraAlterou')) return 'erros.carteiraAlterou';
     if (tudo.includes('carteiraSemAssinatura')) return 'erros.carteiraSemAssinatura';
     if (tudo.includes('carteiraOutroPapel')) return 'erros.carteiraOutroPapel';
-    if (tudo.includes('semNonce')) return 'erros.semNonce';
     if (/blockhash not found|block height exceeded/i.test(tudo)) return 'erros.codigoExpirado';
     if (/already in use/i.test(tudo)) return 'erros.jaExiste';
     if (/reject|denied|cancel/i.test(tudo)) return 'erros.recusado';

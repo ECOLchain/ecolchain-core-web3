@@ -1,10 +1,11 @@
 import { address } from '@solana/kit';
 import { useClient } from '@solana/react';
-import { Ban, CircleCheck, Gavel, HandCoins, LoaderCircle, PenLine } from 'lucide-react';
+import { Ban, CircleCheck, Gavel, HandCoins, LoaderCircle, PenLine, RefreshCw, Scale } from 'lucide-react';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizarReferencia } from '@clientes/coletor';
 import * as lote from '@clientes/generated/ecol_lote';
+import { lerNomeFixo } from '@clientes/nome';
 import { eventAuthority } from '@clientes/pdas';
 import { LerCodigo, MostrarCodigo } from '../componentes/CodigoAssinatura';
 import { Dialogo } from '../componentes/dialogo';
@@ -15,10 +16,21 @@ import { usePreferencias } from '../preferencias/Preferencias';
 import type { AppClient } from '../solana/cliente';
 import type { ContaDecodificada } from '../solana/contas';
 import { useCadastro } from '../solana/useCadastro';
-import { brl, gramasParaKg, reaisParaCentavos, useLotesDaIndustria, useMateriais, useParticipantes, useTodosLotes } from '../solana/useDados';
+import {
+    brl,
+    gramasParaKg,
+    reaisParaCentavos,
+    useCarteiras,
+    useLotesDaIndustria,
+    useMateriais,
+    useParticipantes,
+    useTodosLotes,
+} from '../solana/useDados';
 import { useEnviar } from '../solana/useEnviar';
-import { assinarVenda, CodigoVendaInvalido, type Conferida, conferir, faltam, iniciarVenda, type PapelVenda } from '../solana/venda';
-import { rotuloParticipante, SoPapel } from './admin/comum';
+import { assinarVenda, CodigoVendaInvalido, type Conferida, codigoVencido, conferir, type DadosVenda, faltam, iniciarVenda, type PapelVenda } from '../solana/venda';
+import { abreviar, rotuloParticipante, SoPapel } from './admin/comum';
+import { DialogoAssinarDecisao } from './contestacoes/Contestacoes';
+import { rotuloEstado, rotuloModo } from './venda/comum';
 
 const SEM_CONTA = '11111111111111111111111111111111';
 /** Enquanto o código está na tela, confere a cada 2 s se a venda já chegou à blockchain. */
@@ -46,7 +58,7 @@ function useRotulos() {
             kg: (g: bigint) => gramasParaKg(g, idioma),
             reais: (c: bigint) => brl(c, idioma),
             data: (ts: bigint) => new Date(Number(ts) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' }),
-            situacao: (l: lote.Lote) => t(`estadoLote.${l.estado.__kind}`),
+            situacao: (l: lote.Lote) => rotuloEstado(t, l),
         };
     }, [participantes.data, materiais.data, idioma, t]);
 }
@@ -118,6 +130,24 @@ function ConteudoLeiloes() {
                 valor: (l) => (l.dados.estado.__kind === 'Anunciado' ? l.dados.estado.prazoLeilao : 0n),
                 celula: (l) => <span className="text-texto-suave">{l.dados.estado.__kind === 'Anunciado' ? r.data(l.dados.estado.prazoLeilao) : '—'}</span>,
             },
+            {
+                id: 'lances',
+                titulo: t('venda.maiorLance'),
+                largura: 'w-44',
+                numerica: true,
+                valor: (l) => l.dados.maiorLanceCentavos,
+                celula: (l) =>
+                    l.dados.qtdLances === 0 ? (
+                        <span className="text-texto-suave">—</span>
+                    ) : (
+                        <span className="flex flex-col items-end">
+                            <span className="font-semibold text-texto">{r.reais(l.dados.maiorLanceCentavos)}</span>
+                            <span className="text-xs text-texto-suave">
+                                {r.nome(l.dados.lanceLider)} · {t('venda.qtdLances', { count: l.dados.qtdLances })}
+                            </span>
+                        </span>
+                    ),
+            },
             { id: 'industria', titulo: t('trilha.industria'), valor: (l) => r.nome(l.dados.industria), busca: (l) => l.dados.industria },
             { id: 'valor', titulo: t('vendas.valor'), valor: (l) => l.dados.valorCentavos, celula: (l) => (l.dados.valorCentavos > 0n ? r.reais(l.dados.valorCentavos) : '—'), numerica: true, largura: 'w-32' },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-36', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
@@ -134,6 +164,9 @@ function ConteudoLeiloes() {
     const sel = grade.selecionada;
     const anunciado = sel?.dados.estado.__kind === 'Anunciado' ? sel.dados.estado : null;
     const prazoVencido = !!anunciado && agora >= anunciado.prazoLeilao;
+    // Leilão com lances on-chain (ADR 0013): a venda espera o prazo e não se encerra "sem lance".
+    const comLances = !!sel && sel.dados.qtdLances > 0;
+    const aguardandoPrazo = comLances && !prazoVencido;
 
     const encerrar = async () => {
         if (!sel) return;
@@ -176,15 +209,15 @@ function ConteudoLeiloes() {
                             ]}
                         />
                         <AcoesGrade>
-                            {prazoVencido && (
+                            {prazoVencido && !comLances && (
                                 <Botao compacto variante="secundario" carregando={envio.isRunning} onClick={() => void encerrar()}>
                                     <Ban className="size-4" /> {t('vendas.encerrarSemLance')}
                                 </Botao>
                             )}
                             <Botao
                                 compacto
-                                disabled={!anunciado}
-                                title={anunciado ? undefined : t('vendas.selecione')}
+                                disabled={!anunciado || aguardandoPrazo}
+                                title={!anunciado ? t('vendas.selecione') : aguardandoPrazo ? t('vendas.aguardaPrazoLances') : undefined}
                                 onClick={() => {
                                     setConcluida(null);
                                     if (sel) setPopup(sel);
@@ -201,7 +234,11 @@ function ConteudoLeiloes() {
                     larguraMinima="min-w-[72rem]"
                     vazio={t('vendas.vazioLeiloes')}
                     carregando={lotes.status === 'fetching' && !lotes.data}
-                    onAbrir={(l) => l.dados.estado.__kind === 'Anunciado' && setPopup(l)}
+                    onAbrir={(l) =>
+                        l.dados.estado.__kind === 'Anunciado' &&
+                        !(l.dados.qtdLances > 0 && agora < l.dados.estado.prazoLeilao) &&
+                        setPopup(l)
+                    }
                 />
             </CartaoGrade>
 
@@ -247,6 +284,29 @@ function useAguardarVenda(lote_: Linha | null, ativo: boolean, aoVender: (l: lot
     }, [client, lote_, ativo]);
 }
 
+/** Com o código na tela: o blockhash dele ainda vale? (cerca de um minuto) */
+function useCodigoVencido(dados: DadosVenda | null) {
+    const client = useClient<AppClient>();
+    const [vencido, setVencido] = useState(false);
+    useEffect(() => {
+        setVencido(false);
+        if (!dados) return;
+        let vivo = true;
+        const id = setInterval(async () => {
+            try {
+                if (vivo && (await codigoVencido(client, dados))) setVencido(true);
+            } catch {
+                // RPC oscilando: tenta de novo no próximo intervalo
+            }
+        }, INTERVALO_MS);
+        return () => {
+            vivo = false;
+            clearInterval(id);
+        };
+    }, [client, dados]);
+    return vencido;
+}
+
 function DialogoRegistrarVenda({
     linha,
     rotulos: r,
@@ -259,14 +319,25 @@ function DialogoRegistrarVenda({
     aoConcluir: (mensagem: string) => void;
 }) {
     const { t } = useTranslation();
+    const { idioma } = usePreferencias();
     const client = useClient<AppClient>();
-    const [industria, setIndustria] = useState('');
-    const [valor, setValor] = useState('');
+    // Com lances on-chain, a vencedora e o valor vêm do maior lance (o programa não aceita outros).
+    const vencedor = linha.dados.qtdLances > 0;
+    const [industria, setIndustria] = useState(vencedor ? (linha.dados.lanceLider as string) : '');
+    /** Carteira que vai assinar pela indústria (vazio = a titular). */
+    const [assinanteInd, setAssinanteInd] = useState('');
+    const carteirasInd = useCarteiras(industria ? address(industria) : undefined);
+    const vinculadas = (carteirasInd.data ?? []).filter((c) => c.dados.ativa && c.dados.endereco !== industria);
+    const [valor, setValor] = useState(
+        vencedor ? (Number(linha.dados.maiorLanceCentavos) / 100).toLocaleString(idioma, { minimumFractionDigits: 2 }) : '',
+    );
     const [deposito, setDeposito] = useState('');
     const [ata, setAta] = useState('');
     const [codigo, setCodigo] = useState<string | null>(null);
+    const [dados, setDados] = useState<DadosVenda | null>(null);
     const [assinando, setAssinando] = useState(false);
     const [erro, setErro] = useState<unknown>(null);
+    const expirado = useCodigoVencido(dados);
 
     const industrias = useMemo(
         () =>
@@ -283,25 +354,31 @@ function DialogoRegistrarVenda({
         aoConcluir(t('vendas.concluida', { lote: linha.dados.loteId, nome: r.nome(l.industria), valor: r.reais(l.valorCentavos) })),
     );
 
-    const enviar = async (e: FormEvent) => {
-        e.preventDefault();
+    const gerar = async () => {
         if (!pronto || centavos === null) return;
         setErro(null);
         setAssinando(true);
         try {
-            const { codigo: c } = await iniciarVenda(client, {
+            const { codigo: c, dados: d } = await iniciarVenda(client, {
                 lote: linha.endereco,
                 industria: address(industria),
+                industriaAssinante: address(assinanteInd || industria),
                 valorCentavos: centavos,
                 deposito: deposito.trim(),
                 ata: ata.trim(),
             });
             setCodigo(c);
+            setDados(d);
         } catch (e) {
             setErro(e);
         } finally {
             setAssinando(false);
         }
+    };
+
+    const enviar = (e: FormEvent) => {
+        e.preventDefault();
+        void gerar();
     };
 
     return (
@@ -321,10 +398,20 @@ function DialogoRegistrarVenda({
                     <p className="text-sm text-texto-suave">
                         {t('vendas.passo1', { cooperativa: r.nome(linha.dados.cooperativa), minimo: r.reais(linha.dados.precoMinimoCentavos) })}
                     </p>
+                    {vencedor && <p className="rounded-lg bg-acento-suave p-3 text-sm text-acento">{t('vendas.vencedorLances', { count: linha.dados.qtdLances })}</p>}
                     {industrias.length === 0 ? (
                         <p className="text-sm text-kraft">{t('vendas.semIndustrias')}</p>
                     ) : (
-                        <Selecao rotulo={t('vendas.vencedora')} required value={industria} onChange={(e) => setIndustria(e.target.value)}>
+                        <Selecao
+                            rotulo={t('vendas.vencedora')}
+                            required
+                            disabled={vencedor}
+                            value={industria}
+                            onChange={(e) => {
+                                setIndustria(e.target.value);
+                                setAssinanteInd('');
+                            }}
+                        >
                             <option value="" disabled>
                                 {t('vendas.escolherIndustria')}
                             </option>
@@ -335,10 +422,25 @@ function DialogoRegistrarVenda({
                             ))}
                         </Selecao>
                     )}
+                    {vinculadas.length > 0 && (
+                        <Selecao
+                            rotulo={t('vendas.carteiraIndustria')}
+                            value={assinanteInd}
+                            onChange={(e) => setAssinanteInd(e.target.value)}
+                        >
+                            <option value="">{t('carteiras.titular')}</option>
+                            {vinculadas.map((c) => (
+                                <option key={c.endereco} value={c.dados.endereco}>
+                                    {`${lerNomeFixo(c.dados.nome)} — ${abreviar(c.dados.endereco)}`}
+                                </option>
+                            ))}
+                        </Selecao>
+                    )}
                     <Campo
                         rotulo={t('vendas.valorLance')}
                         inputMode="decimal"
                         required
+                        readOnly={vencedor}
                         placeholder="0,00"
                         value={valor}
                         onChange={(e) => setValor(e.target.value)}
@@ -363,12 +465,22 @@ function DialogoRegistrarVenda({
                 </form>
             ) : (
                 <div className="flex flex-col items-center gap-4 text-center">
+                    <Resultado erro={erro} sucesso="" />
                     <p className="text-sm text-texto">{t('vendas.passo2')}</p>
-                    <MostrarCodigo codigo={codigo} titulo={t('vendas.qrTitulo')} />
-                    <p className="flex items-center gap-2 text-sm text-texto-suave">
-                        <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-                        {t('vendas.aguardando')}
-                    </p>
+                    <MostrarCodigo codigo={codigo} titulo={t('vendas.qrTitulo')} apagado={expirado} />
+                    {expirado ? (
+                        <div className="flex flex-col items-center gap-2">
+                            <p className="text-sm text-kraft">{t('vendas.expirado')}</p>
+                            <Botao compacto carregando={assinando} onClick={() => void gerar()}>
+                                <RefreshCw className="size-4" /> {t('retiradas.gerarNovo')}
+                            </Botao>
+                        </div>
+                    ) : (
+                        <p className="flex items-center gap-2 text-sm text-texto-suave">
+                            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                            {t('vendas.aguardando')}
+                        </p>
+                    )}
                 </div>
             )}
         </Dialogo>
@@ -397,6 +509,7 @@ function DialogoAssinarVenda({
     const [enviando, setEnviando] = useState(false);
     const [erro, setErro] = useState<unknown>(null);
     const [proximo, setProximo] = useState<string | null>(null);
+    const proximoVencido = useCodigoVencido(proximo ? (conferida?.dados ?? null) : null);
 
     const ler = async (texto: string) => {
         setAviso(null);
@@ -435,7 +548,8 @@ function DialogoAssinarVenda({
             <Dialogo titulo={titulo} aoFechar={() => aoConcluir({ codigo: proximo })}>
                 <div className="flex flex-col items-center gap-4 text-center">
                     <p className="text-sm text-texto">{t('vendas.assinadoProximo', { quem: quem.map((p) => t(`vendas.papel.${p}`)).join(', ') })}</p>
-                    <MostrarCodigo codigo={proximo} titulo={t('vendas.qrTitulo')} />
+                    <MostrarCodigo codigo={proximo} titulo={t('vendas.qrTitulo')} apagado={proximoVencido} />
+                    {proximoVencido && <p className="text-sm text-kraft">{t('vendas.codigo.vencido')}</p>}
                 </div>
             </Dialogo>
         );
@@ -533,6 +647,16 @@ function TelaAssinatura({
                 ? [{ id: 'industria', titulo: t('trilha.industria'), valor: (l: Linha) => r.nome(l.dados.industria), busca: (l: Linha) => l.dados.industria }]
                 : []),
             { id: 'valor', titulo: t('vendas.valor'), valor: (l) => l.dados.valorCentavos, celula: (l) => r.reais(l.dados.valorCentavos), numerica: true, largura: 'w-32' },
+            // Compra direta (ADR 0012): quem retira; nas vendas por leilão, "Leilão".
+            {
+                id: 'retirada',
+                titulo: t('venda.retirada'),
+                largura: 'w-36',
+                valor: (l: Linha) => (l.dados.vendaDireta ? rotuloModo(t, l.dados.modoRetirada) : t('venda.leilao')),
+                celula: (l: Linha) => (
+                    <span className="text-texto-suave">{l.dados.vendaDireta ? rotuloModo(t, l.dados.modoRetirada) : t('venda.leilao')}</span>
+                ),
+            },
             { id: 'prazo', titulo: t('retiradas.prazo'), largura: 'w-36', valor: (l) => l.dados.prazoEntrega, celula: (l) => <span className="text-texto-suave">{r.data(l.dados.prazoEntrega)}</span> },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-36', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
         ],
@@ -563,7 +687,7 @@ function TelaAssinatura({
                     </>
                 }
             >
-                <Grade grade={grade} larguraMinima={papel === 'industria' ? 'min-w-[52rem]' : 'min-w-[62rem]'} vazio={vazio} carregando={carregando} />
+                <Grade grade={grade} larguraMinima={papel === 'industria' ? 'min-w-[60rem]' : 'min-w-[70rem]'} vazio={vazio} carregando={carregando} />
             </CartaoGrade>
             {popup && (
                 <DialogoAssinarVenda
@@ -596,7 +720,7 @@ export function EscrowLotes() {
 }
 
 /** Situações do escrow: retido até o recebimento, aguardando liberação, liberado ou devolvido. */
-type FiltroEscrow = 'aguardando' | 'retido' | 'liberados' | 'todos';
+type FiltroEscrow = 'aguardando' | 'retido' | 'liberados' | 'emDisputa' | 'todos';
 const RETIDO = ['Vendido', 'EmTransporte', 'Recebido', 'EmDisputa'];
 const LIBERADO = ['Reciclado', 'Agregado'];
 const DOMINIO_LIBERACAO = 'ECOLCHAIN:LIBERACAO:v1';
@@ -608,9 +732,11 @@ function ConteudoEscrow() {
     const r = useRotulos();
     const envio = useEnviar();
     const [filtro, setFiltro] = useState<FiltroEscrow>('aguardando');
-    const [popup, setPopup] = useState<{ tipo: 'venda' } | { tipo: 'liberar'; linha: Linha } | null>(null);
+    const [popup, setPopup] = useState<{ tipo: 'venda' } | { tipo: 'decisao' } | { tipo: 'liberar'; linha: Linha } | null>(null);
     const [resultadoVenda, setResultadoVenda] = useState<{ enviada: string } | { codigo: string } | null>(null);
     const [sucesso, setSucesso] = useState('');
+    /** Assinatura da decisão do árbitro enviada pelo diálogo (fora do `envio` desta tela). */
+    const [assinaturaDecisao, setAssinaturaDecisao] = useState<string>();
 
     const linhas = useMemo(() => (lotes.data ?? []).filter((l) => l.dados.industria !== SEM_CONTA), [lotes.data]);
     const colunas = useMemo<Coluna<Linha>[]>(
@@ -654,6 +780,7 @@ function ConteudoEscrow() {
             if (filtro === 'aguardando') return k === 'Recebido';
             if (filtro === 'retido') return RETIDO.includes(k);
             if (filtro === 'liberados') return LIBERADO.includes(k);
+            if (filtro === 'emDisputa') return k === 'EmDisputa';
             return true;
         },
         [filtro],
@@ -663,6 +790,7 @@ function ConteudoEscrow() {
     const podeLiberar = sel?.dados.estado.__kind === 'Recebido';
 
     const liberar = async (linha: Linha, referencia: string) => {
+        setAssinaturaDecisao(undefined);
         const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(DOMINIO_LIBERACAO + normalizarReferencia(referencia))));
         try {
             await envio.dispatchAsync([
@@ -685,7 +813,7 @@ function ConteudoEscrow() {
     return (
         <div className="flex flex-col gap-4">
             {!popup && resultadoVenda && 'enviada' in resultadoVenda && <Resultado assinatura={resultadoVenda.enviada} sucesso={t('vendas.enviada')} />}
-            {!popup && !resultadoVenda && <Resultado assinatura={envio.data} erro={envio.error} sucesso={sucesso} />}
+            {!popup && !resultadoVenda && <Resultado assinatura={assinaturaDecisao ?? envio.data} erro={envio.error} sucesso={sucesso} />}
             <CartaoGrade
                 barra={
                     <>
@@ -701,6 +829,7 @@ function ConteudoEscrow() {
                                 { valor: 'aguardando', texto: t('escrow.situacao.aguardando') },
                                 { valor: 'retido', texto: t('escrow.filtroRetido') },
                                 { valor: 'liberados', texto: t('escrow.filtroLiberados') },
+                                { valor: 'emDisputa', texto: t('escrow.situacao.emDisputa') },
                                 { valor: 'todos', texto: t('grade.todasSituacoes') },
                             ]}
                         />
@@ -714,6 +843,19 @@ function ConteudoEscrow() {
                                 }}
                             >
                                 <PenLine className="size-4" /> {t('vendas.assinarDeposito')}
+                            </Botao>
+                            <Botao
+                                compacto
+                                variante="secundario"
+                                onClick={() => {
+                                    setResultadoVenda(null);
+                                    setSucesso('');
+                                    setAssinaturaDecisao(undefined);
+                                    envio.reset();
+                                    setPopup({ tipo: 'decisao' });
+                                }}
+                            >
+                                <Scale className="size-4" /> {t('arbitragem.assinarDecisao')}
                             </Botao>
                             <Botao
                                 compacto
@@ -747,6 +889,17 @@ function ConteudoEscrow() {
                     aoFechar={() => setPopup(null)}
                     aoConcluir={(res) => {
                         setResultadoVenda(res);
+                        setPopup(null);
+                        lotes.refresh();
+                    }}
+                />
+            )}
+            {popup?.tipo === 'decisao' && (
+                <DialogoAssinarDecisao
+                    aoFechar={() => setPopup(null)}
+                    aoConcluir={(assinatura) => {
+                        setAssinaturaDecisao(assinatura);
+                        setSucesso(t('arbitragem.decisaoEnviada'));
                         setPopup(null);
                         lotes.refresh();
                     }}
@@ -863,8 +1016,8 @@ export function Compras() {
 
 function ConteudoCompras() {
     const { t } = useTranslation();
-    const { carteira } = useCadastro();
-    const lotes = useLotesDaIndustria(carteira ? address(carteira) : undefined);
+    const { ator } = useCadastro();
+    const lotes = useLotesDaIndustria(ator);
     return (
         <TelaAssinatura
             papel="industria"
