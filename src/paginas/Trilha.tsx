@@ -318,6 +318,7 @@ function CartaoTrilha({ trilha }: { trilha: Trilha }) {
                         {venda.lote.dados.transportador !== SEM_CONTA && (
                             <Dado rotulo={t('trilha.transportador')}>{nome(venda.lote.dados.transportador)}</Dado>
                         )}
+                        {venda.lote.dados.mtr > 0 && <Dado rotulo={t('retiradas.mtr')}>{venda.lote.dados.mtr}</Dado>}
                         <p className="text-sm text-texto-suave">{t('trilha.desde', { data: data(venda.lote.dados.atualizadoEm) })}</p>
                         {link(venda.lote.endereco)}
                         {venda.origens.length > 0 && (

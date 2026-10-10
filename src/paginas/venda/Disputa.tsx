@@ -1,5 +1,5 @@
 import { useClient } from '@solana/react';
-import { Crown, Gavel, ShoppingCart } from 'lucide-react';
+import { Crown, Gavel, ListOrdered, ShoppingCart } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -21,6 +21,7 @@ import {
     reaisParaCentavos,
     useMateriais,
     useParticipantes,
+    useLancesDoLote,
     useTodosLotes,
     useVariacoes,
 } from '../../solana/useDados';
@@ -34,7 +35,7 @@ type Linha = ContaDecodificada<lote.Lote>;
  * Disputa (ADR 0012 e 0013): os lotes à venda de todas as cooperativas e Clean Techs, por preço fixo
  * ou em leilão. Na venda direta a indústria compra (quem paga primeiro leva); no leilão ela dá lances
  * na blockchain até o prazo, e a Administração registra a venda ao maior lance (três assinaturas). A
- * cooperativa acompanha a concorrência e os próprios lotes. Depois da venda o lote sai daqui e vai
+ * cooperativa acompanha a concorrência e os próprios lotes, e vê os lances dados nos seus leilões. Depois da venda o lote sai daqui e vai
  * para Compras (indústria) e Vendas (cooperativa).
  */
 export function Disputa() {
@@ -55,6 +56,7 @@ function ConteudoDisputa() {
     const { cadastro, ator } = useCadastro();
     const [aviso, setAviso] = useState<string>();
     const ehIndustria = !!cadastro?.papeis.includes('industria');
+    const ehVendedor = !!cadastro?.papeis.some((p) => p === 'cooperativa' || p === 'cleantech');
     const lotes = useTodosLotes();
     const materiais = useMateriais();
     const variacoes = useVariacoes();
@@ -64,6 +66,7 @@ function ConteudoDisputa() {
     const [compra, setCompra] = useState<Linha | null>(null);
     const [lance, setLance] = useState<Linha | null>(null);
     const [comprado, setComprado] = useState<string>();
+    const [verLances, setVerLances] = useState<Linha | null>(null);
 
     const nomeMaterial = useMemo(() => new Map((materiais.data ?? []).map((m) => [m.dados.codigo, m.dados.nome])), [materiais.data]);
     const nomePart = useMemo(() => {
@@ -86,6 +89,8 @@ function ConteudoDisputa() {
         if (emLeilao(l.dados)) setLance(l);
         else setCompra(l);
     };
+    // A cooperativa (ou Clean Tech) vê os lances dos próprios leilões.
+    const meuLeilao = (l: Linha) => ehVendedor && l.dados.cooperativa === ator && emLeilao(l.dados);
 
     const colunas = useMemo<Coluna<Linha>[]>(
         () => [
@@ -258,6 +263,18 @@ function ConteudoDisputa() {
                                 { valor: 'leilao', texto: t('venda.leilao') },
                             ]}
                         />
+                        {ehVendedor && !ehIndustria && (
+                            <AcoesGrade>
+                                <Botao
+                                    compacto
+                                    disabled={!sel || !meuLeilao(sel)}
+                                    title={sel && meuLeilao(sel) ? undefined : t('venda.selecioneLeilaoProprio')}
+                                    onClick={() => sel && setVerLances(sel)}
+                                >
+                                    <ListOrdered className="size-4" /> {t('venda.verLances')}
+                                </Botao>
+                            </AcoesGrade>
+                        )}
                         {ehIndustria && (
                             <AcoesGrade>
                                 {sel && emLeilao(sel.dados) ? (
@@ -279,7 +296,7 @@ function ConteudoDisputa() {
                     larguraMinima="min-w-[86rem]"
                     vazio={t('venda.vazioDisputa')}
                     carregando={lotes.status === 'fetching' && !lotes.data}
-                    onAbrir={ehIndustria ? abrir : undefined}
+                    onAbrir={ehIndustria ? abrir : ehVendedor ? (l) => meuLeilao(l) && setVerLances(l) : undefined}
                 />
             </CartaoGrade>
 
@@ -293,6 +310,15 @@ function ConteudoDisputa() {
                         setCompra(null);
                         lotes.refresh();
                     }}
+                />
+            )}
+
+            {verLances && (
+                <DialogoLances
+                    linha={verLances}
+                    descricao={`${material(verLances.dados)} | ${gramasParaKg(verLances.dados.pesoG, idioma)} kg`}
+                    nomePart={nomePart}
+                    aoFechar={() => setVerLances(null)}
                 />
             )}
 
@@ -411,6 +437,86 @@ function DialogoCompra({
                 </fieldset>
                 <p className="text-sm text-texto-suave">{t('venda.efeitoCompra')}</p>
             </form>
+        </Dialogo>
+    );
+}
+
+/**
+ * Lances de um leilão da cooperativa (ADR 0013): uma conta `Lance` por indústria na rodada atual, do maior
+ * para o menor. Só leitura: a venda ao líder é registrada pela Administração depois do prazo.
+ */
+function DialogoLances({
+    linha,
+    descricao,
+    nomePart,
+    aoFechar,
+}: {
+    linha: Linha;
+    descricao: string;
+    nomePart: (carteira: string) => string;
+    aoFechar: () => void;
+}) {
+    const { t } = useTranslation();
+    const { idioma } = usePreferencias();
+    const l = linha.dados;
+    const prazo = prazoLeilao(l);
+    const lances = useLancesDoLote(linha.endereco, prazo);
+    const encerrado = prazo <= BigInt(Math.floor(Date.now() / 1000));
+    const dataHora = (ts: bigint) => new Date(Number(ts) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' });
+    const lista = lances.data ?? [];
+
+    return (
+        <Dialogo titulo={t('venda.lancesTitulo', { id: l.loteId.toString() })} subtitulo={descricao} largura="lg" aoFechar={aoFechar}>
+            <div className="flex flex-col gap-4 text-sm">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                    <dt className="text-texto-suave">{t('venda.lanceMinimo')}</dt>
+                    <dd className="text-texto">{brl(l.precoMinimoCentavos, idioma)}</dd>
+                    <dt className="text-texto-suave">{t('venda.prazoLeilao')}</dt>
+                    <dd className="text-texto">{encerrado ? t('venda.leilaoEncerrado') : dataHora(prazo)}</dd>
+                </dl>
+                <p className="text-texto-suave">{t('venda.lancesAjuda')}</p>
+                <Resultado erro={lances.error} sucesso="" />
+                {!lances.data && !lances.error ? (
+                    <p className="text-texto-suave">{t('venda.lancesCarregando')}</p>
+                ) : lista.length === 0 ? (
+                    <p className="rounded-lg bg-superficie-2 p-3 text-texto-suave">{t('venda.lancesVazio')}</p>
+                ) : (
+                    <div className="overflow-x-auto rounded-lg border border-linha">
+                        <table className="w-full min-w-[32rem] text-left">
+                            <thead className="bg-superficie-2 text-xs uppercase tracking-wide text-texto-suave">
+                                <tr>
+                                    <th className="px-3 py-2 text-right">{t('venda.posicao')}</th>
+                                    <th className="px-3 py-2">{t('venda.industria')}</th>
+                                    <th className="px-3 py-2 text-right">{t('venda.valorLance')}</th>
+                                    <th className="px-3 py-2">{t('venda.ultimoLance')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {lista.map((c, i) => {
+                                    const lider = c.dados.industria === l.lanceLider;
+                                    return (
+                                        <tr key={c.endereco} className="border-t border-linha">
+                                            <td className="px-3 py-2 text-right tabular-nums text-texto-suave">{i + 1}º</td>
+                                            <td className="px-3 py-2 text-texto">
+                                                <span className="flex flex-wrap items-center gap-2">
+                                                    {nomePart(c.dados.industria)}
+                                                    {lider && (
+                                                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-acento">
+                                                            <Crown className="size-3.5" aria-hidden /> {t('venda.lider')}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right font-semibold tabular-nums text-texto">{brl(c.dados.valorCentavos, idioma)}</td>
+                                            <td className="px-3 py-2 text-texto-suave">{dataHora(c.dados.atualizadoEm)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </Dialogo>
     );
 }

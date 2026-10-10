@@ -657,6 +657,16 @@ function TelaAssinatura({
                     <span className="text-texto-suave">{l.dados.vendaDireta ? rotuloModo(t, l.dados.modoRetirada) : t('venda.leilao')}</span>
                 ),
             },
+            // Número do MTR informado por quem retirou; traço antes da retirada.
+            {
+                id: 'mtr',
+                titulo: t('retiradas.mtr'),
+                largura: 'w-28',
+                numerica: true,
+                valor: (l: Linha) => l.dados.mtr,
+                busca: (l: Linha) => (l.dados.mtr ? String(l.dados.mtr) : ''),
+                celula: (l: Linha) => (l.dados.mtr ? <span className="tabular-nums">{l.dados.mtr}</span> : <span className="text-texto-suave">—</span>),
+            },
             { id: 'prazo', titulo: t('retiradas.prazo'), largura: 'w-36', valor: (l) => l.dados.prazoEntrega, celula: (l) => <span className="text-texto-suave">{r.data(l.dados.prazoEntrega)}</span> },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-36', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
         ],

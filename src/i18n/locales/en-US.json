@@ -445,7 +445,7 @@
     "soParticipante": "This screen is for wallets registered as collector or carrier.",
     "qrTitulo": "Wallet QR code",
     "ajudaColetor": "Show this code to the cooperative when you deliver or sell material. They scan it and the source lot is registered in your name. The code carries only the wallet address, no personal data.",
-    "ajudaTransportador": "Show this code to the cooperative when you pick up the lot. They scan it and check that the lot leaves with the registered carrier. The code carries only the wallet address, no personal data."
+    "ajudaTransportador": "This code identifies your wallet. To pick up a lot, use \"Pickups › Pickup code\", which also carries the MTR number."
   },
   "retiradas": {
     "soParticipante": "This screen is for wallets registered as cooperative, Clean Tech, carrier or industry.",
@@ -457,10 +457,8 @@
     "vazioCooperativa": "No sold lot waiting for pickup.",
     "vazioTransportador": "No lot picked up with your wallet yet. Tap \"Sign pickup\" at the cooperative.",
     "resumo": "Lot #{{lote}} · {{material}} · {{kg}} kg",
-    "passo1": "Identify the carrier who will take the lot to {{industria}}: scan the QR code on their \"My wallet\" screen or pick from the list.",
-    "escolher": "Choose the carrier",
-    "semTransportadores": "No active carrier registered. Ask the administration to register their wallet in Participants.",
-    "qrNaoCarteira": "This QR code is not a wallet. Ask the carrier to open \"My wallet\" in the app.",
+    "passo1": "Read the code of whoever will take the lot to {{industria}}. The carrier generates it in \"Pickups › Pickup code\", with the MTR number.",
+    "qrNaoCarteira": "This is not a pickup code. Ask them to open \"Pickups\" in the app, tap \"Pickup code\" and enter the MTR.",
     "qrSemCadastro": "This wallet is not registered. Ask the administration to register it as a carrier.",
     "qrNaoTransportador": "This wallet is registered with another role, not as a carrier.",
     "qrInativo": "This carrier is inactive. Ask the administration to reactivate it.",
@@ -484,13 +482,25 @@
       "jaRetirado": "This lot is no longer waiting for pickup.",
       "assinaturaInvalida": "The code does not match the cooperative's signature. Ask them to generate another code."
     },
-    "aponteTransportador": "Point at the QR code on the carrier's \"My wallet\" screen",
+    "aponteTransportador": "Point at the code on the screen of whoever picks up",
     "aponteCamera": "Point at the code on the cooperative's screen",
     "propria": "The industry itself",
-    "passo1Propria": "At purchase, {{industria}} chose to pick up the lot itself. Scan the QR code on the \"My wallet\" screen of whoever came to collect it, or confirm the industry in the list.",
+    "passo1Propria": "At purchase, {{industria}} chose to pick up the lot itself. Read the code generated in \"Pickups › Pickup code\" by whoever came, with the MTR number.",
     "quemRetira": "Picked up by",
     "qrNaoCompradora": "This wallet does not belong to the industry that bought the lot.",
-    "vazioIndustria": "No purchases with own pickup. When you buy choosing \"Own carrier\", the lot appears here so you can sign the pickup at the cooperative."
+    "vazioIndustria": "No purchases with own pickup. When you buy choosing \"Own carrier\", the lot appears here so you can sign the pickup at the cooperative.",
+    "mtr": "MTR",
+    "mtrRotulo": "MTR number",
+    "mtrAjuda": "Waste Transport Manifest (MTR) of this load: up to 6 digits.",
+    "mtrInvalido": "Enter the MTR number: 1 to 999999.",
+    "gerarCodigo": "Pickup code",
+    "mostrarCodigo": "Generate code",
+    "corrigirMtr": "Fix the MTR",
+    "codigoRetiradorTitulo": "Pickup code with the MTR",
+    "codigoRetiradorPasso": "Enter the MTR number of this load and show the code to the cooperative, in \"Register pickup\". Then tap \"Sign pickup\" and read the code it generates.",
+    "codigoRetiradorMostrar": "Show this code to the cooperative. It carries your wallet and MTR {{mtr}}.",
+    "lerOutro": "Read another code",
+    "mtrNoCodigo": "MTR {{mtr}}, entered by whoever picks up, is recorded on the lot."
   },
   "papelAtual": {
     "operando": "Operating as",
@@ -812,7 +822,18 @@
     "voceLideraAjuda": "Your bid is the highest so far. You can raise it if you wish.",
     "lanceVenceu": "The auction has ended and your bid is the highest. Wait for the administration to record the sale: the signing code arrives in \"Purchases\".",
     "lanceEncerradoSemLances": "The auction ended with no bids.",
-    "lanceSoIndustria": "Only industries place bids."
+    "lanceSoIndustria": "Only industries place bids.",
+    "verLances": "View bids",
+    "selecioneLeilaoProprio": "Select one of your lots at auction",
+    "lancesTitulo": "Bids on lot #{{id}}",
+    "lancesAjuda": "Bids of the current round, highest first. Each industry has one bid, which it can only raise. The sale goes to the top bidder after the deadline.",
+    "lancesVazio": "No bids in this round.",
+    "lancesCarregando": "Loading bids…",
+    "posicao": "Rank",
+    "industria": "Industry",
+    "valorLance": "Bid",
+    "ultimoLance": "Last bid",
+    "lider": "Leader"
   },
   "contestacoes": {
     "soParte": "This screen is for the parties of the lots: cooperative, Clean Tech, industry and carrier.",

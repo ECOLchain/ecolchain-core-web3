@@ -29,9 +29,14 @@ import type { AppClient } from './cliente';
  * Retirada do lote (`transportador_pickup_lote`): a cooperativa e o transportador assinam a mesma
  * transação, cada um no seu aparelho.
  *
+ * Primeiro quem retira (transportador, ou a indústria na retirada própria) digita o número do MTR
+ * (Manifesto de Transporte de Resíduos) e mostra o código `ecolchain:retirador:v1:<carteira>:<mtr>`.
+ * A cooperativa lê esse código: o MTR entra na transação antes de ela assinar, porque a assinatura
+ * cobre a instrução inteira.
+ *
  * A cooperativa monta a transação, assina (e paga a taxa) e mostra num QR Code só o necessário para
  * remontá-la:
- * `ecolchain:retirada:v2:<lote>:<cooperativa>:<assinante coop>:<transportador>:<assinante transp>:<blockhash>:<último bloco>:<assinatura>`.
+ * `ecolchain:retirada:v3:<lote>:<cooperativa>:<assinante coop>:<transportador>:<assinante transp>:<blockhash>:<último bloco>:<mtr>:<assinatura>`.
  * Desde a ADR 0011, cada lado pode assinar com uma carteira vinculada ao titular; o assinante fica
  * vazio no código quando é o próprio titular.
  * O aparelho do transportador remonta a mesma transação a partir da blockchain, confere a assinatura
@@ -40,7 +45,35 @@ import type { AppClient } from './cliente';
  *
  * O blockhash vale por cerca de um minuto; depois disso a cooperativa gera outro código.
  */
-const PREFIXO = 'ecolchain:retirada:v2:';
+const PREFIXO = 'ecolchain:retirada:v3:';
+const PREFIXO_RETIRADOR = 'ecolchain:retirador:v1:';
+
+/** Maior número de MTR aceito pelo programa (seis dígitos). */
+export const MTR_MAXIMO = 999_999;
+
+/** "001234" ou "1234" → 1234; `null` se não for um número de 1 a 999999. */
+export function textoParaMtr(texto: string): number | null {
+    const limpo = texto.trim();
+    if (!/^\d{1,6}$/.test(limpo)) return null;
+    const n = Number(limpo);
+    return n >= 1 && n <= MTR_MAXIMO ? n : null;
+}
+
+/** Código que quem retira mostra à cooperativa: a carteira que vai assinar e o MTR. */
+export const codigoRetirador = (carteira: Address, mtr: number) => `${PREFIXO_RETIRADOR}${carteira}:${mtr}`;
+
+/** Lê o código de quem retira; `null` se não for um código válido. */
+export function lerCodigoRetirador(texto: string): { carteira: Address; mtr: number } | null {
+    if (!texto.startsWith(PREFIXO_RETIRADOR)) return null;
+    const [carteira, mtr, ...resto] = texto.slice(PREFIXO_RETIRADOR.length).split(':');
+    const numero = textoParaMtr(mtr ?? '');
+    if (resto.length || !carteira || numero === null) return null;
+    try {
+        return { carteira: address(carteira), mtr: numero };
+    } catch {
+        return null;
+    }
+}
 
 type Partes = {
     lote: Address;
@@ -52,6 +85,7 @@ type Partes = {
     transportadorAssinante: Address;
     blockhash: Blockhash;
     ultimoBloco: bigint;
+    mtr: number;
 };
 
 /** A mesma transação, byte a byte, dos dois lados: mesmas contas, pagador e blockhash. */
@@ -69,6 +103,7 @@ async function montarMensagem(client: AppClient, p: Partes, signers: { cooperati
         asset: conta.data.asset,
         eventAuthority: await eventAuthority(lote.ECOL_LOTE_PROGRAM_ADDRESS),
         program: lote.ECOL_LOTE_PROGRAM_ADDRESS,
+        mtr: p.mtr,
     });
     const mensagem = pipe(
         createTransactionMessage({ version: 0 }),
@@ -85,7 +120,8 @@ export type RetiradaPreparada = { codigo: string; ultimoBloco: bigint };
 
 /**
  * Lado da cooperativa: assina com a carteira conectada (em nome do titular `cooperativa`) e devolve o
- * texto do QR. `transportadorAssinante` é a carteira com que o transportador vai assinar.
+ * texto do QR. `transportadorAssinante` é a carteira com que o transportador vai assinar; `mtr`, o
+ * número que ele informou no código dele.
  */
 export async function prepararRetirada(
     client: AppClient,
@@ -93,6 +129,7 @@ export async function prepararRetirada(
     cooperativa: Address,
     transportador: Address,
     transportadorAssinante: Address,
+    mtr: number,
 ): Promise<RetiradaPreparada> {
     const { value: bloco } = await client.rpc.getLatestBlockhash().send();
     const partes: Partes = {
@@ -103,6 +140,7 @@ export async function prepararRetirada(
         transportadorAssinante,
         blockhash: bloco.blockhash,
         ultimoBloco: bloco.lastValidBlockHeight,
+        mtr,
     };
     // O transportador assina depois, no aparelho dele: aqui só reservamos o lugar da assinatura.
     const { mensagem } = await montarMensagem(client, partes, {
@@ -124,6 +162,7 @@ export async function prepararRetirada(
         outroQue(transportadorAssinante, transportador),
         partes.blockhash,
         partes.ultimoBloco,
+        partes.mtr,
         getBase58Decoder().decode(assinatura),
     ].join(':');
     return { codigo: PREFIXO + codigo, ultimoBloco: partes.ultimoBloco };
@@ -136,7 +175,7 @@ export class RetiradaInvalida extends Error {
     }
 }
 
-export type RetiradaLida = { tx: Transaction; lote: Address; cooperativa: Address; ultimoBloco: bigint };
+export type RetiradaLida = { tx: Transaction; lote: Address; cooperativa: Address; ultimoBloco: bigint; mtr: number };
 
 /**
  * Lado do transportador: remonta a transação a partir do QR e da blockchain e confere a assinatura
@@ -145,7 +184,7 @@ export type RetiradaLida = { tx: Transaction; lote: Address; cooperativa: Addres
 export async function lerRetirada(client: AppClient, texto: string, transportador: Address): Promise<RetiradaLida> {
     if (!texto.startsWith(PREFIXO)) throw new RetiradaInvalida('formato');
     const campos = texto.slice(PREFIXO.length).split(':');
-    if (campos.length !== 8) throw new RetiradaInvalida('formato');
+    if (campos.length !== 9) throw new RetiradaInvalida('formato');
     let partes: Partes;
     let assinatura: SignatureBytes;
     try {
@@ -159,8 +198,10 @@ export async function lerRetirada(client: AppClient, texto: string, transportado
             transportadorAssinante: campos[4] ? address(campos[4]) : transp,
             blockhash: campos[5] as Blockhash,
             ultimoBloco: BigInt(campos[6]),
+            mtr: textoParaMtr(campos[7]) ?? Number.NaN,
         };
-        assinatura = getBase58Encoder().encode(campos[7]) as SignatureBytes;
+        if (Number.isNaN(partes.mtr)) throw new Error('mtr');
+        assinatura = getBase58Encoder().encode(campos[8]) as SignatureBytes;
     } catch {
         throw new RetiradaInvalida('formato');
     }
@@ -182,6 +223,7 @@ export async function lerRetirada(client: AppClient, texto: string, transportado
         lote: partes.lote,
         cooperativa: partes.cooperativa,
         ultimoBloco: partes.ultimoBloco,
+        mtr: partes.mtr,
     };
 }
 
