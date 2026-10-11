@@ -445,7 +445,7 @@
     "soParticipante": "Esta pantalla es para billeteras registradas como recolector o transportista.",
     "qrTitulo": "Código QR de la billetera",
     "ajudaColetor": "Muestre este código a la cooperativa al entregar o vender el material. Ella lo escanea y el lote de origen queda registrado a su nombre. El código lleva solo la dirección de la billetera, ningún dato personal.",
-    "ajudaTransportador": "Muestre este código a la cooperativa al retirar el lote. Ella lo escanea y confirma que el lote sale con el transportista registrado. El código lleva solo la dirección de la billetera, ningún dato personal."
+    "ajudaTransportador": "Este código identifica su billetera. Para retirar un lote, use \"Retiros › Código de retiro\", que también lleva el número del MTR."
   },
   "retiradas": {
     "soParticipante": "Esta pantalla es para billeteras registradas como cooperativa, Clean Tech, transportista o industria.",
@@ -457,10 +457,8 @@
     "vazioCooperativa": "Ningún lote vendido espera retiro.",
     "vazioTransportador": "Aún no hay lotes retirados con su billetera. Toque \"Firmar retiro\" en la cooperativa.",
     "resumo": "Lote #{{lote}} · {{material}} · {{kg}} kg",
-    "passo1": "Identifique al transportista que llevará el lote a {{industria}}: lea el código QR de su pantalla \"Mi billetera\" o elíjalo en la lista.",
-    "escolher": "Elija el transportista",
-    "semTransportadores": "No hay transportistas activos registrados. Pida a la administración que registre su billetera en Participantes.",
-    "qrNaoCarteira": "Este código QR no es de una billetera. Pida al transportista que abra \"Mi billetera\" en la app.",
+    "passo1": "Lea el código de quien llevará el lote a {{industria}}. El transportista lo genera en \"Retiros › Código de retiro\", con el número del MTR.",
+    "qrNaoCarteira": "Este no es un código de retiro. Pida abrir \"Retiros\" en la app, tocar \"Código de retiro\" e informar el MTR.",
     "qrSemCadastro": "Esta billetera no está registrada. Pida a la administración que la registre como transportista.",
     "qrNaoTransportador": "Esta billetera está registrada con otro rol, no como transportista.",
     "qrInativo": "Este transportista está inactivo. Pida a la administración que lo reactive.",
@@ -484,13 +482,25 @@
       "jaRetirado": "Este lote ya no espera retiro.",
       "assinaturaInvalida": "El código no coincide con la firma de la cooperativa. Pida que genere otro código."
     },
-    "aponteTransportador": "Apunte al código QR de la pantalla \"Mi billetera\" del transportista",
+    "aponteTransportador": "Apunte al código en la pantalla de quien retira",
     "aponteCamera": "Apunte al código en la pantalla de la cooperativa",
     "propria": "La propia industria",
-    "passo1Propria": "En la compra, {{industria}} eligió retirar el lote ella misma. Lea el código QR de la pantalla \"Mi billetera\" de quien vino a buscarlo, o confirme la industria en la lista.",
+    "passo1Propria": "En la compra, {{industria}} eligió retirar el lote ella misma. Lea el código que generó quien vino a buscarlo en \"Retiros › Código de retiro\", con el número del MTR.",
     "quemRetira": "Quién retira",
     "qrNaoCompradora": "Esta billetera no es de la industria que compró el lote.",
-    "vazioIndustria": "Ninguna compra con retiro propio. Cuando compre eligiendo \"Transportista propio\", el lote aparece aquí para firmar el retiro en la cooperativa."
+    "vazioIndustria": "Ninguna compra con retiro propio. Cuando compre eligiendo \"Transportista propio\", el lote aparece aquí para firmar el retiro en la cooperativa.",
+    "mtr": "MTR",
+    "mtrRotulo": "Número del MTR",
+    "mtrAjuda": "Manifiesto de Transporte de Residuos (MTR) de esta carga: hasta 6 dígitos.",
+    "mtrInvalido": "Informe el número del MTR: de 1 a 999999.",
+    "gerarCodigo": "Código de retiro",
+    "mostrarCodigo": "Generar código",
+    "corrigirMtr": "Corregir el MTR",
+    "codigoRetiradorTitulo": "Código de retiro con el MTR",
+    "codigoRetiradorPasso": "Informe el número del MTR de esta carga y muestre el código a la cooperativa, en \"Registrar retiro\". Después toque \"Firmar retiro\" y lea el código que ella genere.",
+    "codigoRetiradorMostrar": "Muestre este código a la cooperativa. Lleva su billetera y el MTR {{mtr}}.",
+    "lerOutro": "Leer otro código",
+    "mtrNoCodigo": "El MTR {{mtr}}, informado por quien retira, queda grabado en el lote."
   },
   "papelAtual": {
     "operando": "Operando como",
@@ -812,7 +822,18 @@
     "voceLideraAjuda": "Su oferta es la mayor hasta ahora. Si quiere, auméntela.",
     "lanceVenceu": "La subasta terminó y su oferta es la mayor. Espere que la administración registre la venta: el código para firmar llega en \"Compras\".",
     "lanceEncerradoSemLances": "La subasta terminó sin ofertas.",
-    "lanceSoIndustria": "Solo las industrias hacen ofertas."
+    "lanceSoIndustria": "Solo las industrias hacen ofertas.",
+    "verLances": "Ver ofertas",
+    "selecioneLeilaoProprio": "Seleccione un lote suyo en subasta",
+    "lancesTitulo": "Ofertas del lote #{{id}}",
+    "lancesAjuda": "Ofertas de la ronda actual, de mayor a menor. Cada industria tiene una oferta, que solo puede aumentar. La venta va al primer lugar después del plazo.",
+    "lancesVazio": "Ninguna oferta en esta ronda.",
+    "lancesCarregando": "Cargando las ofertas…",
+    "posicao": "Posición",
+    "industria": "Industria",
+    "valorLance": "Oferta",
+    "ultimoLance": "Última oferta",
+    "lider": "Líder"
   },
   "contestacoes": {
     "soParte": "Esta pantalla es para las partes de los lotes: cooperativa, Clean Tech, industria y transportista.",

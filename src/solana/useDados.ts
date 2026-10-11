@@ -217,3 +217,25 @@ export function useCarteiras(participante: Address | undefined) {
     );
     return useRequest(participante ? fonte : null);
 }
+
+/**
+ * Lances da rodada atual de um lote em leilão (ADR 0013), do maior para o menor (empate: o mais antigo
+ * primeiro). Contas de rodadas anteriores (outro `prazoLeilao`) ficam de fora até serem fechadas.
+ */
+export function useLancesDoLote(loteEndereco: Address | undefined, prazoLeilao: bigint) {
+    const client = useClient<AppClient>();
+    const fonte = useCallback(
+        async () =>
+            (await listarContas(client, lote.ECOL_LOTE_PROGRAM_ADDRESS, lote.LANCE_DISCRIMINATOR, lote.getLanceDecoder(), loteEndereco))
+                .filter((l) => l.dados.prazoLeilao === prazoLeilao)
+                .sort((a, b) =>
+                    a.dados.valorCentavos === b.dados.valorCentavos
+                        ? Number(a.dados.atualizadoEm - b.dados.atualizadoEm)
+                        : a.dados.valorCentavos > b.dados.valorCentavos
+                          ? -1
+                          : 1,
+                ),
+        [client, loteEndereco, prazoLeilao],
+    );
+    return useRequest(loteEndereco ? fonte : null);
+}

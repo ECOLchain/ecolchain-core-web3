@@ -1,26 +1,28 @@
-import { type Address, address, getAddressEncoder, isAddress } from '@solana/kit';
+import { type Address, address, getAddressEncoder } from '@solana/kit';
 import { useClient, useRequest } from '@solana/react';
-import { CircleCheck, LoaderCircle, QrCode, RefreshCw, ScanLine, Truck } from 'lucide-react';
+import { CircleCheck, FileText, LoaderCircle, QrCode, RefreshCw, ScanLine, Truck } from 'lucide-react';
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as lote from '@clientes/generated/ecol_lote';
 import { LerCodigo, MostrarCodigo } from '../componentes/CodigoAssinatura';
 import { Dialogo } from '../componentes/dialogo';
 import { AcoesGrade, CampoBusca, CartaoGrade, type Coluna, FiltroGrade, Grade, useGrade } from '../componentes/grade';
-import { LeitorQr } from '../componentes/LeitorQr';
 import { TituloPagina } from '../componentes/pagina';
-import { Botao, Resultado, Selecao } from '../componentes/ui';
+import { Botao, Campo, Resultado } from '../componentes/ui';
 import { usePreferencias } from '../preferencias/Preferencias';
 import { resolverCarteira } from '../solana/ator';
 import type { AppClient } from '../solana/cliente';
 import { type ContaDecodificada, listarContas } from '../solana/contas';
 import {
     assinarEEnviarRetirada,
+    codigoRetirador,
+    lerCodigoRetirador,
     lerRetirada,
     prepararRetirada,
     type RetiradaLida,
     RetiradaInvalida,
     type RetiradaPreparada,
+    textoParaMtr,
 } from '../solana/retirada';
 import { useCadastro } from '../solana/useCadastro';
 import { gramasParaKg, useLotes, useLotesDaIndustria, useMateriais, useParticipantes } from '../solana/useDados';
@@ -34,7 +36,6 @@ const OFFSET_TRANSPORTADOR = 8 + 32 + 8 + 2 + 8 + 8 + 4 + 8 + 32 + 32 + 8 + 32;
 const INTERVALO_MS = 2000;
 
 type Linha = ContaDecodificada<lote.Lote>;
-type Participantes = ContaDecodificada<lote.Participante>[];
 
 export function Retiradas() {
     const { t } = useTranslation();
@@ -65,7 +66,6 @@ function useRotulos() {
         const cadastro = new Map((participantes.data ?? []).map((p) => [p.dados.carteira as string, p.dados]));
         const nomes = new Map((materiais.data ?? []).map((m) => [m.dados.codigo, m.dados.nome]));
         return {
-            participantes: participantes.data ?? [],
             nome: (carteira: string) => {
                 if (carteira === SEM_CONTA) return '—';
                 const p = cadastro.get(carteira);
@@ -74,6 +74,8 @@ function useRotulos() {
             material: (codigo: number) => nomes.get(codigo) ?? String(codigo),
             kg: (g: bigint) => gramasParaKg(g, idioma),
             data: (ts: bigint) => new Date(Number(ts) * 1000).toLocaleString(idioma, { dateStyle: 'short', timeStyle: 'short' }),
+            /** Número do MTR informado na retirada; traço antes dela (ou nos lotes retirados sem o campo). */
+            mtr: (l: lote.Lote) => (l.mtr ? String(l.mtr) : '—'),
             /** Vendido ainda não foi retirado; os demais estados vêm da máquina de estados do lote. */
             situacao: (l: lote.Lote) => (l.estado.__kind === 'Vendido' ? t('retiradas.aguardando') : t(`estadoLote.${l.estado.__kind}`)),
         };
@@ -132,6 +134,7 @@ function RetiradasCooperativa() {
                         : r.nome(l.dados.transportador),
                 busca: (l) => l.dados.transportador,
             },
+            { id: 'mtr', titulo: t('retiradas.mtr'), largura: 'w-28', numerica: true, valor: (l) => l.dados.mtr, busca: (l) => r.mtr(l.dados), celula: (l) => <span className="tabular-nums">{r.mtr(l.dados)}</span> },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-44', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
         ],
         [t, r],
@@ -197,7 +200,6 @@ function RetiradasCooperativa() {
             {popup && (
                 <DialogoRetirada
                     linha={popup}
-                    participantes={r.participantes}
                     rotulos={r}
                     aoFechar={() => setPopup(null)}
                     aoConcluir={(texto) => {
@@ -212,18 +214,16 @@ function RetiradasCooperativa() {
 }
 
 /**
- * Passo 1: identificar o transportador (QR da tela Minha carteira dele, ou a lista).
+ * Passo 1: ler o código de quem retira (carteira e número do MTR, gerado na tela Retiradas dele).
  * Passo 2: a cooperativa assina e mostra a transação num QR para o transportador assinar e enviar.
  */
 function DialogoRetirada({
     linha,
-    participantes,
     rotulos: r,
     aoFechar,
     aoConcluir,
 }: {
     linha: Linha;
-    participantes: Participantes;
     rotulos: ReturnType<typeof useRotulos>;
     aoFechar: () => void;
     aoConcluir: (mensagem: string) => void;
@@ -233,40 +233,27 @@ function DialogoRetirada({
     const { ator: cooperativa } = useCadastro();
     /** Retirada própria: a indústria compradora assina no lugar do transportador. */
     const propria = linha.dados.modoRetirada === lote.ModoRetirada.Propria;
-    const [transportador, setTransportador] = useState<string>(propria ? linha.dados.industria : '');
-    /** Carteira com que o transportador vai assinar: a titular (lista) ou a lida no QR (pode ser vinculada). */
-    const [assinanteTransp, setAssinanteTransp] = useState('');
-    const [lendoQr, setLendoQr] = useState(false);
-    const [avisoQr, setAvisoQr] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+    /** Quem retira, lido do código dele: titular, carteira que assina (pode ser vinculada) e MTR. */
+    const [retirador, setRetirador] = useState<{ titular: Address; assinante: Address; nome: string; mtr: number } | null>(null);
+    const [avisoQr, setAvisoQr] = useState<string | null>(null);
     const [preparada, setPreparada] = useState<RetiradaPreparada | null>(null);
     const [expirado, setExpirado] = useState(false);
     const [assinando, setAssinando] = useState(false);
     const [erro, setErro] = useState<unknown>(null);
-
-    const transportadores = useMemo(
-        () =>
-            participantes
-                .filter((p) =>
-                    propria ? p.dados.carteira === linha.dados.industria : p.dados.papel === lote.Papel.Transportador && p.dados.ativo,
-                )
-                .sort((a, b) => rotuloParticipante(a.dados).localeCompare(rotuloParticipante(b.dados))),
-        [participantes, propria, linha],
-    );
+    const transportador = retirador?.titular ?? '';
 
     const lerQr = async (texto: string) => {
-        setLendoQr(false);
-        const falha = (chave: string) => setAvisoQr({ tipo: 'erro', texto: t(chave) });
-        if (!isAddress(texto)) return falha('retiradas.qrNaoCarteira');
-        // O QR pode ser de uma carteira vinculada ao transportador (ADR 0011): ela assina por ele.
-        const quem = await resolverCarteira(client, address(texto)).catch(() => null);
-        if (!quem) return falha('retiradas.qrSemCadastro');
+        setAvisoQr(null);
+        const lido = lerCodigoRetirador(texto.trim());
+        if (!lido) return setAvisoQr(t('retiradas.qrNaoCarteira'));
+        // O código pode ser de uma carteira vinculada ao transportador (ADR 0011): ela assina por ele.
+        const quem = await resolverCarteira(client, lido.carteira).catch(() => null);
+        if (!quem) return setAvisoQr(t('retiradas.qrSemCadastro'));
         if (propria) {
-            if (quem.titular !== linha.dados.industria) return falha('retiradas.qrNaoCompradora');
-        } else if (quem.participante.papel !== lote.Papel.Transportador) return falha('retiradas.qrNaoTransportador');
-        if (!quem.participante.ativo) return falha('retiradas.qrInativo');
-        setTransportador(quem.titular);
-        setAssinanteTransp(quem.assinante);
-        setAvisoQr({ tipo: 'ok', texto: t('retiradas.qrLido', { nome: rotuloParticipante(quem.participante) }) });
+            if (quem.titular !== linha.dados.industria) return setAvisoQr(t('retiradas.qrNaoCompradora'));
+        } else if (quem.participante.papel !== lote.Papel.Transportador) return setAvisoQr(t('retiradas.qrNaoTransportador'));
+        if (!quem.participante.ativo) return setAvisoQr(t('retiradas.qrInativo'));
+        setRetirador({ titular: quem.titular, assinante: quem.assinante, nome: rotuloParticipante(quem.participante), mtr: lido.mtr });
     };
 
     const gerar = async () => {
@@ -274,7 +261,7 @@ function DialogoRetirada({
         setAssinando(true);
         try {
             setPreparada(
-                await prepararRetirada(client, linha.endereco, cooperativa!, address(transportador), address(assinanteTransp || transportador)),
+                await prepararRetirada(client, linha.endereco, cooperativa!, retirador!.titular, retirador!.assinante, retirador!.mtr),
             );
             setExpirado(false);
         } catch (e) {
@@ -313,7 +300,7 @@ function DialogoRetirada({
 
     const enviar = (e: FormEvent) => {
         e.preventDefault();
-        if (transportador) void gerar();
+        if (retirador) void gerar();
     };
 
     return (
@@ -322,7 +309,7 @@ function DialogoRetirada({
             subtitulo={t('retiradas.resumo', { lote: linha.dados.loteId, material: r.material(linha.dados.material), kg: r.kg(linha.dados.pesoG) })}
             formId={preparada ? undefined : 'form-retirada'}
             salvando={assinando}
-            podeSalvar={!!transportador}
+            podeSalvar={!!retirador}
             rotuloSalvar={t('retiradas.assinarGerar')}
             iconeSalvar={QrCode}
             aoFechar={aoFechar}
@@ -333,47 +320,24 @@ function DialogoRetirada({
                     <p className="text-sm text-texto-suave">
                         {t(propria ? 'retiradas.passo1Propria' : 'retiradas.passo1', { industria: r.nome(linha.dados.industria) })}
                     </p>
-                    {transportadores.length === 0 ? (
-                        <p className="text-sm text-kraft">{t('retiradas.semTransportadores')}</p>
+                    {retirador ? (
+                        <div className="flex flex-col gap-3">
+                            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 rounded-lg border border-linha p-3 text-sm">
+                                <dt className="text-texto-suave">{t(propria ? 'retiradas.quemRetira' : 'papel.transportador')}</dt>
+                                <dd className="text-texto">{retirador.nome}</dd>
+                                <dt className="text-texto-suave">{t('retiradas.mtrRotulo')}</dt>
+                                <dd className="font-semibold text-texto tabular-nums">{retirador.mtr}</dd>
+                            </dl>
+                            <Botao type="button" variante="secundario" compacto className="self-start" onClick={() => setRetirador(null)}>
+                                <ScanLine className="size-4" /> {t('retiradas.lerOutro')}
+                            </Botao>
+                        </div>
                     ) : (
                         <div className="flex flex-col gap-2">
-                            <div className="grid grid-cols-[1fr_auto] items-end gap-2">
-                                <Selecao
-                                    rotulo={t(propria ? 'retiradas.quemRetira' : 'papel.transportador')}
-                                    required
-                                    value={transportador}
-                                    onChange={(e) => {
-                                        setTransportador(e.target.value);
-                                        setAssinanteTransp('');
-                                        setAvisoQr(null);
-                                    }}
-                                >
-                                    <option value="" disabled>
-                                        {t('retiradas.escolher')}
-                                    </option>
-                                    {transportadores.map((p) => (
-                                        <option key={p.endereco} value={p.dados.carteira}>
-                                            {rotuloParticipante(p.dados)}
-                                        </option>
-                                    ))}
-                                </Selecao>
-                                <Botao
-                                    type="button"
-                                    variante="secundario"
-                                    className="h-10"
-                                    aria-pressed={lendoQr}
-                                    onClick={() => {
-                                        setAvisoQr(null);
-                                        setLendoQr((v) => !v);
-                                    }}
-                                >
-                                    <ScanLine className="size-4" /> {t('cooperativa.coletas.lerQr')}
-                                </Botao>
-                            </div>
-                            {lendoQr && <LeitorQr aoLer={lerQr} aoCancelar={() => setLendoQr(false)} instrucao={t('retiradas.aponteTransportador')} />}
+                            <LerCodigo aoLer={(texto) => void lerQr(texto)} instrucaoCamera={t('retiradas.aponteTransportador')} />
                             {avisoQr && (
-                                <p role="status" className={`text-sm ${avisoQr.tipo === 'ok' ? 'text-acento' : 'text-perigo'}`}>
-                                    {avisoQr.texto}
+                                <p role="alert" className="text-sm text-perigo">
+                                    {avisoQr}
                                 </p>
                             )}
                         </div>
@@ -383,6 +347,7 @@ function DialogoRetirada({
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Resultado erro={erro} sucesso="" />
                     <p className="text-sm text-texto">{t('retiradas.passo2', { nome: r.nome(transportador) })}</p>
+                    <p className="text-sm text-texto-suave">{t('retiradas.mtrNoCodigo', { mtr: retirador?.mtr })}</p>
                     <MostrarCodigo codigo={preparada.codigo} titulo={t('retiradas.qrTitulo')} apagado={expirado} />
                     {expirado ? (
                         <div className="flex flex-col items-center gap-2">
@@ -444,6 +409,7 @@ function RetiradasTransportador({
     const { t } = useTranslation();
     const r = useRotulos();
     const [popup, setPopup] = useState(false);
+    const [codigo, setCodigo] = useState(false);
     const [assinatura, setAssinatura] = useState<string>();
 
     const colunas = useMemo<Coluna<Linha>[]>(
@@ -460,6 +426,7 @@ function RetiradasTransportador({
                 valor: (l) => l.dados.prazoEntrega,
                 celula: (l) => <span className="text-texto-suave">{r.data(l.dados.prazoEntrega)}</span>,
             },
+            { id: 'mtr', titulo: t('retiradas.mtr'), largura: 'w-28', numerica: true, valor: (l) => l.dados.mtr, busca: (l) => r.mtr(l.dados), celula: (l) => <span className="tabular-nums">{r.mtr(l.dados)}</span> },
             { id: 'situacao', titulo: t('admin.situacao'), largura: 'w-40', valor: (l) => r.situacao(l.dados), celula: (l) => <Situacao linha={l} texto={r.situacao(l.dados)} /> },
         ],
         [t, r],
@@ -474,6 +441,16 @@ function RetiradasTransportador({
                     <>
                         <CampoBusca grade={grade} rotulo={t('grade.buscar')} />
                         <AcoesGrade>
+                            <Botao
+                                compacto
+                                variante="secundario"
+                                onClick={() => {
+                                    setAssinatura(undefined);
+                                    setCodigo(true);
+                                }}
+                            >
+                                <FileText className="size-4" /> {t('retiradas.gerarCodigo')}
+                            </Botao>
                             <Botao
                                 compacto
                                 onClick={() => {
@@ -495,6 +472,8 @@ function RetiradasTransportador({
                 />
             </CartaoGrade>
 
+            {codigo && <DialogoCodigoRetirador aoFechar={() => setCodigo(false)} />}
+
             {popup && (
                 <DialogoAssinarRetirada
                     rotulos={r}
@@ -507,6 +486,61 @@ function RetiradasTransportador({
                 />
             )}
         </div>
+    );
+}
+
+/**
+ * Quem retira informa o número do MTR desta carga e mostra à cooperativa um código com a carteira
+ * conectada e o MTR. A cooperativa lê o código e monta a retirada com esse número.
+ */
+function DialogoCodigoRetirador({ aoFechar }: { aoFechar: () => void }) {
+    const { t } = useTranslation();
+    const { carteira } = useCadastro();
+    const [texto, setTexto] = useState('');
+    const [mtr, setMtr] = useState<number | null>(null);
+    const valido = textoParaMtr(texto);
+
+    return (
+        <Dialogo
+            titulo={t('retiradas.gerarCodigo')}
+            formId={mtr === null ? 'form-codigo-retirador' : undefined}
+            podeSalvar={valido !== null}
+            rotuloSalvar={t('retiradas.mostrarCodigo')}
+            iconeSalvar={QrCode}
+            aoFechar={aoFechar}
+        >
+            {mtr === null || !carteira ? (
+                <form
+                    id="form-codigo-retirador"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        if (valido !== null) setMtr(valido);
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    <p className="text-sm text-texto-suave">{t('retiradas.codigoRetiradorPasso')}</p>
+                    <Campo
+                        rotulo={t('retiradas.mtrRotulo')}
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        autoFocus
+                        value={texto}
+                        onChange={(e) => setTexto(e.target.value.replace(/\D/g, ''))}
+                        aria-invalid={texto !== '' && valido === null}
+                        ajuda={texto !== '' && valido === null ? t('retiradas.mtrInvalido') : t('retiradas.mtrAjuda')}
+                    />
+                </form>
+            ) : (
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <p className="text-sm text-texto">{t('retiradas.codigoRetiradorMostrar', { mtr })}</p>
+                    <MostrarCodigo codigo={codigoRetirador(address(carteira), mtr)} titulo={t('retiradas.codigoRetiradorTitulo')} />
+                    <Botao type="button" variante="secundario" compacto onClick={() => setMtr(null)}>
+                        {t('retiradas.corrigirMtr')}
+                    </Botao>
+                </div>
+            )}
+        </Dialogo>
     );
 }
 
@@ -593,6 +627,8 @@ function DialogoAssinarRetirada({
                         <dd className="text-texto">{r.nome(dados.industria)}</dd>
                         <dt className="text-texto-suave">{t('retiradas.prazo')}</dt>
                         <dd className="text-texto">{r.data(dados.prazoEntrega)}</dd>
+                        <dt className="text-texto-suave">{t('retiradas.mtrRotulo')}</dt>
+                        <dd className="font-semibold text-texto tabular-nums">{lida.mtr}</dd>
                     </dl>
                     <p className="text-sm text-texto-suave">{t('retiradas.efeito')}</p>
                 </form>

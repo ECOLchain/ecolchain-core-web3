@@ -28,7 +28,7 @@ export function ehRede(valor: unknown): valor is Rede {
     return typeof valor === 'string' && valor in REDES;
 }
 
-// Rede padrão por ambiente de build (dev usa devnet; build de prod recebe
-// VITE_REDE_PADRAO=testnet na esteira). Fallback seguro: devnet.
+// Rede padrão por ambiente de build (VITE_REDE_PADRAO na esteira; hoje dev e prod usam
+// devnet, a única rede com os programas). Fallback seguro: devnet.
 const redeEnv = import.meta.env.VITE_REDE_PADRAO;
 export const REDE_PADRAO: Rede = ehRede(redeEnv) ? redeEnv : 'devnet';
