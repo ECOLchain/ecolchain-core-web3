@@ -81,7 +81,7 @@ cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participan
 cd web && VITE_RPC_LOCALNET=<rpcUrl> VITE_WS_LOCALNET=<wsUrl> npm run dev
 ```
 
-Na interface, escolha a rede **Localnet**. Os lotes de venda de demonstração: #1 vendido (esperando a retirada), #2 em leilão (esperando a venda), #3 em transporte (esperando o recebimento, com a balança da indústria já cadastrada) e #4 recebido (esperando a liberação do escrow). As chaves de teste de todos os papéis usados na interface (cooperativa e sua balança, coletor 1, transportador, indústria e sua balança, operador e intermediador) ficam em `onchain/.surfpool-demo.json`, fora do git; a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
+Na interface, escolha a rede **Localnet**. Os lotes de venda de demonstração: #1 vendido (esperando a retirada), #2 em leilão com lances da Indústria Demo e da Recicla Sul (esperando o prazo e a venda; a cooperativa os vê em Disputa › Ver lances), #3 em transporte (esperando o recebimento, com a balança da indústria já cadastrada) e #4 recebido (esperando a liberação do escrow). As chaves de teste de todos os papéis usados na interface (cooperativa e sua balança, coletor 1, transportador, indústria e sua balança, operador e intermediador) ficam em `onchain/.surfpool-demo.json`, fora do git, e são reaproveitadas quando a rede é reiniciada (as carteiras importadas continuam valendo; `NOVAS_CHAVES=1` gera outras); a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
 
 As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegador.
 

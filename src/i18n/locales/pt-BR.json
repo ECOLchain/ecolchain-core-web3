@@ -445,7 +445,7 @@
     "soParticipante": "Esta tela é para carteiras cadastradas como coletor ou transportador.",
     "qrTitulo": "Código QR da carteira",
     "ajudaColetor": "Mostre este código à cooperativa na entrega ou na venda do material. Ela escaneia e o lote de origem fica registrado em seu nome. O código traz só o endereço da carteira, nenhum dado pessoal.",
-    "ajudaTransportador": "Mostre este código à cooperativa na retirada do lote. Ela escaneia e confere que o lote sai com o transportador cadastrado. O código traz só o endereço da carteira, nenhum dado pessoal."
+    "ajudaTransportador": "Este código identifica a sua carteira. Na retirada de um lote, use \"Retiradas › Código da retirada\", que leva também o número do MTR."
   },
   "retiradas": {
     "soParticipante": "Esta tela é para carteiras cadastradas como cooperativa, Clean Tech, transportador ou indústria.",
@@ -457,10 +457,8 @@
     "vazioCooperativa": "Nenhum lote vendido aguardando retirada.",
     "vazioTransportador": "Nenhum lote retirado com a sua carteira ainda. Toque em \"Assinar retirada\" na cooperativa.",
     "resumo": "Lote #{{lote}} · {{material}} · {{kg}} kg",
-    "passo1": "Identifique o transportador que vai levar o lote para {{industria}}: leia o QR Code da tela \"Minha carteira\" dele ou escolha na lista.",
-    "escolher": "Escolha o transportador",
-    "semTransportadores": "Nenhum transportador ativo cadastrado. Peça à administração para cadastrar a carteira dele em Participantes.",
-    "qrNaoCarteira": "Este QR Code não é de uma carteira. Peça ao transportador para abrir \"Minha carteira\" no app.",
+    "passo1": "Leia o código de quem vai levar o lote para {{industria}}. O transportador gera esse código em \"Retiradas › Código da retirada\", com o número do MTR.",
+    "qrNaoCarteira": "Este não é um código de quem retira. Peça para abrir \"Retiradas\" no app, tocar em \"Código da retirada\" e informar o MTR.",
     "qrSemCadastro": "Esta carteira não está cadastrada. Peça à administração para cadastrá-la como transportador.",
     "qrNaoTransportador": "Esta carteira está cadastrada com outro papel, não como transportador.",
     "qrInativo": "Este transportador está inativo. Peça à administração para reativá-lo.",
@@ -484,13 +482,25 @@
       "jaRetirado": "Este lote não está mais aguardando retirada.",
       "assinaturaInvalida": "O código não confere com a assinatura da cooperativa. Peça para ela gerar outro código."
     },
-    "aponteTransportador": "Aponte para o QR Code da tela \"Minha carteira\" do transportador",
+    "aponteTransportador": "Aponte para o código na tela de quem retira",
     "aponteCamera": "Aponte para o código na tela da cooperativa",
     "propria": "A própria indústria",
-    "passo1Propria": "Na compra, {{industria}} escolheu retirar o lote ela mesma. Leia o QR Code da tela \"Minha carteira\" de quem veio buscar, ou confirme a indústria na lista.",
+    "passo1Propria": "Na compra, {{industria}} escolheu retirar o lote ela mesma. Leia o código que quem veio buscar gerou em \"Retiradas › Código da retirada\", com o número do MTR.",
     "quemRetira": "Quem retira",
     "qrNaoCompradora": "Esta carteira não é da indústria que comprou o lote.",
-    "vazioIndustria": "Nenhuma compra com retirada própria. Quando você comprar escolhendo \"Transportador próprio\", o lote aparece aqui para assinar a retirada na cooperativa."
+    "vazioIndustria": "Nenhuma compra com retirada própria. Quando você comprar escolhendo \"Transportador próprio\", o lote aparece aqui para assinar a retirada na cooperativa.",
+    "mtr": "MTR",
+    "mtrRotulo": "Número do MTR",
+    "mtrAjuda": "Manifesto de Transporte de Resíduos desta carga: até 6 dígitos.",
+    "mtrInvalido": "Informe o número do MTR: de 1 a 999999.",
+    "gerarCodigo": "Código da retirada",
+    "mostrarCodigo": "Gerar código",
+    "corrigirMtr": "Corrigir o MTR",
+    "codigoRetiradorTitulo": "Código de quem retira, com o MTR",
+    "codigoRetiradorPasso": "Informe o número do MTR desta carga e mostre o código à cooperativa, em \"Registrar retirada\". Depois toque em \"Assinar retirada\" e leia o código que ela gerar.",
+    "codigoRetiradorMostrar": "Mostre este código à cooperativa. Ele traz a sua carteira e o MTR {{mtr}}.",
+    "lerOutro": "Ler outro código",
+    "mtrNoCodigo": "MTR {{mtr}}, informado por quem retira, vai gravado no lote."
   },
   "papelAtual": {
     "operando": "Operando como",
@@ -812,7 +822,18 @@
     "voceLideraAjuda": "Seu lance é o maior até agora. Se quiser, aumente.",
     "lanceVenceu": "O leilão terminou e o seu lance é o maior. Aguarde a Administração registrar a venda: o código para assinar chega em \"Compras\".",
     "lanceEncerradoSemLances": "O leilão terminou sem lances.",
-    "lanceSoIndustria": "Só indústrias dão lances."
+    "lanceSoIndustria": "Só indústrias dão lances.",
+    "verLances": "Ver lances",
+    "selecioneLeilaoProprio": "Selecione um lote seu em leilão",
+    "lancesTitulo": "Lances do lote #{{id}}",
+    "lancesAjuda": "Lances da rodada atual, do maior para o menor. Cada indústria tem um lance, que ela só pode aumentar. A venda vai ao primeiro colocado depois do prazo.",
+    "lancesVazio": "Nenhum lance nesta rodada.",
+    "lancesCarregando": "Carregando os lances…",
+    "posicao": "Posição",
+    "industria": "Indústria",
+    "valorLance": "Lance",
+    "ultimoLance": "Último lance",
+    "lider": "Líder"
   },
   "contestacoes": {
     "soParte": "Esta tela é para as partes dos lotes: cooperativa, Clean Tech, indústria e transportador.",

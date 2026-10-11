@@ -7,7 +7,7 @@ programas só serão publicados nela futuramente.
 | Ambiente | Hostname | Rede Solana | Proteção |
 |---|---|---|---|
 | dev | `app-dev-tester.ecolchain.com` | **devnet** | Basic Auth + `noindex` |
-| prod | `app.ecolchain.com` | **testnet** | — |
+| prod | `app.ecolchain.com` | **devnet** (os programas não estão na testnet) | — |
 | local | `localhost` (vite dev) | **localnet** (`127.0.0.1:8899`) | — |
 | futuro | `app.ecolchain.com` | **mainnet** | quando programas publicarem |
 
@@ -19,7 +19,7 @@ programas só serão publicados nela futuramente.
 - `REDE_PADRAO` vem de `import.meta.env.VITE_REDE_PADRAO`, definido **no build**
   pela esteira:
   - builds de dev (branches `feature/**` e `develop`): sem a var → `devnet`
-  - build de prod (branch `main`): `VITE_REDE_PADRAO=testnet`
+  - build de prod (branch `main`): `VITE_REDE_PADRAO=devnet` (era `testnet`; mudou em 2026-10-09 porque os programas só estão publicados na devnet)
 - RPCs podem ser sobrescritos por `VITE_RPC_<REDE>` / `VITE_WS_<REDE>`
   (útil para RPC dedicado se o público der rate-limit).
 
@@ -30,7 +30,7 @@ push em feature/** ──► typecheck + build (devnet) → sync → ecolchain-w
                      └─► auto-PR → develop (preview = domínio dev + credenciais)
 push em develop ─────► idem → ecolchain-web-dev
                      └─► auto-PR → main (preview = domínio dev + credenciais)
-push em main ────────► typecheck + build (testnet) → sync → ecolchain-web-prod
+push em main ────────► typecheck + build (devnet) → sync → ecolchain-web-prod
                      └─► purge de cache Cloudflare → app.ecolchain.com
 ```
 

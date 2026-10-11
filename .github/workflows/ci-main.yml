@@ -20,11 +20,12 @@ env:
   AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
   S3_ENDPOINT: https://grmykw8bmw9d.compat.objectstorage.sa-saopaulo-1.oraclecloud.com
   DEPLOY_BUCKET: ecolchain-web-prod
-  VITE_REDE_PADRAO: testnet
+  # Os programas só estão na devnet (a testnet não tem deploy): produção também usa a devnet.
+  VITE_REDE_PADRAO: devnet
 
 jobs:
   deploy-production:
-    name: Deploy to Production (app.ecolchain.com, testnet)
+    name: Deploy to Production (app.ecolchain.com, devnet)
     runs-on: ubuntu-latest
 
     steps:
@@ -53,7 +54,7 @@ jobs:
       - name: Run Typecheck
         run: npm run typecheck
 
-      - name: Run Build (testnet)
+      - name: Run Build (devnet)
         run: npm run build
 
       - name: Deploy to OCI Bucket (prod)
