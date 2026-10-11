@@ -1,110 +1,110 @@
-# Interface web — EcolChain
+# Web interface — EcolChain
 
-React 19 + Tailwind 4 (Vite). Conecta carteiras Solana pelo Wallet Standard (`@solana/kit-plugin-wallet`) e lê o cadastro da carteira direto dos programas, usando os clientes Codama do repositório da blockchain.
+React 19 + Tailwind 4 (Vite). Connects Solana wallets through the Wallet Standard (`@solana/kit-plugin-wallet`) and reads the wallet's registration directly from the programs, using the Codama clients from the blockchain repository.
 
-## Repositórios
+## Repositories
 
-| Repositório | Conteúdo |
+| Repository | Contents |
 |---|---|
-| [ecolchain-core-web](https://github.com/ECOLchain/ecolchain-core-web) (este) | interface web |
-| [ecolchain-core-chains](https://github.com/ECOLchain/ecolchain-core-chains) | programas Anchor, clientes TypeScript (`onchain/clients`), ADRs e operação da devnet |
+| [ecolchain-core-web3](https://github.com/ECOLchain/ecolchain-core-web3) (this one) | web interface |
+| [ecolchain-core-chains](https://github.com/ECOLchain/ecolchain-core-chains) | Anchor programs, TypeScript clients (`onchain/clients`), ADRs and devnet operations |
 
-A interface importa os clientes pelo alias `@clientes/*`, que aponta para `../onchain/clients/src`. Por isso **este repositório precisa ficar dentro da pasta do repositório da blockchain, na pasta `web/`** (que está no `.gitignore` de lá):
+The interface imports the clients through the `@clientes/*` alias, which points to `../onchain/clients/src`. That is why **this repository must live inside the blockchain repository folder, in the `web/` folder** (which is in that repository's `.gitignore`):
 
 ```bash
 git clone https://github.com/ECOLchain/ecolchain-core-chains.git ecolchain
-git clone https://github.com/ECOLchain/ecolchain-core-web.git ecolchain/web
-cd ecolchain/onchain/clients && npm install     # dependências dos clientes
+git clone https://github.com/ECOLchain/ecolchain-core-web3.git ecolchain/web
+cd ecolchain/onchain/clients && npm install     # client dependencies
 cd ../../web && npm install
 npm run dev        # http://localhost:5173
-npm run build      # typecheck + build de produção em dist/
+npm run build      # typecheck + production build in dist/
 ```
 
-Os clientes gerados (`onchain/clients/src/generated`) estão versionados no repositório da blockchain, então não é preciso compilar os programas para rodar a interface.
+The generated clients (`onchain/clients/src/generated`) are committed to the blockchain repository, so you don't need to build the programs to run the interface.
 
-## Carteira recomendada: Solflare
+## Recommended wallet: Solflare
 
-Use a **[Solflare](https://solflare.com)** (extensão do navegador ou app do celular) para todos os papéis. É a carteira usada na operação da devnet (a administração assina com uma Solflare), e ela atende três pontos de que a EcolChain depende:
+Use **[Solflare](https://solflare.com)** (browser extension or mobile app) for every role. It is the wallet used in the devnet operation (the administration signs with a Solflare wallet), and it meets three requirements EcolChain depends on:
 
-- **Assina sem alterar a transação.** A retirada do lote é assinada por duas pessoas, cada uma no seu aparelho: a cooperativa assina primeiro e o transportador completa. Algumas carteiras acrescentam instruções ao assinar (proteções ou taxa de prioridade). Isso muda a transação e invalida a assinatura da outra parte. Nesse caso, a tela avisa: "A carteira alterou a transação ao assinar".
-- **Assina sem enviar.** A Solflare implementa a assinatura avulsa do Wallet Standard (`solana:signTransaction`), usada na retirada.
-- **Devnet.** A rede da carteira pode ser trocada para Devnet, a rede atual dos programas. A rede escolhida na carteira precisa ser a mesma do seletor de rede da interface.
+- **Signs without changing the transaction.** The lot pickup is signed by two people, each on their own device: the cooperative signs first and the carrier completes it. Some wallets add instructions when signing (protections or a priority fee). That changes the transaction and invalidates the other party's signature. In that case, the screen warns: "A carteira alterou a transação ao assinar" (the wallet changed the transaction while signing).
+- **Signs without sending.** Solflare implements the Wallet Standard's standalone signing (`solana:signTransaction`), used in the pickup.
+- **Devnet.** The wallet's network can be switched to Devnet, the programs' current network. The network chosen in the wallet must match the network selector in the interface.
 
-Outras carteiras compatíveis com o Wallet Standard aparecem no botão **Conectar** e servem para as telas de uma assinatura só, mas não são testadas.
+Other Wallet Standard–compatible wallets show up under the **Connect** button and work for the single-signature screens, but they are not tested.
 
-## O que já existe
+## What already exists
 
-- **Header fixo:** logo e, em destaque, o **selo de quem está operando** ("Operando como", papel e nome do cadastro), numa cor por papel, repetida numa faixa no topo do header. Serve para apresentações: de longe dá para ver se a tela é da cooperativa, do coletor, do transportador, da indústria ou da administração. À direita: tamanho do texto (P / M / G), tema claro/escuro, rede e carteira. Em telas estreitas, as preferências ficam num painel e a carteira mostra só o ícone.
-- **Menu lateral:** o botão ☰ recolhe o menu para só ícones (telas largas) ou abre uma gaveta (celular). Sem carteira conectada, todas as opções ficam desabilitadas.
-- **Menu por papel:** ao conectar, a interface lê o `Participante` da carteira no `ecol_lote` e as chaves das três configs. O menu mostra só as operações de cada papel (cooperativa, indústria, transportador, coletor, operador, intermediador, registrador, Zupy, árbitro), definidas em `src/navegacao/menu.ts`.
-- **Idiomas:** pt-BR, en-US e es-ES (`src/i18n/locales`), escolhidos no rodapé do menu lateral, com bandeira. Com o menu recolhido, aparece só a bandeira e a lista abre ao lado.
-- **Redes:** devnet (padrão) e localnet. Mainnet fica bloqueada até os programas serem publicados lá.
-- **Layout do painel central:** moldura com a barra de título (subheader) fixa no topo; só o miolo rola. Toda listagem é uma grade com busca (sem acentos), filtros, ordenação clicando no cabeçalho e 7 registros por página (`componentes/grade.tsx`). Inclusões e alterações abrem em popup (`componentes/dialogo.tsx`), com Salvar e fechar no cabeçalho; as ações da régua agem sobre a linha selecionada (Enter na linha abre a edição). Como os dados vêm inteiros da blockchain, filtro, ordem e paginação acontecem no navegador.
-- **Administração** (carteira do operador): telas funcionais de **Participantes** (cadastrar com nome, editar o nome, ativar/desativar), **Balanças** (nome, proprietário escolhido pelo nome e carteira; editar o nome, ativar/desativar) e **Materiais** (cadastrar, renomear, ativar/desativar). Cada ação é uma transação assinada na carteira; o resultado mostra o link da transação ou o erro em linguagem simples.
-- **Cooperativa** (carteira com papel Cooperativa):
-  - **Lotes de origem:** registra o material que chega, com a origem (coletor, triagem própria, doação, compra ou catador avulso), o material e o peso; a balança assina a pesagem. Para coletor, escolhe o coletor cadastrado; para as demais, informa a referência (nota, recibo, CNPJ), da qual só um hash vai on-chain.
-  - **Lotes de venda:** junta lotes de origem do mesmo material, pesa o consolidado (aceito de −10% a +2% da soma) e fecha o lote (criar, vincular 10 origens por transação, pesar e fechar). Depois, anuncia no leilão ou cancela o anúncio. Antes da venda, **Desfazer** devolve as origens e queima o recibo digital do lote.
-  - **Balança de teste (só devnet/localnet):** na primeira vez, a tela gera uma chave de balança guardada no navegador; a administração a cadastra em Balanças com a cooperativa como dona. Na operação real, o equipamento assina cada pesagem.
-  - **Leitor de QR:** em "Novo lote de origem", o botão **Ler QR** abre a câmera e lê o QR Code da tela Minha carteira do coletor, selecionando-o na lista (`componentes/LeitorQr.tsx`, `jsqr`). A câmera só abre em **https** ou em `localhost`.
-  - **Nota fiscal ou recibo do lote de venda:** opcional; vira o `evidencias_hash` no mesmo formato das referências de origem, e a trilha encontra o lote pelo texto.
-- **Coletor:** **Minha carteira** (nome e QR Code com o endereço da carteira, para a cooperativa escanear na entrega) e **Meus lotes** (grade com os lotes de origem da carteira em qualquer cooperativa, o lote de venda e a situação de cada um, com link para a trilha).
-- **Transportador:** **Minha carteira**, para a cooperativa conferir quem retira o lote.
-- **Retiradas** (cooperativa e transportador): a retirada exige a assinatura das duas partes (`transportador_pickup_lote`).
-  1. A cooperativa seleciona o lote vendido, identifica o transportador pelo QR da tela Minha carteira dele (ou pela lista) e assina.
-  2. A tela mostra um QR com a assinatura da cooperativa, o lote, as duas carteiras e o blockhash. O código vale por cerca de um minuto; depois, "Gerar novo código".
-  3. O transportador, em **Assinar retirada**, lê o QR. O aparelho dele remonta a mesma transação a partir da blockchain, confere a assinatura da cooperativa, mostra o lote para conferência, assina e envia.
-  4. A tela da cooperativa percebe a retirada sozinha. O lote vai para "Em transporte", e o recibo digital, para a carteira do transportador.
+- **Fixed header:** the logo and, prominently, the **badge of who is operating** ("Operating as", role and registered name), in a color per role, repeated in a strip at the top of the header. It is meant for presentations: from a distance you can tell whether the screen belongs to the cooperative, the collector, the carrier, the industry or the administration. On the right: text size (S / M / L), light/dark theme, network and wallet. On narrow screens, the preferences go into a panel and the wallet shows only its icon.
+- **Side menu:** the ☰ button collapses the menu to icons only (wide screens) or opens a drawer (mobile). With no wallet connected, every option is disabled.
+- **Menu per role:** on connect, the interface reads the wallet's `Participante` in `ecol_lote` and the keys of the three configs. The menu shows only the operations of each role (cooperative, industry, carrier, collector, operator, payment intermediary, registrar, Zupy, arbiter), defined in `src/navegacao/menu.ts`.
+- **Languages:** pt-BR, en-US and es-ES (`src/i18n/locales`), chosen at the bottom of the side menu, with a flag. With the menu collapsed, only the flag shows and the list opens beside it.
+- **Networks:** devnet (default) and localnet. Mainnet stays locked until the programs are published there.
+- **Central panel layout:** a frame with the title bar (subheader) fixed at the top; only the body scrolls. Every listing is a grid with search (accent-insensitive), filters, sorting by clicking the header, and 7 records per page (`componentes/grade.tsx`). Inserts and edits open in a popup (`componentes/dialogo.tsx`), with Save and close in the header; the toolbar actions act on the selected row (Enter on a row opens the edit). Since the data comes whole from the blockchain, filtering, sorting and pagination happen in the browser.
+- **Administration** (operator wallet): working screens for **Participants** (register with a name, edit the name, activate/deactivate), **Scales** (name, owner chosen by name and wallet; edit the name, activate/deactivate) and **Materials** (register, rename, activate/deactivate). Each action is a transaction signed in the wallet; the result shows the transaction link or the error in plain language.
+- **Cooperative** (wallet with the Cooperative role):
+  - **Source lots:** records incoming material, with its origin (collector, own sorting, donation, purchase or independent waste picker), the material and the weight; the scale signs the weighing. For a collector, it picks the registered collector; for the others, it takes a reference (invoice, receipt, CNPJ), of which only a hash goes on-chain.
+  - **Sale lots:** combines source lots of the same material, weighs the consolidated load (accepted from −10% to +2% of the sum) and closes the lot (create, link 10 source lots per transaction, weigh and close). Then it lists the lot for auction or cancels the listing. Before the sale, **Undo** returns the source lots and burns the lot's digital receipt.
+  - **Test scale (devnet/localnet only):** the first time, the screen generates a scale key stored in the browser; the administration registers it under Scales with the cooperative as owner. In real operation, the device signs each weighing.
+  - **QR reader:** in "New source lot", the **Scan QR** button opens the camera and reads the QR Code from the collector's My wallet screen, selecting them in the list (`componentes/LeitorQr.tsx`, `jsqr`). The camera only opens over **https** or on `localhost`.
+  - **Invoice or receipt for the sale lot:** optional; it becomes the `evidencias_hash` in the same format as the origin references, and the trail finds the lot by the text.
+- **Collector:** **My wallet** (name and a QR Code with the wallet address, for the cooperative to scan on delivery) and **My lots** (a grid with the wallet's source lots at any cooperative, the sale lot and the status of each, with a link to the trail).
+- **Carrier:** **My wallet**, so the cooperative can check who is picking up the lot.
+- **Pickups** (cooperative and carrier): the pickup requires both parties' signatures (`transportador_pickup_lote`).
+  1. The cooperative selects the sold lot, identifies the carrier by the QR on their My wallet screen (or from the list) and signs.
+  2. The screen shows a QR with the cooperative's signature, the lot, both wallets and the blockhash. The code is valid for about a minute; after that, "Generate new code".
+  3. The carrier, in **Sign pickup**, scans the QR. Their device rebuilds the same transaction from the blockchain, checks the cooperative's signature, shows the lot for review, signs and sends.
+  4. The cooperative's screen detects the pickup on its own. The lot moves to "In transit", and the digital receipt goes to the carrier's wallet.
 
-  O transportador vê na grade os lotes que retirou. Código em `src/solana/retirada.ts`.
-- **Venda** (administração, intermediador e indústria): `industria_accept_venda` exige as três assinaturas.
-  1. Em **Leilões**, a administração seleciona o lote anunciado e registra o resultado: indústria vencedora, valor (≥ preço mínimo), referência do depósito no escrow e da ata. Assina e mostra o código.
-  2. Em **Escrow dos lotes**, o intermediador lê o código, confere e assina.
-  3. Em **Compras**, a indústria lê, confere, assina e envia. A tela da administração percebe a venda sozinha.
+  The carrier sees the lots they picked up in the grid. Code in `src/solana/retirada.ts`.
+- **Sale** (administration, payment intermediary and industry): `industria_accept_venda` requires all three signatures.
+  1. In **Auctions**, the administration selects the listed lot and records the result: winning industry, amount (≥ minimum price), and the references of the escrow deposit and of the minutes. It signs and shows the code.
+  2. In **Batch escrow**, the payment intermediary scans the code, checks it and signs.
+  3. In **Purchases**, the industry scans, checks, signs and sends. The administration's screen detects the sale on its own.
 
-  A transação usa um **nonce durável**: uma conta de sistema derivada da carteira do operador (`createAccountWithSeed`, semente `ecolchain-venda`), criada na primeira venda por ≈ 0,0015 SOL. Por isso o código **não expira com o tempo**, só quando outra venda usa o nonce. Cada aparelho remonta a transação a partir da blockchain e confere as assinaturas anteriores antes de assinar. Em Leilões, a administração também encerra leilões vencidos sem lance. Código em `src/solana/venda.ts`.
-- **Recebimentos** (indústria): os lotes em transporte para a indústria, com prazo de entrega (em vermelho se vencido). **Registrar recebimento** mostra o peso de saída e a faixa aceita sem disputa, que usa a tolerância fixada na venda e a mesma conta do programa. Se o peso digitado cair fora da faixa, a tela avisa antes de assinar, e o lote vai para disputa por divergência de peso. Com a balança da indústria pronta, a pesagem é assinada por ela (Ed25519) e o recebimento fica **atestado** (✓ na grade); sem balança, o peso fica como informado. O recibo digital passa para a carteira da indústria. A balança de teste é a mesma da cooperativa (`componentes/BalancaTeste.tsx`), gerada no navegador da indústria e cadastrada pela administração.
-- **Escrow dos lotes** (intermediador): todas as vendas, com a situação do dinheiro (retido, aguardando liberação, liberado à cooperativa, devolvido, em disputa) e o peso recebido. Tem dois caminhos:
-  - **Assinar venda**: a segunda assinatura da venda, descrita acima.
-  - **Liberar pagamento**: para lotes recebidos pela indústria (`intermediador_confirm_liberacao`). Mostra quem recebe, quem pagou, o valor e os pesos de saída e de chegada (atestado ou informado), e pede a referência do repasse à cooperativa, por exemplo o id do Pix. Vai on-chain só o hash, com o domínio `ECOLCHAIN:LIBERACAO:v1` sobre o texto normalizado. O lote passa a **Reciclado** e pode entrar num crédito de carbono.
-- **Códigos entre aparelhos** (retirada e venda): cada código aparece como QR Code, com o botão **Copiar código**. Quem lê usa a câmera ou **cola o código**, o que permite fazer tudo num computador só, por exemplo numa apresentação com um perfil de navegador por papel (`componentes/CodigoAssinatura.tsx`).
-- **Trilha pública** (sem carteira): busca pelo nome de um participante (coletor, cooperativa, indústria, transportador), pela referência de um comprovante (o hash é recalculado no navegador) ou pelo endereço de um lote ou carteira, e mostra lote de origem → lote de venda → consumo pela indústria → crédito de carbono. Aceita `?q=` na URL para compartilhar o link. No RPC público da devnet, buscas grandes podem esbarrar no limite de requisições (429).
-- **Páginas:** o painel ainda é um esqueleto, e as demais operações abrem uma página provisória.
+  The transaction uses a **durable nonce**: a system account derived from the operator's wallet (`createAccountWithSeed`, seed `ecolchain-venda`), created on the first sale for ≈ 0.0015 SOL. That is why the code **does not expire with time**, only when another sale uses the nonce. Each device rebuilds the transaction from the blockchain and checks the previous signatures before signing. In Auctions, the administration also closes expired auctions with no bids. Code in `src/solana/venda.ts`.
+- **Receipts** (industry): the lots in transit to the industry, with the delivery deadline (in red if overdue). **Register receipt** shows the departure weight and the range accepted without dispute, which uses the tolerance fixed at the sale and the same calculation as the program. If the entered weight falls outside the range, the screen warns before signing, and the lot goes into a weight-discrepancy dispute. With the industry's scale ready, the weighing is signed by it (Ed25519) and the receipt is **attested** (✓ in the grid); without a scale, the weight is recorded as declared. The digital receipt moves to the industry's wallet. The test scale is the same as the cooperative's (`componentes/BalancaTeste.tsx`), generated in the industry's browser and registered by the administration.
+- **Batch escrow** (payment intermediary): all sales, with the status of the money (held, awaiting release, released to the cooperative, refunded, in dispute) and the received weight. It has two paths:
+  - **Sign sale**: the sale's second signature, described above.
+  - **Release payment**: for lots received by the industry (`intermediador_confirm_liberacao`). It shows who receives, who paid, the amount and the departure and arrival weights (attested or declared), and asks for the reference of the transfer to the cooperative, for example the Pix id. Only the hash goes on-chain, with the domain `ECOLCHAIN:LIBERACAO:v1` over the normalized text. The lot moves to **Recycled** (`Reciclado`) and can join a carbon credit.
+- **Codes between devices** (pickup and sale): each code appears as a QR Code, with a **Copy code** button. The reader uses the camera or **pastes the code**, which makes it possible to do everything on a single computer, for example in a presentation with one browser profile per role (`componentes/CodigoAssinatura.tsx`).
+- **Public trail** (no wallet): searches by the name of a participant (collector, cooperative, industry, carrier), by the reference of a proof document (the hash is recomputed in the browser) or by the address of a lot or wallet, and shows source lot → sale lot → consumption by the industry → carbon credit. It accepts `?q=` in the URL for sharing the link. On the public devnet RPC, large searches may hit the request limit (429).
+- **Pages:** the dashboard is still a skeleton, and the other operations open a placeholder page.
 
-## Testar com uma rede local
+## Testing with a local network
 
-Sem depender da devnet (nem da carteira de administração):
+Without depending on devnet (or on the administration wallet):
 
 ```bash
-cd ../onchain && NO_DNA=1 anchor build        # os .so em target/deploy
-cd clients && npx tsx scripts/rede-local.ts   # Surfpool com configs, participantes de teste, materiais, balanças e quatro lotes de demonstração
-# em outro terminal, com o rpcUrl/wsUrl que o script mostrar:
+cd ../onchain && NO_DNA=1 anchor build        # the .so files in target/deploy
+cd clients && npx tsx scripts/rede-local.ts   # Surfpool with configs, test participants, materials, scales and four demo lots
+# in another terminal, with the rpcUrl/wsUrl the script prints:
 cd web && VITE_RPC_LOCALNET=<rpcUrl> VITE_WS_LOCALNET=<wsUrl> npm run dev
 ```
 
-Na interface, escolha a rede **Localnet**. Os lotes de venda de demonstração: #1 vendido (esperando a retirada), #2 em leilão com lances da Indústria Demo e da Recicla Sul (esperando o prazo e a venda; a cooperativa os vê em Disputa › Ver lances), #3 em transporte (esperando o recebimento, com a balança da indústria já cadastrada) e #4 recebido (esperando a liberação do escrow). As chaves de teste de todos os papéis usados na interface (cooperativa e sua balança, coletor 1, transportador, indústria e sua balança, operador e intermediador) ficam em `onchain/.surfpool-demo.json`, fora do git, e são reaproveitadas quando a rede é reiniciada (as carteiras importadas continuam valendo; `NOVAS_CHAVES=1` gera outras); a semente da balança vai em `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
+In the interface, choose the **Localnet** network. The demo sale lots: #1 sold (awaiting pickup), #2 in auction with bids from Indústria Demo and Recicla Sul (awaiting the deadline and the sale; the cooperative sees them in Marketplace › View bids), #3 in transit (awaiting receipt, with the industry's scale already registered) and #4 received (awaiting the escrow release). The test keys for every role used in the interface (cooperative and its scale, collector 1, carrier, industry and its scale, operator and payment intermediary) are in `onchain/.surfpool-demo.json`, outside git, and are reused when the network restarts (imported wallets keep working; `NOVAS_CHAVES=1` generates new ones); the scale seed goes in `localStorage["ecolchain:balanca-teste:<cooperativa>"]`.
 
-As preferências (tema, fonte, idioma e rede) ficam no `localStorage` do navegador.
+Preferences (theme, font, language and network) are kept in the browser's `localStorage`.
 
-## Configuração
+## Configuration
 
-| Variável | Padrão |
+| Variable | Default |
 |---|---|
 | `VITE_RPC_DEVNET` | `https://api.devnet.solana.com` |
-| `VITE_WS_DEVNET` | derivado do RPC |
+| `VITE_WS_DEVNET` | derived from the RPC |
 | `VITE_RPC_LOCALNET` | `http://127.0.0.1:8899` |
-| `VITE_WS_LOCALNET` | derivado do RPC |
+| `VITE_WS_LOCALNET` | derived from the RPC |
 
-## Estrutura
+## Structure
 
-| Caminho | Conteúdo |
+| Path | Contents |
 |---|---|
-| `src/layout/` | `Shell` (header + menu + conteúdo), `Header`, `MenuLateral`, `Carteira`, `Controles` |
-| `src/navegacao/menu.ts` | itens do menu e quais papéis veem cada um |
-| `src/solana/` | redes, cliente Kit por rede, `useCadastro` (papéis da carteira), `retirada.ts` e `venda.ts` (assinatura em vários aparelhos) |
-| `src/preferencias/` | tema, fonte, idioma e rede |
-| `src/i18n/` | traduções |
-| `src/paginas/` | páginas: `admin/`, `cooperativa/`, `coletor/`, `Trilha.tsx`, `MinhaCarteira.tsx` e as provisórias |
-| `src/componentes/` | grade, popup, título do painel, leitor de QR, campos e botões |
-| `src/componentes/Logo.tsx` | logo provisório (trocar pela marca oficial) |
+| `src/layout/` | `Shell` (header + menu + content), `Header`, `MenuLateral`, `Carteira`, `Controles` |
+| `src/navegacao/menu.ts` | menu items and which roles see each one |
+| `src/solana/` | networks, Kit client per network, `useCadastro` (wallet roles), `retirada.ts` and `venda.ts` (multi-device signing) |
+| `src/preferencias/` | theme, font, language and network |
+| `src/i18n/` | translations |
+| `src/paginas/` | pages: `admin/`, `cooperativa/`, `coletor/`, `Trilha.tsx`, `MinhaCarteira.tsx` and the placeholders |
+| `src/componentes/` | grid, popup, panel title, QR reader, fields and buttons |
+| `src/componentes/Logo.tsx` | EcolChain logo in the header (`public/EcolChain-header.png`) |
 
-Depois de mudar um programa (no repositório da blockchain), rode `anchor build` e depois `npm run gerar` em `onchain/clients`; a interface passa a usar os clientes novos na hora.
+After changing a program (in the blockchain repository), run `anchor build` and then `npm run gerar` in `onchain/clients`; the interface picks up the new clients immediately.
